@@ -14,6 +14,11 @@ import NoTransactionsIcon from '@/public/images/transactions/no-transactions.svg
 import { useHasPendingTxs } from '@/hooks/usePendingTxs'
 import useSafeInfo from '@/hooks/useSafeInfo'
 import { useRecoveryQueue } from '@/features/recovery/hooks/useRecoveryQueue'
+import dynamic from 'next/dynamic'
+
+const Analytics = dynamic(() => import('./Analytics/Analytics'), {
+  ssr: false,
+})
 
 const NoQueuedTxns = () => {
   return <PagePlaceholder img={<NoTransactionsIcon />} text="Queued transactions will appear here" />
@@ -41,6 +46,8 @@ const TxPage = ({
   const isQueue = useTxns === useTxQueue
   const recoveryQueue = useRecoveryQueue()
   const hasPending = useHasPendingTxs()
+
+  console.log('## page', page)
 
   return (
     <>
@@ -85,6 +92,8 @@ const PaginatedTxns = ({ useTxns }: { useTxns: typeof useTxHistory | typeof useT
 
   return (
     <Box position="relative">
+      <Analytics useTxns={useTxns} pages={pages} />
+
       {pages.map((pageUrl, index) => (
         <TxPage
           key={pageUrl}

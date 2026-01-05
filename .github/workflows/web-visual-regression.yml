@@ -24,13 +24,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  STORYBOOK_WAIT_TIMEOUT: 60000
+
 jobs:
   visual-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/yarn
 
@@ -53,7 +56,7 @@ jobs:
 
           # Wait for Storybook to be ready
           echo "Waiting for Storybook to be ready..."
-          npx wait-on http://localhost:6006 --timeout 60000
+          npx wait-on http://localhost:6006 --timeout ${{ env.STORYBOOK_WAIT_TIMEOUT }}
 
           # Run visual regression tests
           yarn test:visual:ci || TEST_EXIT_CODE=$?
@@ -68,10 +71,10 @@ jobs:
 
       - name: Upload visual diff artifacts
         if: failure() && steps.visual-tests.outcome == 'failure'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: visual-regression-diffs
-          path: apps/web/src/**/__image_snapshots__/__diff_output__/
+          path: apps/web/__visual_snapshots__/__diff_output__/
           retention-days: 7
 
       - name: Comment on PR with visual diff summary
@@ -81,15 +84,16 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const { execSync } = require('child_process');
 
-            // Find all diff output directories
+            // Find all diff output PNG files using Node.js fs
+            const diffDir = 'apps/web/__visual_snapshots__/__diff_output__';
             let diffFiles = [];
-            try {
-              const result = execSync('find apps/web/src -path "*/__image_snapshots__/__diff_output__/*" -name "*.png" 2>/dev/null || true', { encoding: 'utf-8' });
-              diffFiles = result.trim().split('\n').filter(Boolean).map(f => path.basename(f, '.png'));
-            } catch (e) {
-              console.log('No diff files found');
+
+            if (fs.existsSync(diffDir)) {
+              const files = fs.readdirSync(diffDir);
+              diffFiles = files
+                .filter(f => f.endsWith('.png'))
+                .map(f => path.basename(f, '.png'));
             }
 
             if (diffFiles.length === 0) {

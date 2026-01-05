@@ -1,5 +1,9 @@
+const path = require('path')
 const { getStoryContext } = require('@storybook/test-runner')
 const { toMatchImageSnapshot } = require('jest-image-snapshot')
+
+// Configurable threshold via environment variable (default: 1%)
+const FAILURE_THRESHOLD = parseFloat(process.env.VISUAL_REGRESSION_THRESHOLD || '0.01')
 
 /** @type {import('@storybook/test-runner').TestRunnerConfig} */
 const config = {
@@ -29,17 +33,19 @@ const config = {
       })
     })
 
-    // Small delay for any remaining renders
-    await page.waitForTimeout(100)
+    // Wait for network to be idle to reduce flakiness
+    await page.waitForLoadState('networkidle')
 
     // Take screenshot
     const screenshot = await page.screenshot()
 
     // Compare with baseline using jest-image-snapshot
+    // Snapshots are stored in a central location for easier CI artifact collection
     expect(screenshot).toMatchImageSnapshot({
       customSnapshotIdentifier: context.id,
-      // Allow 1% pixel difference to account for minor rendering variations
-      failureThreshold: 0.01,
+      customSnapshotsDir: path.join(process.cwd(), '__visual_snapshots__'),
+      customDiffDir: path.join(process.cwd(), '__visual_snapshots__', '__diff_output__'),
+      failureThreshold: FAILURE_THRESHOLD,
       failureThresholdType: 'percent',
     })
   },

@@ -20,6 +20,13 @@ on:
       - packages/theme/**
       - .github/workflows/web-visual-regression.yml
 
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: 'Update visual regression baselines'
+        type: boolean
+        default: false
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -58,8 +65,13 @@ jobs:
           echo "Waiting for Storybook to be ready..."
           npx wait-on http://localhost:6006 --timeout ${{ env.STORYBOOK_WAIT_TIMEOUT }}
 
-          # Run visual regression tests
-          yarn test:visual:ci || TEST_EXIT_CODE=$?
+          # Run visual regression tests (update mode if requested)
+          if [ "${{ inputs.update_baselines }}" == "true" ]; then
+            echo "Updating baselines..."
+            yarn test:visual:update || true
+          else
+            yarn test:visual:ci || TEST_EXIT_CODE=$?
+          fi
 
           # Cleanup
           kill $STORYBOOK_PID 2>/dev/null || true
@@ -68,6 +80,14 @@ jobs:
         working-directory: apps/web
         env:
           NEXT_PUBLIC_IS_OFFICIAL_HOST: true
+
+      - name: Upload updated baselines
+        if: inputs.update_baselines == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-baselines
+          path: apps/web/__visual_snapshots__/*.png
+          retention-days: 30
 
       - name: Upload visual diff artifacts
         if: failure() && steps.visual-tests.outcome == 'failure'
@@ -109,15 +129,12 @@ jobs:
             ${diffFiles.length > 20 ? `\n... and ${diffFiles.length - 20} more` : ''}
 
             ### How to fix:
-            1. Download the \`visual-regression-diffs\` artifact from this workflow run
-            2. Review the diff images to verify the changes are intentional
-            3. If intentional, run locally:
-               \`\`\`bash
-               cd apps/web
-               yarn storybook &
-               yarn test:visual:update
-               \`\`\`
-            4. Commit the updated snapshots
+            1. Download the \`visual-regression-diffs\` artifact to review the changes
+            2. If the changes are intentional, update baselines from CI:
+               - Go to Actions → "Web Visual Regression Tests"
+               - Click "Run workflow" → check "Update visual regression baselines"
+               - Download the \`visual-regression-baselines\` artifact
+               - Extract and commit to \`apps/web/__visual_snapshots__/\`
 
             ---
             *Visual regression tests powered by Storybook Test Runner + jest-image-snapshot*`;

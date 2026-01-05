@@ -1,0 +1,147 @@
+name: Web Visual Regression Tests
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    paths:
+      - apps/web/**
+      - packages/theme/**
+      - .github/workflows/web-visual-regression.yml
+
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - apps/web/**
+      - packages/theme/**
+      - .github/workflows/web-visual-regression.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/yarn
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Build Storybook
+        run: yarn build-storybook
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_IS_OFFICIAL_HOST: true
+
+      - name: Serve Storybook and run visual tests
+        id: visual-tests
+        run: |
+          # Start Storybook in the background
+          npx http-server storybook-static -p 6006 --silent &
+          STORYBOOK_PID=$!
+
+          # Wait for Storybook to be ready
+          echo "Waiting for Storybook to be ready..."
+          npx wait-on http://localhost:6006 --timeout 60000
+
+          # Run visual regression tests
+          yarn test:visual:ci || TEST_EXIT_CODE=$?
+
+          # Cleanup
+          kill $STORYBOOK_PID 2>/dev/null || true
+
+          exit ${TEST_EXIT_CODE:-0}
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_IS_OFFICIAL_HOST: true
+
+      - name: Upload visual diff artifacts
+        if: failure() && steps.visual-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v6
+        with:
+          name: visual-regression-diffs
+          path: apps/web/src/**/__image_snapshots__/__diff_output__/
+          retention-days: 7
+
+      - name: Comment on PR with visual diff summary
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { execSync } = require('child_process');
+
+            // Find all diff output directories
+            let diffFiles = [];
+            try {
+              const result = execSync('find apps/web/src -path "*/__image_snapshots__/__diff_output__/*" -name "*.png" 2>/dev/null || true', { encoding: 'utf-8' });
+              diffFiles = result.trim().split('\n').filter(Boolean).map(f => path.basename(f, '.png'));
+            } catch (e) {
+              console.log('No diff files found');
+            }
+
+            if (diffFiles.length === 0) {
+              console.log('No visual diffs found');
+              return;
+            }
+
+            const body = `## 🔴 Visual Regression Tests Failed
+
+            Found **${diffFiles.length}** visual difference(s):
+
+            ${diffFiles.slice(0, 20).map(f => `- \`${f}\``).join('\n')}
+            ${diffFiles.length > 20 ? `\n... and ${diffFiles.length - 20} more` : ''}
+
+            ### How to fix:
+            1. Download the \`visual-regression-diffs\` artifact from this workflow run
+            2. Review the diff images to verify the changes are intentional
+            3. If intentional, run locally:
+               \`\`\`bash
+               cd apps/web
+               yarn storybook &
+               yarn test:visual:update
+               \`\`\`
+            4. Commit the updated snapshots
+
+            ---
+            *Visual regression tests powered by Storybook Test Runner + jest-image-snapshot*`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes('Visual Regression Tests Failed')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }

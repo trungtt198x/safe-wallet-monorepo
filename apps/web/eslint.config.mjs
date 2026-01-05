@@ -23,7 +23,7 @@ export default [
       '**/.github/',
       '**/cypress/',
       '**/src/types/contracts/',
-      '**/.storybook/test-runner.cjs',
+      '**/.storybook/test-runner.mjs',
     ],
   },
   ...compat.extends('next', 'prettier', 'plugin:storybook/recommended'),

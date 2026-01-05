@@ -1,6 +1,9 @@
-const path = require('path')
-const { getStoryContext } = require('@storybook/test-runner')
-const { toMatchImageSnapshot } = require('jest-image-snapshot')
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { getStoryContext } from '@storybook/test-runner'
+import { toMatchImageSnapshot } from 'jest-image-snapshot'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Configurable threshold via environment variable (default: 1%)
 const FAILURE_THRESHOLD = parseFloat(process.env.VISUAL_REGRESSION_THRESHOLD || '0.01')
@@ -43,12 +46,12 @@ const config = {
     // Snapshots are stored in a central location for easier CI artifact collection
     expect(screenshot).toMatchImageSnapshot({
       customSnapshotIdentifier: context.id,
-      customSnapshotsDir: path.join(process.cwd(), '__visual_snapshots__'),
-      customDiffDir: path.join(process.cwd(), '__visual_snapshots__', '__diff_output__'),
+      customSnapshotsDir: path.join(__dirname, '..', '__visual_snapshots__'),
+      customDiffDir: path.join(__dirname, '..', '__visual_snapshots__', '__diff_output__'),
       failureThreshold: FAILURE_THRESHOLD,
       failureThresholdType: 'percent',
     })
   },
 }
 
-module.exports = config
+export default config

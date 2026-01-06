@@ -9,6 +9,9 @@ import {
 import { faker } from '@faker-js/faker'
 import { StoreDecorator } from '@/stories/storeDecorator'
 
+// Seed faker for deterministic visual regression tests
+faker.seed(456)
+
 const meta = {
   component: SafeShieldDisplay,
   parameters: { layout: 'centered' },

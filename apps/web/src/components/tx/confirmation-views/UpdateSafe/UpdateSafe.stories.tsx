@@ -5,6 +5,9 @@ import { _UpdateSafe } from './index'
 import { mockUpdateSafeTxData, mockUnknownContractTxData } from './mockData'
 import { faker } from '@faker-js/faker'
 
+// Seed faker for deterministic visual regression tests
+faker.seed(123)
+
 const meta = {
   component: _UpdateSafe,
   decorators: [

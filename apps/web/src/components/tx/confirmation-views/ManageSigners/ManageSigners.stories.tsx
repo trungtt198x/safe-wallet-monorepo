@@ -5,6 +5,9 @@ import { ManageSigners } from './index'
 import { mockAddOwnerTxInfo, mockRemoveOwnerTxInfo, mockSwapOwnerTxInfo, mockTxData } from './mockData'
 import { faker } from '@faker-js/faker'
 
+// Seed faker for deterministic visual regression tests
+faker.seed(789)
+
 const meta = {
   component: ManageSigners,
   decorators: [

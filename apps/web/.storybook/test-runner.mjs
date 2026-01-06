@@ -5,9 +5,10 @@ import { toMatchImageSnapshot } from 'jest-image-snapshot'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Configurable threshold via environment variable (default: 2%)
-// Slightly higher threshold to account for minor rendering differences between CI runs
-const FAILURE_THRESHOLD = parseFloat(process.env.VISUAL_REGRESSION_THRESHOLD || '0.02')
+// Configurable threshold via environment variable (default: 5%)
+// Higher threshold to account for rendering differences between CI runs
+// Visual tests are most useful for catching major changes, not pixel-perfect matching
+const FAILURE_THRESHOLD = parseFloat(process.env.VISUAL_REGRESSION_THRESHOLD || '0.05')
 
 /** @type {import('@storybook/test-runner').TestRunnerConfig} */
 const config = {

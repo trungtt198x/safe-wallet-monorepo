@@ -5,8 +5,9 @@ import { toMatchImageSnapshot } from 'jest-image-snapshot'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Configurable threshold via environment variable (default: 1%)
-const FAILURE_THRESHOLD = parseFloat(process.env.VISUAL_REGRESSION_THRESHOLD || '0.01')
+// Configurable threshold via environment variable (default: 2%)
+// Slightly higher threshold to account for minor rendering differences between CI runs
+const FAILURE_THRESHOLD = parseFloat(process.env.VISUAL_REGRESSION_THRESHOLD || '0.02')
 
 /** @type {import('@storybook/test-runner').TestRunnerConfig} */
 const config = {

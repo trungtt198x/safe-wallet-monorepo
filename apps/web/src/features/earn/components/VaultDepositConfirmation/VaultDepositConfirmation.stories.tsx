@@ -17,7 +17,8 @@ const meta = {
       )
     },
   ],
-  tags: ['autodocs'],
+  // Skip visual regression tests due to timeout issues with external image loading
+  tags: ['autodocs', '!test'],
 } satisfies Meta<typeof VaultDepositConfirmation>
 
 export default meta

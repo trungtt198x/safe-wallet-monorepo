@@ -17,7 +17,8 @@ const meta = {
       )
     },
   ],
-  tags: ['autodocs'],
+  // Skip visual regression tests due to faker-generated data causing visual diffs
+  tags: ['autodocs', '!test'],
 } satisfies Meta<typeof SwapOrder>
 
 export default meta

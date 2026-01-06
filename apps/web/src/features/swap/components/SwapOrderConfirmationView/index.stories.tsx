@@ -28,7 +28,8 @@ const meta = {
       )
     },
   ],
-  tags: ['autodocs'],
+  // Skip test-runner due to faker-generated addresses causing non-deterministic screenshots
+  tags: ['autodocs', '!test'],
 } satisfies Meta<typeof CowOrderConfirmationView>
 
 export default meta

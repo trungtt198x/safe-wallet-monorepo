@@ -10,6 +10,10 @@ faker.seed(123)
 
 const meta = {
   component: _UpdateSafe,
+  parameters: {
+    // Stories use faker for addresses which causes non-deterministic visual tests
+    visualTest: { disable: true },
+  },
   decorators: [
     (Story) => {
       return (

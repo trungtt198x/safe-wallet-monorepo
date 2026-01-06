@@ -50,6 +50,8 @@ const meta = {
   component: SellOrderComponent,
   parameters: {
     componentSubtitle: 'Renders a Status label with icon and text for a swap order',
+    // Stories use new Date() which makes screenshots non-deterministic
+    visualTest: { disable: true },
   },
 
   decorators: [

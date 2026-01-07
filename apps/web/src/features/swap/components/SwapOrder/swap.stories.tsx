@@ -2,8 +2,29 @@ import type { OrderStatuses } from '@safe-global/store/gateway/types'
 import type { Meta, StoryObj } from '@storybook/react'
 import { SellOrder as SellOrderComponent } from './index'
 import { Paper } from '@mui/material'
-import { appDataBuilder, orderTokenBuilder, swapOrderBuilder } from '@/features/swap/helpers/swapOrderBuilder'
+import { appDataBuilder, swapOrderBuilder } from '@/features/swap/helpers/swapOrderBuilder'
 import { StoreDecorator } from '@/stories/storeDecorator'
+
+// Fixed token data for deterministic snapshots
+const FIXED_SELL_TOKEN = {
+  address: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14',
+  decimals: 18,
+  logoUri:
+    'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14.png',
+  name: 'Wrapped Ether',
+  symbol: 'WETH',
+  trusted: true,
+}
+
+const FIXED_BUY_TOKEN = {
+  address: '0xbe72E441BF55620febc26715db68d3494213D8Cb',
+  decimals: 18,
+  logoUri:
+    'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xbe72E441BF55620febc26715db68d3494213D8Cb.png',
+  name: 'USD Coin',
+  symbol: 'USDC',
+  trusted: true,
+}
 
 const FulfilledSwapOrder = swapOrderBuilder()
   .with({
@@ -17,20 +38,8 @@ const FulfilledSwapOrder = swapOrderBuilder()
   .with({ buyAmount: '3388586928324482608' })
   .with({ executedBuyAmount: '3388586928324482608' })
   .with({ validUntil: 1713520008 })
-  .with({
-    sellToken: {
-      ...orderTokenBuilder().build(),
-      logoUri:
-        'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14.png',
-    },
-  })
-  .with({
-    buyToken: {
-      ...orderTokenBuilder().build(),
-      logoUri:
-        'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xbe72E441BF55620febc26715db68d3494213D8Cb.png',
-    },
-  })
+  .with({ sellToken: FIXED_SELL_TOKEN })
+  .with({ buyToken: FIXED_BUY_TOKEN })
   .with({
     explorerUrl:
       'https://explorer.cow.fi/orders/0x03a5d561ad2452d719a0d075573f4bed68217c696b52f151122c30e3e4426f1b05e6b5eb1d0e6aabab082057d5bb91f2ee6d11be66223d88',

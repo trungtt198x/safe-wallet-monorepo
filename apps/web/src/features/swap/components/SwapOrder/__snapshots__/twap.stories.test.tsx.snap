@@ -50,7 +50,7 @@ exports[`./twap.stories ExecutedTwap 1`] = `
                   Sell
                    
                   <span
-                    aria-label="100,000,000 AFN"
+                    aria-label="0.01 WETH"
                     class="container verticalAlign"
                     data-mui-internal-clone-element="true"
                   >
@@ -75,16 +75,16 @@ exports[`./twap.stories ExecutedTwap 1`] = `
   "
                         style="pointer-events: none; border: 0px; display: block;"
                         tabindex="-1"
-                        title="AFN"
+                        title="WETH"
                         width="26"
                       />
                     </div>
                     <b
                       class="tokenText"
                     >
-                      100M
+                      0.01
                        
-                      AFN
+                      WETH
                     </b>
                   </span>
                 </span>
@@ -96,7 +96,7 @@ exports[`./twap.stories ExecutedTwap 1`] = `
                   for at least
                    
                   <span
-                    aria-label="33,885,869,283,244.824 DZD"
+                    aria-label="3.3885869283244827 USDC"
                     class="container verticalAlign"
                     data-mui-internal-clone-element="true"
                   >
@@ -121,16 +121,16 @@ exports[`./twap.stories ExecutedTwap 1`] = `
   "
                         style="pointer-events: none; border: 0px; display: block;"
                         tabindex="-1"
-                        title="DZD"
+                        title="USDC"
                         width="26"
                       />
                     </div>
                     <b
                       class="tokenText"
                     >
-                      33.89T
+                      3.38859
                        
-                      DZD
+                      USDC
                     </b>
                   </span>
                 </span>
@@ -162,11 +162,11 @@ exports[`./twap.stories ExecutedTwap 1`] = `
             class="MuiTypography-root MuiTypography-body1 css-v6lhhw-MuiTypography-root"
           >
             1 
-            DZD
+            USDC
              = 
-            &lt; 0.00001
+            0.00295
              
-            AFN
+            WETH
           </div>
         </div>
       </div>
@@ -194,7 +194,7 @@ exports[`./twap.stories ExecutedTwap 1`] = `
           >
             0
              
-            DZD
+            USDC
           </div>
         </div>
       </div>
@@ -230,9 +230,9 @@ exports[`./twap.stories ExecutedTwap 1`] = `
           <div
             class="MuiTypography-root MuiTypography-body1 css-v6lhhw-MuiTypography-root"
           >
-            &lt; 0.00001
+            0.02
              
-            GMD
+            AOA
           </div>
         </div>
       </div>
@@ -293,9 +293,9 @@ exports[`./twap.stories ExecutedTwap 1`] = `
               <span
                 class="MuiTypography-root MuiTypography-body1 css-w5uidf-MuiTypography-root"
               >
-                50M
+                0.005
                  
-                AFN
+                WETH
               </span>
               <span
                 class="MuiTypography-root MuiTypography-body1 css-9p6poq-MuiTypography-root"
@@ -334,9 +334,9 @@ exports[`./twap.stories ExecutedTwap 1`] = `
               <span
                 class="MuiTypography-root MuiTypography-body1 css-w5uidf-MuiTypography-root"
               >
-                16.94T
+                1.69429
                  
-                DZD
+                USDC
               </span>
               <span
                 class="MuiTypography-root MuiTypography-body1 css-9p6poq-MuiTypography-root"
@@ -396,9 +396,9 @@ exports[`./twap.stories ExecutedTwap 1`] = `
                 <span
                   class="MuiTypography-root MuiTypography-body1 css-w5uidf-MuiTypography-root"
                 >
-                  100M
+                  0.01
                    
-                  AFN
+                  WETH
                 </span>
                  
                 sold

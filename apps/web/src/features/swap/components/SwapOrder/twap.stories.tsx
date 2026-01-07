@@ -1,8 +1,29 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { TwapOrder as TwapOrderComponent } from './index'
 import { Paper } from '@mui/material'
-import { appDataBuilder, orderTokenBuilder, twapOrderBuilder } from '@/features/swap/helpers/swapOrderBuilder'
+import { appDataBuilder, twapOrderBuilder } from '@/features/swap/helpers/swapOrderBuilder'
 import { StoreDecorator } from '@/stories/storeDecorator'
+
+// Fixed token data for deterministic snapshots
+const FIXED_SELL_TOKEN = {
+  address: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14',
+  decimals: 18,
+  logoUri:
+    'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14.png',
+  name: 'Wrapped Ether',
+  symbol: 'WETH',
+  trusted: true,
+}
+
+const FIXED_BUY_TOKEN = {
+  address: '0xbe72E441BF55620febc26715db68d3494213D8Cb',
+  decimals: 18,
+  logoUri:
+    'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xbe72E441BF55620febc26715db68d3494213D8Cb.png',
+  name: 'USD Coin',
+  symbol: 'USDC',
+  trusted: true,
+}
 
 const FullfilledTwapOrder = twapOrderBuilder()
   .with({ status: 'fulfilled' })
@@ -13,22 +34,9 @@ const FullfilledTwapOrder = twapOrderBuilder()
   .with({ buyAmount: '3388586928324482608' })
   .with({ executedBuyAmount: '3388586928324482608' })
   .with({ validUntil: 1713520008 })
-  .with({
-    sellToken: {
-      ...orderTokenBuilder().build(),
-      logoUri:
-        'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14.png',
-    },
-  })
-  .with({
-    buyToken: {
-      ...orderTokenBuilder().build(),
-      logoUri:
-        'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xbe72E441BF55620febc26715db68d3494213D8Cb.png',
-    },
-  })
+  .with({ sellToken: FIXED_SELL_TOKEN })
+  .with({ buyToken: FIXED_BUY_TOKEN })
   .with({ numberOfParts: '2' })
-
   .with({ partSellAmount: '5000000000000000' })
   .with({ minPartLimit: '1694293464162241304' })
   .with({ timeBetweenParts: 1800 })

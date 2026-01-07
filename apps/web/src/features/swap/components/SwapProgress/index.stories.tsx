@@ -1,7 +1,18 @@
-import { orderTokenBuilder, swapOrderBuilder } from '@/features/swap/helpers/swapOrderBuilder'
+import { swapOrderBuilder } from '@/features/swap/helpers/swapOrderBuilder'
 import type { Meta, StoryObj } from '@storybook/react'
 import SwapProgress from './index'
 import { Paper } from '@mui/material'
+
+// Fixed token data for deterministic snapshots
+const FIXED_SELL_TOKEN = {
+  address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  decimals: 6,
+  logoUri:
+    'https://safe-transaction-assets.staging.5afe.dev/tokens/logos/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48.png',
+  name: 'USD Coin',
+  symbol: 'USDC',
+  trusted: true,
+}
 
 const meta = {
   component: SwapProgress,
@@ -30,7 +41,7 @@ export const Filled: Story = {
       .with({ kind: 'sell' })
       .with({ sellAmount: '10000000' })
       .with({ executedSellAmount: '10000000' })
-      .with({ sellToken: { ...orderTokenBuilder().build(), decimals: 6 } })
+      .with({ sellToken: FIXED_SELL_TOKEN })
       .build(),
   },
   parameters: {
@@ -47,7 +58,7 @@ export const PartiallyFilled: Story = {
       .with({ kind: 'sell' })
       .with({ sellAmount: '5000000' })
       .with({ executedSellAmount: '1000000' })
-      .with({ sellToken: { ...orderTokenBuilder().build(), decimals: 6 } })
+      .with({ sellToken: FIXED_SELL_TOKEN })
       .build(),
   },
 }
@@ -58,7 +69,7 @@ export const NotFilled: Story = {
       .with({ kind: 'sell' })
       .with({ sellAmount: '5000000' })
       .with({ executedSellAmount: '0' })
-      .with({ sellToken: { ...orderTokenBuilder().build(), decimals: 6 } })
+      .with({ sellToken: FIXED_SELL_TOKEN })
       .build(),
   },
 }

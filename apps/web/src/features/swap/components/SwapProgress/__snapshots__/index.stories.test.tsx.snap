@@ -37,7 +37,7 @@ exports[`./index.stories Filled 1`] = `
         >
           10
            
-          MUR
+          USDC
         </span>
          
         sold
@@ -84,7 +84,7 @@ exports[`./index.stories NotFilled 1`] = `
         >
           0
            
-          TTD
+          USDC
         </span>
          
         sold
@@ -131,7 +131,7 @@ exports[`./index.stories PartiallyFilled 1`] = `
         >
           1
            
-          XAF
+          USDC
         </span>
          
         sold

@@ -58,8 +58,7 @@ const meta = {
       ],
     },
   },
-  // Skip test-runner due to data parsing error in mock data
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs'],
 } satisfies Meta<typeof ExecTransaction>
 
 export default meta

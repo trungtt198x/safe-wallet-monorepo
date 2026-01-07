@@ -3,8 +3,10 @@ import type { Meta, StoryObj } from '@storybook/react'
 import CowOrderConfirmationView from './index'
 import { Paper } from '@mui/material'
 import { orderTokenBuilder, swapOrderConfirmationViewBuilder } from '@/features/swap/helpers/swapOrderBuilder'
-import { faker } from '@faker-js/faker'
 import { StoreDecorator } from '@/stories/storeDecorator'
+
+// Fixed settlement contract address for deterministic tests
+const FIXED_SETTLEMENT_CONTRACT = '0x9008D19f58AAbD9eD0D60971565AA8510560ab41'
 
 const Order = swapOrderConfirmationViewBuilder()
   .with({ kind: 'sell' })
@@ -28,8 +30,7 @@ const meta = {
       )
     },
   ],
-  // Skip test-runner due to faker-generated addresses causing non-deterministic screenshots
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs'],
 } satisfies Meta<typeof CowOrderConfirmationView>
 
 export default meta
@@ -38,7 +39,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     order: Order.build(),
-    settlementContract: faker.finance.ethereumAddress(),
+    settlementContract: FIXED_SETTLEMENT_CONTRACT,
   },
   parameters: {
     design: {
@@ -48,10 +49,13 @@ export const Default: Story = {
   },
 }
 
+// Fixed receiver address for deterministic tests
+const FIXED_RECEIVER = '0x1234567890123456789012345678901234567890'
+
 export const CustomRecipient: Story = {
   args: {
-    order: Order.with({ receiver: faker.finance.ethereumAddress() }).build(),
-    settlementContract: faker.finance.ethereumAddress(),
+    order: Order.with({ receiver: FIXED_RECEIVER }).build(),
+    settlementContract: FIXED_SETTLEMENT_CONTRACT,
   },
   parameters: {
     design: {

@@ -8,11 +8,8 @@ const meta = {
   component: ToggleButtonGroup,
   parameters: {
     layout: 'centered',
-    // TODO: Fix story - "Objects are not valid as a React child" error
-    visualTest: { disable: true },
   },
-  // Skip this story in test-runner due to rendering bug
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs'],
 } satisfies Meta<typeof ToggleButtonGroup>
 
 export default meta

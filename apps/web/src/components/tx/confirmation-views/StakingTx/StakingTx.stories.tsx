@@ -17,8 +17,7 @@ const meta = {
       )
     },
   ],
-  // Skip visual regression tests due to faker-generated data causing visual diffs
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs'],
 } satisfies Meta<typeof StakingTx>
 
 export default meta

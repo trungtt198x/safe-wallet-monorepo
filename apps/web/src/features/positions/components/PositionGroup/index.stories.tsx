@@ -106,8 +106,7 @@ const meta: Meta<typeof PositionGroup> = {
       </StoreDecorator>
     ),
   ],
-  // Skip visual regression tests due to timeout issues with external image loading
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs'],
 }
 
 export default meta

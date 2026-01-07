@@ -16,8 +16,7 @@ const meta = {
       )
     },
   ],
-  // Skip visual regression tests due to faker-generated data causing visual diffs
-  tags: ['autodocs', '!test'],
+  tags: ['autodocs'],
 } satisfies Meta<typeof MigrateToL2Information>
 
 export default meta

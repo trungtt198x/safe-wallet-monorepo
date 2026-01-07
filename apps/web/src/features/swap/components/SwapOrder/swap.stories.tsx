@@ -39,10 +39,13 @@ const FulfilledSwapOrder = swapOrderBuilder()
     fullAppData: appDataBuilder('market').build(),
   })
 
+// Fixed timestamp for deterministic tests: Dec 24, 2024
+const FIXED_TIMESTAMP = 1735000000
+
 const NonFulfilledSwapOrder = {
   ...FulfilledSwapOrder.build(),
   status: 'open' as OrderStatuses,
-  expiresTimestamp: new Date().getTime() / 1000 + 28 * 60,
+  expiresTimestamp: FIXED_TIMESTAMP + 28 * 60,
   executedSellAmount: '0',
 }
 
@@ -50,8 +53,6 @@ const meta = {
   component: SellOrderComponent,
   parameters: {
     componentSubtitle: 'Renders a Status label with icon and text for a swap order',
-    // Stories use new Date() which makes screenshots non-deterministic
-    visualTest: { disable: true },
   },
 
   decorators: [
@@ -101,7 +102,7 @@ export const PendingMarket: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('market').build(),
       status: 'presignaturePending' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 + 28 * 60,
+      validUntil: FIXED_TIMESTAMP + 28 * 60,
     },
   },
   parameters: {
@@ -118,7 +119,7 @@ export const PendingLimit: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('limit').build(),
       status: 'presignaturePending' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 + 28 * 60,
+      validUntil: FIXED_TIMESTAMP + 28 * 60,
     },
   },
   parameters: {
@@ -162,7 +163,7 @@ export const CancelledMarket: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('market').build(),
       status: 'cancelled' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 - 28 * 60,
+      validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
   parameters: {
@@ -179,7 +180,7 @@ export const CancelledLimit: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('limit').build(),
       status: 'cancelled' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 - 28 * 60,
+      validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
   parameters: {
@@ -196,7 +197,7 @@ export const ExpiredSwap: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('market').build(),
       status: 'expired' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 - 28 * 60,
+      validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
   parameters: {
@@ -213,7 +214,7 @@ export const ExpiredLimit: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('limit').build(),
       status: 'expired' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 - 28 * 60,
+      validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
   parameters: {
@@ -230,7 +231,7 @@ export const LimitOpenPartiallyFilled: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('limit').build(),
       status: 'open' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 + 28 * 60,
+      validUntil: FIXED_TIMESTAMP + 28 * 60,
       executedSellAmount: '1000000000000000',
       executedBuyAmount: '3388586928324',
     },
@@ -249,7 +250,7 @@ export const LimitExpiredPartiallyFilled: Story = {
       ...NonFulfilledSwapOrder,
       fullAppData: appDataBuilder('limit').build(),
       status: 'expired' as OrderStatuses,
-      validUntil: new Date().getTime() / 1000 - 28 * 60,
+      validUntil: FIXED_TIMESTAMP - 28 * 60,
       executedSellAmount: '1000000000000000',
       executedBuyAmount: '3388586928324',
     },

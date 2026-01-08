@@ -47,6 +47,7 @@ import pendingTxsListeners from '@/src/store/middleware/pendingTxs'
 import signingState from './signingStateSlice'
 import signerImportFlow from './signerImportFlowSlice'
 import executingState from './executingStateSlice'
+import simulation from './simulationSlice'
 
 setBaseUrl(GATEWAY_URL)
 
@@ -127,6 +128,7 @@ export const rootReducer = combineReducers({
   signingState,
   signerImportFlow,
   executingState,
+  simulation,
   [web3API.reducerPath]: web3API.reducer,
   [cgwClient.reducerPath]: cgwClient.reducer,
 })

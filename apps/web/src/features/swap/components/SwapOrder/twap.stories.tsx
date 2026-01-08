@@ -63,6 +63,9 @@ const meta = {
   ],
   // Skip visual regression tests until baseline snapshots are generated
   tags: ['autodocs', '!test'],
+  argTypes: {
+    order: { control: false },
+  },
   // excludeStories: ['SwapOrderProps'],
 } satisfies Meta<typeof TwapOrderComponent>
 
@@ -73,6 +76,7 @@ export const ExecutedTwap: Story = {
   args: {
     order: FullfilledTwapOrder.build(),
   },
+  render: (args) => <TwapOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',

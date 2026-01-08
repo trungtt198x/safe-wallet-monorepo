@@ -77,6 +77,9 @@ const meta = {
   ],
   // Skip visual regression tests until baseline snapshots are generated
   tags: ['autodocs', '!test'],
+  argTypes: {
+    order: { control: false },
+  },
   // excludeStories: ['SwapOrderProps'],
 } satisfies Meta<typeof SellOrderComponent>
 
@@ -87,6 +90,7 @@ export const ExecutedMarket: Story = {
   args: {
     order: FulfilledSwapOrder.build(),
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -98,6 +102,7 @@ export const ExecutedLimit: Story = {
   args: {
     order: FulfilledSwapOrder.with({ fullAppData: appDataBuilder('limit').build() }).build(),
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -115,6 +120,7 @@ export const PendingMarket: Story = {
       validUntil: FIXED_TIMESTAMP + 28 * 60,
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -132,6 +138,7 @@ export const PendingLimit: Story = {
       validUntil: FIXED_TIMESTAMP + 28 * 60,
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -146,6 +153,7 @@ export const OpenMarket: Story = {
       ...NonFulfilledSwapOrder,
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -160,6 +168,7 @@ export const OpenLimit: Story = {
       fullAppData: appDataBuilder('limit').build(),
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -176,6 +185,7 @@ export const CancelledMarket: Story = {
       validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -193,6 +203,7 @@ export const CancelledLimit: Story = {
       validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -210,6 +221,7 @@ export const ExpiredSwap: Story = {
       validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -227,6 +239,7 @@ export const ExpiredLimit: Story = {
       validUntil: FIXED_TIMESTAMP - 28 * 60,
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -246,6 +259,7 @@ export const LimitOpenPartiallyFilled: Story = {
       executedBuyAmount: '3388586928324',
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -265,6 +279,7 @@ export const LimitExpiredPartiallyFilled: Story = {
       executedBuyAmount: '3388586928324',
     },
   },
+  render: (args) => <SellOrderComponent order={args.order} />,
   parameters: {
     design: {
       type: 'figma',

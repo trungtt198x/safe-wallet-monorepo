@@ -16,6 +16,9 @@ const meta = {
   ],
   // Skip visual regression tests until baseline snapshots are generated
   tags: ['autodocs', '!test'],
+  argTypes: {
+    children: { control: false },
+  },
 } satisfies Meta<typeof PaperViewToggle>
 
 export default meta
@@ -43,41 +46,53 @@ const NFTsContent = () => (
   </Box>
 )
 
+const baseViews = [
+  { title: 'Tokens', content: <TokensContent /> },
+  { title: 'NFTs', content: <NFTsContent /> },
+]
+
 export const Default: Story = {
   args: {
-    children: [
-      { title: 'Tokens', content: <TokensContent /> },
-      { title: 'NFTs', content: <NFTsContent /> },
-    ],
+    children: baseViews,
   },
+  render: (args) => (
+    <PaperViewToggle activeView={args.activeView} leftAlign={args.leftAlign}>
+      {args.children}
+    </PaperViewToggle>
+  ),
 }
 
 export const SecondViewActive: Story = {
   args: {
     activeView: 1,
-    children: [
-      { title: 'Tokens', content: <TokensContent /> },
-      { title: 'NFTs', content: <NFTsContent /> },
-    ],
+    children: baseViews,
   },
+  render: (args) => (
+    <PaperViewToggle activeView={args.activeView} leftAlign={args.leftAlign}>
+      {args.children}
+    </PaperViewToggle>
+  ),
 }
 
 export const LeftAligned: Story = {
   args: {
     leftAlign: true,
-    children: [
-      { title: 'Tokens', content: <TokensContent /> },
-      { title: 'NFTs', content: <NFTsContent /> },
-    ],
+    children: baseViews,
   },
+  render: (args) => (
+    <PaperViewToggle activeView={args.activeView} leftAlign={args.leftAlign}>
+      {args.children}
+    </PaperViewToggle>
+  ),
 }
 
 export const ThreeViews: Story = {
   args: {
-    children: [
-      { title: 'All', content: <Typography px={2}>All assets shown here</Typography> },
-      { title: 'Tokens', content: <TokensContent /> },
-      { title: 'NFTs', content: <NFTsContent /> },
-    ],
+    children: [{ title: 'All', content: <Typography px={2}>All assets shown here</Typography> }, ...baseViews],
   },
+  render: (args) => (
+    <PaperViewToggle activeView={args.activeView} leftAlign={args.leftAlign}>
+      {args.children}
+    </PaperViewToggle>
+  ),
 }

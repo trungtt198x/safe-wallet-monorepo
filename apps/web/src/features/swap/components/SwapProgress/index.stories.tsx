@@ -30,6 +30,9 @@ const meta = {
     },
   ],
   tags: ['autodocs'],
+  argTypes: {
+    order: { control: false },
+  },
 } satisfies Meta<typeof SwapProgress>
 
 export default meta
@@ -44,6 +47,7 @@ export const Filled: Story = {
       .with({ sellToken: FIXED_SELL_TOKEN })
       .build(),
   },
+  render: (args) => <SwapProgress order={args.order} />,
   parameters: {
     design: {
       type: 'figma',
@@ -61,6 +65,7 @@ export const PartiallyFilled: Story = {
       .with({ sellToken: FIXED_SELL_TOKEN })
       .build(),
   },
+  render: (args) => <SwapProgress order={args.order} />,
 }
 
 export const NotFilled: Story = {
@@ -72,4 +77,5 @@ export const NotFilled: Story = {
       .with({ sellToken: FIXED_SELL_TOKEN })
       .build(),
   },
+  render: (args) => <SwapProgress order={args.order} />,
 }

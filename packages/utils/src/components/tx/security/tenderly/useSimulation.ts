@@ -5,7 +5,7 @@ export type UseSimulationReturn =
   | {
       _simulationRequestStatus: FETCH_STATUS.NOT_ASKED | FETCH_STATUS.ERROR | FETCH_STATUS.LOADING
       simulationData: undefined
-      simulateTransaction: (params: SimulationTxParams) => void
+      simulateTransaction: (params: SimulationTxParams, txId?: string) => void
       simulationLink: string
       requestError?: string
       resetSimulation: () => void
@@ -13,7 +13,7 @@ export type UseSimulationReturn =
   | {
       _simulationRequestStatus: FETCH_STATUS.SUCCESS
       simulationData: TenderlySimulation
-      simulateTransaction: (params: SimulationTxParams) => void
+      simulateTransaction: (params: SimulationTxParams, txId?: string) => void
       simulationLink: string
       requestError?: string
       resetSimulation: () => void

@@ -14,7 +14,7 @@ import { useAppDispatch } from '@/store'
 import { showNotification } from '@/store/notificationsSlice'
 import { shortenAddress } from '@safe-global/utils/utils/formatters'
 import { addressIsNotCurrentSafe, addressIsNotOwner } from '@safe-global/utils/utils/validation'
-import { isEthSignWallet } from '@/utils/wallets'
+import { isEthSignWallet, isSmartContractWallet } from '@/utils/wallets'
 import { Close } from '@mui/icons-material'
 import {
   Alert,
@@ -93,7 +93,12 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
     setIsLoading(true)
 
     try {
-      const shouldEthSign = isEthSignWallet(wallet)
+      // Check if the wallet is a smart contract (e.g., Safe connected via WalletConnect)
+      const isSmartContract = await isSmartContractWallet(chainId, wallet.address)
+
+      // Smart contract wallets must use EIP-712 typed data for EIP-1271 signature validation
+      // EOA wallets can use eth_sign (V1) if they are legacy wallets
+      const shouldEthSign = !isSmartContract && isEthSignWallet(wallet)
       const signer = await getAssertedChainSigner(wallet.provider)
       const signature = shouldEthSign
         ? await signProposerData(data.address, signer)

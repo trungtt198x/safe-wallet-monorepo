@@ -8,8 +8,8 @@ import { selectChainById } from '@/src/store/chains'
 import { isTxSimulationEnabled, getSimulationStatus } from '@safe-global/utils/components/tx/security/tenderly/utils'
 import type { SafeTransaction } from '@safe-global/types-kit'
 
-export const useTransactionSimulation = (safeTx?: SafeTransaction) => {
-  const simulation = useSimulation()
+export const useTransactionSimulation = (safeTx?: SafeTransaction, txId?: string) => {
+  const simulation = useSimulation(txId)
   const { safe } = useSafeInfo()
   const activeSafe = useAppSelector(selectActiveSafe)
   const activeSigner = useAppSelector((state) =>
@@ -57,12 +57,15 @@ export const useTransactionSimulation = (safeTx?: SafeTransaction) => {
       implementationVersionState: safe.implementationVersionState,
     }
 
-    await simulation.simulateTransaction({
-      safe: safeState,
-      executionOwner,
-      transactions: safeTx,
-    })
-  }, [canSimulate, safeTx, safe, executionOwner, activeSafe, simulation])
+    await simulation.simulateTransaction(
+      {
+        safe: safeState,
+        executionOwner,
+        transactions: safeTx,
+      },
+      txId,
+    )
+  }, [canSimulate, safeTx, safe, executionOwner, activeSafe, simulation, txId])
 
   const simulationStatus = useMemo(() => getSimulationStatus(simulation), [simulation])
 

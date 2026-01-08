@@ -16,14 +16,14 @@ import { FEATURES } from '@safe-global/utils/utils/chains'
 import { useHasFeature } from '@/src/hooks/useHasFeature'
 
 export const TransactionChecksContainer = () => {
-  const { simulationData, simulateTransaction, simulationLink, _simulationRequestStatus } = useSimulation()
+  const txId = useRoute<RouteProp<{ params: { txId: string } }>>().params.txId
+  const { simulationData, simulateTransaction, simulationLink, _simulationRequestStatus } = useSimulation(txId)
   const { scanTransaction, blockaidPayload, error: blockaidError, loading: blockaidLoading } = useBlockaid()
   const activeSafe = useDefinedActiveSafe()
   const safeInfo = useSafeInfo()
   const chain = useAppSelector(selectActiveChain)
   const simulationEnabled = chain ? isTxSimulationEnabled(chain) : false
   const blockaidEnabled = useHasFeature(FEATURES.RISK_MITIGATION) ?? false
-  const txId = useRoute<RouteProp<{ params: { txId: string } }>>().params.txId
 
   const { txDetails, signerState } = useTransactionSigner(txId)
   const { activeSigner } = signerState
@@ -44,11 +44,14 @@ export const TransactionChecksContainer = () => {
       await Promise.all(
         [
           simulationEnabled &&
-            simulateTransaction({
-              safe: safeInfo.safe,
-              executionOwner,
-              transactions: safeTx,
-            }),
+            simulateTransaction(
+              {
+                safe: safeInfo.safe,
+                executionOwner,
+                transactions: safeTx,
+              },
+              txId,
+            ),
           blockaidEnabled &&
             scanTransaction({
               data: safeTx,

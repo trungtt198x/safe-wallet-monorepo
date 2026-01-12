@@ -1,0 +1,16 @@
+{
+  "$schema": "../schemas/sync-manifest-schema.json",
+  "figmaFileKey": "SX3PdSxgY0D7vfGx2ytRWU",
+  "figmaFileName": "DS · Foundations",
+  "lastSync": "2026-01-07T00:00:00Z",
+  "syncedTokens": {
+    "colors": 2,
+    "textStyles": 0,
+    "spacing": 2,
+    "radius": 1,
+    "shadows": 0
+  },
+  "syncedComponents": ["Card"],
+  "syncedBy": "Claude Sonnet 4.5",
+  "notes": "Synced card component with base design tokens from Figma. Includes color/bg-surface, color/text-primary, space/8, space/16, and radius/md."
+}

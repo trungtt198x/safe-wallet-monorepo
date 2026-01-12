@@ -1,0 +1,21 @@
+{
+  "$schema": "../token-schema.json",
+  "figma": {
+    "fileKey": "SX3PdSxgY0D7vfGx2ytRWU",
+    "lastSync": "2026-01-07T00:00:00Z"
+  },
+  "color": {
+    "primitive": {
+      "white": {
+        "value": "#ffffff",
+        "type": "color",
+        "description": "Pure white for backgrounds and surfaces"
+      },
+      "black": {
+        "value": "#111111",
+        "type": "color",
+        "description": "Primary black for text and UI elements"
+      }
+    }
+  }
+}

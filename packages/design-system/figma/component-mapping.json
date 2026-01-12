@@ -1,0 +1,13 @@
+{
+  "$schema": "../schemas/component-mapping-schema.json",
+  "components": {
+    "12:31": {
+      "figmaName": "Card",
+      "codePath": "src/web/components/ui/card.tsx",
+      "storyPath": "src/web/components/ui/card.stories.tsx",
+      "status": "synced",
+      "lastSync": "2026-01-07T00:00:00Z"
+    }
+  },
+  "notes": "This file maps Figma component IDs to design system component paths. Updated with Card component from Figma sync."
+}

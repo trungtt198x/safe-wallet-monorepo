@@ -1,0 +1,27 @@
+/**
+ * Design Token CSS Variables
+ *
+ * Generated from Figma tokens
+ * Last sync: 2026-01-07T00:00:00Z
+ * Figma file: SX3PdSxgY0D7vfGx2ytRWU (DS · Foundations)
+ */
+
+:root {
+  /* Primitive Colors */
+  --ds-color-primitive-white: #ffffff;
+  --ds-color-primitive-black: #111111;
+
+  /* Spacing */
+  --ds-spacing-8: 8px;
+  --ds-spacing-16: 16px;
+
+  /* Border Radius */
+  --ds-radius-md: 12px;
+}
+
+:root,
+[data-theme='light'] {
+  /* Semantic Colors - Light Theme */
+  --ds-color-bg-surface: #ffffff;
+  --ds-color-text-primary: #111111;
+}

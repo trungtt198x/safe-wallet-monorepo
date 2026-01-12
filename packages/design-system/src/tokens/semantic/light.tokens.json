@@ -1,0 +1,26 @@
+{
+  "$schema": "../token-schema.json",
+  "theme": "light",
+  "figma": {
+    "fileKey": "SX3PdSxgY0D7vfGx2ytRWU",
+    "lastSync": "2026-01-07T00:00:00Z"
+  },
+  "color": {
+    "semantic": {
+      "bg": {
+        "surface": {
+          "value": "{color.primitive.white}",
+          "type": "color",
+          "description": "Surface background color for cards and elevated surfaces"
+        }
+      },
+      "text": {
+        "primary": {
+          "value": "{color.primitive.black}",
+          "type": "color",
+          "description": "Primary text color for main content"
+        }
+      }
+    }
+  }
+}

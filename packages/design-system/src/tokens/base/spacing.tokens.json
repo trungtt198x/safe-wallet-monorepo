@@ -1,0 +1,19 @@
+{
+  "$schema": "../token-schema.json",
+  "figma": {
+    "fileKey": "SX3PdSxgY0D7vfGx2ytRWU",
+    "lastSync": "2026-01-07T00:00:00Z"
+  },
+  "spacing": {
+    "8": {
+      "value": "8px",
+      "type": "dimension",
+      "description": "Base spacing unit - 8px"
+    },
+    "16": {
+      "value": "16px",
+      "type": "dimension",
+      "description": "Medium spacing - 16px (2x base)"
+    }
+  }
+}

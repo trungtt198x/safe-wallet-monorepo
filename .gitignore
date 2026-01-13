@@ -75,8 +75,8 @@ certificates
 **/storybook-static/
 *storybook.log
 
-# visual regression (keep baselines, ignore diffs)
-**/__visual_snapshots__/__diff_output__/
+# visual regression (baselines stored on separate branches)
+**/__visual_snapshots__/
 
 # os
 THUMBS_DB

@@ -1,7 +1,7 @@
 name: Web Visual Regression Tests
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 on:
@@ -42,6 +42,66 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Determine storage branch
+        id: storage
+        run: |
+          # For PRs, use the base branch's storage; for pushes, use the current branch
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_BRANCH="${{ github.base_ref }}"
+          else
+            BASE_BRANCH="${{ github.ref_name }}"
+          fi
+
+          # Normalize branch name (same as other screenshot workflows)
+          NORMALIZED=$(echo "$BASE_BRANCH" | sed 's/[^a-z0-9]/_/ig' | sed 's/[A-Z]/\L&/g')
+          STORAGE_BRANCH="${NORMALIZED}-screenshots"
+
+          echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+          echo "storage_branch=$STORAGE_BRANCH" >> $GITHUB_OUTPUT
+          echo "Using storage branch: $STORAGE_BRANCH (from base: $BASE_BRANCH)"
+
+      - name: Fetch baselines from storage branch
+        id: fetch-baselines
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STORAGE_BRANCH="${{ steps.storage.outputs.storage_branch }}"
+          BASELINES_DIR="apps/web/__visual_snapshots__"
+
+          mkdir -p "$BASELINES_DIR"
+
+          # Try to fetch baselines from storage branch
+          if git ls-remote --heads origin "$STORAGE_BRANCH" | grep -q "$STORAGE_BRANCH"; then
+            echo "Fetching baselines from $STORAGE_BRANCH..."
+
+            # Clone just the visual-baselines directory from storage branch
+            cd /tmp
+            rm -rf baseline-fetch
+            git clone --depth 1 --branch "$STORAGE_BRANCH" --filter=blob:none --sparse \
+              https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git baseline-fetch || true
+
+            if [ -d baseline-fetch ]; then
+              cd baseline-fetch
+              git sparse-checkout set visual-baselines 2>/dev/null || true
+
+              if [ -d "visual-baselines" ] && [ "$(ls -A visual-baselines/*.png 2>/dev/null)" ]; then
+                cp visual-baselines/*.png "$GITHUB_WORKSPACE/$BASELINES_DIR/"
+                BASELINE_COUNT=$(ls "$GITHUB_WORKSPACE/$BASELINES_DIR"/*.png 2>/dev/null | wc -l)
+                echo "Copied $BASELINE_COUNT baseline(s) from storage"
+                echo "has_baselines=true" >> $GITHUB_OUTPUT
+              else
+                echo "No baselines found in storage branch"
+                echo "has_baselines=false" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "Failed to clone storage branch"
+              echo "has_baselines=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Storage branch $STORAGE_BRANCH does not exist yet"
+            echo "has_baselines=false" >> $GITHUB_OUTPUT
+          fi
+
       - uses: ./.github/actions/yarn
 
       - name: Install Playwright browsers
@@ -65,12 +125,14 @@ jobs:
           echo "Waiting for Storybook to be ready..."
           npx wait-on http://localhost:6006 --timeout ${{ env.STORYBOOK_WAIT_TIMEOUT }}
 
-          # Run visual regression tests (update mode if requested)
-          if [ "${{ inputs.update_baselines }}" == "true" ]; then
-            echo "Updating baselines..."
+          # Run visual regression tests (update mode if requested or no baselines exist)
+          if [ "${{ inputs.update_baselines }}" == "true" ] || [ "${{ steps.fetch-baselines.outputs.has_baselines }}" == "false" ]; then
+            echo "Running in update mode..."
             yarn test:visual:update || true
+            echo "update_mode=true" >> $GITHUB_OUTPUT
           else
             yarn test:visual:ci || TEST_EXIT_CODE=$?
+            echo "update_mode=false" >> $GITHUB_OUTPUT
           fi
 
           # Cleanup
@@ -81,13 +143,57 @@ jobs:
         env:
           NEXT_PUBLIC_IS_OFFICIAL_HOST: true
 
-      - name: Upload updated baselines
-        if: inputs.update_baselines == true
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-regression-baselines
-          path: apps/web/__visual_snapshots__/*.png
-          retention-days: 30
+      - name: Upload baselines to storage branch
+        if: steps.visual-tests.outputs.update_mode == 'true' || (github.event_name == 'push' && (github.ref_name == 'dev' || github.ref_name == 'main'))
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STORAGE_BRANCH="${{ steps.storage.outputs.storage_branch }}"
+          BASELINES_DIR="apps/web/__visual_snapshots__"
+
+          # Check if there are any baselines to upload
+          if [ ! -d "$BASELINES_DIR" ] || [ -z "$(ls -A $BASELINES_DIR/*.png 2>/dev/null)" ]; then
+            echo "No baselines to upload"
+            exit 0
+          fi
+
+          BASELINE_COUNT=$(ls "$BASELINES_DIR"/*.png 2>/dev/null | wc -l)
+          echo "Uploading $BASELINE_COUNT baseline(s) to $STORAGE_BRANCH"
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          cd /tmp
+          rm -rf baseline-upload
+
+          # Clone or create storage branch
+          if git ls-remote --heads origin "$STORAGE_BRANCH" https://github.com/${{ github.repository }}.git | grep -q "$STORAGE_BRANCH"; then
+            git clone --depth 1 --branch "$STORAGE_BRANCH" \
+              https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git baseline-upload
+            cd baseline-upload
+          else
+            git clone --depth 1 \
+              https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git baseline-upload
+            cd baseline-upload
+            git checkout --orphan "$STORAGE_BRANCH"
+            git rm -rf . 2>/dev/null || true
+            echo "# Visual Regression Baselines" > README.md
+            git add README.md
+            git commit -m "Initialize $STORAGE_BRANCH branch"
+          fi
+
+          # Copy new baselines
+          mkdir -p visual-baselines
+          cp "$GITHUB_WORKSPACE/$BASELINES_DIR"/*.png visual-baselines/
+
+          # Commit and push
+          git add visual-baselines/
+          if git commit -m "Update visual regression baselines from ${{ github.sha }}"; then
+            git push origin "$STORAGE_BRANCH"
+            echo "Successfully uploaded baselines to $STORAGE_BRANCH"
+          else
+            echo "No changes to baselines"
+          fi
 
       - name: Upload visual diff artifacts
         if: failure() && steps.visual-tests.outcome == 'failure'
@@ -130,11 +236,10 @@ jobs:
 
             ### How to fix:
             1. Download the \`visual-regression-diffs\` artifact to review the changes
-            2. If the changes are intentional, update baselines from CI:
+            2. If the changes are intentional, update baselines:
                - Go to Actions → "Web Visual Regression Tests"
                - Click "Run workflow" → check "Update visual regression baselines"
-               - Download the \`visual-regression-baselines\` artifact
-               - Extract and commit to \`apps/web/__visual_snapshots__/\`
+               - The baselines will be automatically stored on the \`${{ steps.storage.outputs.storage_branch }}\` branch
 
             ---
             *Visual regression tests powered by Storybook Test Runner + jest-image-snapshot*`;

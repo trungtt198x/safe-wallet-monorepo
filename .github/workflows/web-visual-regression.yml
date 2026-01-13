@@ -379,7 +379,7 @@ jobs:
             });
 
             const botComment = comments.find(c =>
-              c.user.type === 'Bot' &&
+              c.user?.type === 'Bot' &&
               (c.body.includes('Visual Regression Tests') || c.body.includes('Storybook Component Screenshots'))
             );
 

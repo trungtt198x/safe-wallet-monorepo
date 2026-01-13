@@ -91,9 +91,9 @@ const AssetsTable = ({
   onOpenManageTokens?: () => void
 }): ReactElement => {
   const headCells = [
-    { id: 'asset', label: 'Asset', width: '23%' },
-    { id: 'price', label: 'Price', width: '18%', align: 'right' },
-    { id: 'balance', label: 'Balance', width: '18%', align: 'right' },
+    { id: 'asset', label: 'Asset', width: '35%' },
+    { id: 'price', label: 'Price', width: '16%', align: 'right' },
+    { id: 'balance', label: 'Balance', width: '16%', align: 'right' },
     {
       id: 'weight',
       label: (
@@ -101,11 +101,11 @@ const AssetsTable = ({
           <span>Weight</span>
         </Tooltip>
       ),
-      width: '23%',
+      width: '16%',
       align: 'right',
     },
-    { id: 'value', label: 'Value', width: '18%', align: 'right' },
-    { id: 'actions', label: '', width: showHiddenAssets ? '130px' : '86px', align: 'right', disableSort: true },
+    { id: 'value', label: 'Value', width: '17%', align: 'right' },
+    { id: 'actions', label: 'Actions', width: showHiddenAssets ? '130px' : '86px', align: 'right', disableSort: true },
   ]
   const { balances, loading } = useBalances()
   const { balances: visibleBalances } = useVisibleBalances()
@@ -232,7 +232,7 @@ const AssetsTable = ({
       {hasNoAssets ? (
         <AddFundsCTA />
       ) : isMobile ? (
-        <Card sx={{ px: 2, mb: 2 }}>
+        <Card sx={{ mb: 2, border: '4px solid transparent' }}>
           <Box className={css.mobileContainer}>
             <Box className={css.mobileHeader}>
               <Typography variant="body2" color="text.secondary">
@@ -268,12 +268,12 @@ const AssetsTable = ({
                   </Box>
                 ))}
           </Box>
-          <Box sx={{ pt: 2, pb: 2 }}>
+          <Box sx={{ pt: 2, pb: 2, px: '16px' }}>
             <HiddenTokensInfo onOpenManageTokens={onOpenManageTokens} />
           </Box>
         </Card>
       ) : (
-        <Card sx={{ px: 2, mb: 2 }}>
+        <Card sx={{ mb: 2, border: '4px solid transparent' }}>
           <div className={classNames(css.container, { [css.containerWideActions]: showHiddenAssets })}>
             <EnhancedTable
               rows={rows}

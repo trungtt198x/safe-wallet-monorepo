@@ -5,6 +5,7 @@ import { logError, Errors } from '@/services/exceptions'
 import { useHasFeature } from '@/hooks/useChains'
 import { FEATURES } from '@safe-global/utils/utils/chains'
 import { isHypernativeGuard } from '../services/hypernativeGuardCheck'
+import type { SafeInfo } from '@safe-global/safe-gateway-typescript-sdk'
 
 export type HypernativeGuardCheckResult = {
   isHypernativeGuard: boolean
@@ -13,11 +14,14 @@ export type HypernativeGuardCheckResult = {
 
 /**
  * Hook to check if the current Safe has a HypernativeGuard installed
+ * @param safeInfo - The Safe info to check the guard for (optional, defaults to current Safe info)
  *
  * @returns HypernativeGuardCheckResult with isHypernativeGuard flag and loading state
  */
-export const useIsHypernativeGuard = (): HypernativeGuardCheckResult => {
-  const { safe, safeLoaded } = useSafeInfo()
+export const useIsHypernativeGuard = (safeInfo?: SafeInfo): HypernativeGuardCheckResult => {
+  const currentSafeInfo = useSafeInfo()
+  const { safe, safeLoaded } = safeInfo ? { safe: safeInfo, safeLoaded: true } : currentSafeInfo
+
   const web3ReadOnly = useWeb3ReadOnly()
   const skipAbiCheck = useHasFeature(FEATURES.HYPERNATIVE_RELAX_GUARD_CHECK)
 

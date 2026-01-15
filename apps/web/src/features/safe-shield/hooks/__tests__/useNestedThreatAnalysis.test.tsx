@@ -180,10 +180,11 @@ describe('useNestedThreatAnalysis', () => {
 
     it('should skip Blockaid analysis when Hypernative guard check is loading', async () => {
       const nestedTx = buildSafeTransaction('0x1234')
+      const nestedSafeInfo = buildNestedSafeInfo()
 
       mockUseIsHypernativeEligible.mockReturnValue(buildEligibility({ loading: true }))
       mockUseNestedTransaction.mockReturnValue({
-        nestedSafeInfo: buildNestedSafeInfo(),
+        nestedSafeInfo,
         nestedSafeTx: nestedTx,
         isNested: true,
       })
@@ -193,7 +194,33 @@ describe('useNestedThreatAnalysis', () => {
 
       await waitFor(() => {
         // Blockaid should be skipped while guard check is loading to prevent unnecessary API calls
+        // This uses skipChecks which includes HNGuardCheckLoading
         expect(mockUseThreatAnalysisUtils).toHaveBeenCalledWith(
+          expect.objectContaining({
+            skip: true,
+          }),
+        )
+      })
+    })
+
+    it('should skip Hypernative analysis when eligibility check is loading', async () => {
+      const nestedTx = buildSafeTransaction('0x1234')
+      const authToken = 'test-auth-token'
+      const nestedSafeInfo = buildNestedSafeInfo()
+
+      mockUseIsHypernativeEligible.mockReturnValue(buildEligibility({ isHypernativeEligible: false, loading: true }))
+      mockUseNestedTransaction.mockReturnValue({
+        nestedSafeInfo,
+        nestedSafeTx: nestedTx,
+        isNested: true,
+      })
+      mockUseThreatAnalysisHypernative.mockReturnValue([undefined, undefined, false])
+
+      renderHook(() => useNestedThreatAnalysis(nestedTx, authToken))
+
+      await waitFor(() => {
+        // Hypernative should be skipped while eligibility check is loading
+        expect(mockUseThreatAnalysisHypernative).toHaveBeenCalledWith(
           expect.objectContaining({
             skip: true,
           }),
@@ -271,13 +298,14 @@ describe('useNestedThreatAnalysis', () => {
       )
     })
 
-    it('should skip Blockaid analysis when Hypernative guard is enabled', async () => {
+    it('should skip Blockaid analysis when Hypernative guard is enabled AND auth token is provided', async () => {
       const nestedTx = buildSafeTransaction('0x1234')
       const authToken = 'test-auth-token'
+      const nestedSafeInfo = buildNestedSafeInfo()
 
       mockUseIsHypernativeEligible.mockReturnValue(buildEligibility({ isHypernativeEligible: true }))
       mockUseNestedTransaction.mockReturnValue({
-        nestedSafeInfo: buildNestedSafeInfo(),
+        nestedSafeInfo,
         nestedSafeTx: nestedTx,
         isNested: true,
       })
@@ -349,10 +377,11 @@ describe('useNestedThreatAnalysis', () => {
 
     it('should return undefined when guard is enabled but no auth token provided', async () => {
       const nestedTx = buildSafeTransaction('0x1234')
+      const nestedSafeInfo = buildNestedSafeInfo()
 
       mockUseIsHypernativeEligible.mockReturnValue(buildEligibility({ isHypernativeEligible: true }))
       mockUseNestedTransaction.mockReturnValue({
-        nestedSafeInfo: buildNestedSafeInfo(),
+        nestedSafeInfo,
         nestedSafeTx: nestedTx,
         isNested: true,
       })
@@ -520,6 +549,51 @@ describe('useNestedThreatAnalysis', () => {
       await waitFor(() => {
         const [, resultError] = result.current
         expect(resultError).toBe(error)
+      })
+    })
+  })
+
+  describe('Hypernative guard check with nested Safe info', () => {
+    it('should call useIsHypernativeGuard with nestedSafeInfo parameter', async () => {
+      const nestedTx = buildSafeTransaction('0x1234')
+      const nestedSafeInfo = buildNestedSafeInfo()
+
+      mockUseNestedTransaction.mockReturnValue({
+        nestedSafeInfo,
+        nestedSafeTx: nestedTx,
+        isNested: true,
+      })
+      mockUseThreatAnalysisUtils.mockReturnValue(buildThreatResult(Severity.OK))
+
+      const { useIsHypernativeGuard: useIsHypernativeGuardMock } = jest.requireMock(
+        '@/features/hypernative/hooks/useIsHypernativeGuard',
+      )
+
+      renderHook(() => useNestedThreatAnalysis(nestedTx))
+
+      await waitFor(() => {
+        expect(useIsHypernativeGuardMock).toHaveBeenCalledWith(nestedSafeInfo)
+      })
+    })
+
+    it('should call useIsHypernativeGuard with undefined when nestedSafeInfo is not available', async () => {
+      const nestedTx = buildSafeTransaction('0x1234')
+
+      mockUseNestedTransaction.mockReturnValue({
+        nestedSafeInfo: undefined,
+        nestedSafeTx: nestedTx,
+        isNested: true,
+      })
+      mockUseThreatAnalysisUtils.mockReturnValue(buildThreatResult(Severity.OK))
+
+      const { useIsHypernativeGuard: useIsHypernativeGuardMock } = jest.requireMock(
+        '@/features/hypernative/hooks/useIsHypernativeGuard',
+      )
+
+      renderHook(() => useNestedThreatAnalysis(nestedTx))
+
+      await waitFor(() => {
+        expect(useIsHypernativeGuardMock).toHaveBeenCalledWith(undefined)
       })
     })
   })

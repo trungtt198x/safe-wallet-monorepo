@@ -6,6 +6,7 @@ import * as useChains from '@/hooks/useChains'
 import * as hypernativeGuardCheck from '../../services/hypernativeGuardCheck'
 import { extendedSafeInfoBuilder } from '@/tests/builders/safe'
 import type { JsonRpcProvider } from 'ethers'
+import type { SafeInfo } from '@safe-global/safe-gateway-typescript-sdk'
 
 describe('useIsHypernativeGuard', () => {
   let mockProvider: JsonRpcProvider
@@ -386,6 +387,293 @@ describe('useIsHypernativeGuard', () => {
     await waitFor(() => {
       expect(result.current.isHypernativeGuard).toBe(false)
       expect(result.current.loading).toBe(true)
+    })
+  })
+
+  describe('with safeInfo parameter', () => {
+    it('should use provided safeInfo instead of current Safe info', async () => {
+      const currentGuardAddress = '0x1111111111111111111111111111111111111111'
+      const providedGuardAddress = '0x4784e9bF408F649D04A0a3294e87B0c74C5A3020'
+      const providedChainId = '10'
+
+      jest.spyOn(hypernativeGuardCheck, 'isHypernativeGuard').mockResolvedValue(true)
+
+      // Mock current Safe info (should be ignored)
+      jest.spyOn(useSafeInfo, 'default').mockReturnValue({
+        safe: extendedSafeInfoBuilder()
+          .with({
+            chainId: '1',
+            guard: {
+              value: currentGuardAddress,
+              name: 'OtherGuard',
+              logoUri: null,
+            },
+          })
+          .build(),
+        safeAddress: '0x1234567890123456789012345678901234567890',
+        safeLoaded: true,
+        safeLoading: false,
+        safeError: undefined,
+      })
+
+      // Provide different Safe info
+      const providedSafeInfo = extendedSafeInfoBuilder()
+        .with({
+          chainId: providedChainId,
+          guard: {
+            value: providedGuardAddress,
+            name: 'HypernativeGuard',
+            logoUri: null,
+          },
+        })
+        .build() as SafeInfo
+
+      const { result } = renderHook(() => useIsHypernativeGuard(providedSafeInfo))
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+        expect(result.current.isHypernativeGuard).toBe(true)
+      })
+
+      // Should check the provided Safe info, not the current Safe
+      expect(hypernativeGuardCheck.isHypernativeGuard).toHaveBeenCalledWith(
+        providedChainId,
+        providedGuardAddress,
+        mockProvider,
+        false,
+      )
+      expect(hypernativeGuardCheck.isHypernativeGuard).not.toHaveBeenCalledWith(
+        '1',
+        currentGuardAddress,
+        mockProvider,
+        false,
+      )
+    })
+
+    it('should treat safeLoaded as true when safeInfo is provided', async () => {
+      const guardAddress = '0x4784e9bF408F649D04A0a3294e87B0c74C5A3020'
+      const chainId = '10'
+
+      jest.spyOn(hypernativeGuardCheck, 'isHypernativeGuard').mockResolvedValue(true)
+
+      // Mock current Safe as not loaded (should be ignored)
+      jest.spyOn(useSafeInfo, 'default').mockReturnValue({
+        safe: extendedSafeInfoBuilder().build(),
+        safeAddress: '',
+        safeLoaded: false,
+        safeLoading: true,
+        safeError: undefined,
+      })
+
+      const providedSafeInfo = extendedSafeInfoBuilder()
+        .with({
+          chainId,
+          guard: {
+            value: guardAddress,
+            name: 'HypernativeGuard',
+            logoUri: null,
+          },
+        })
+        .build() as SafeInfo
+
+      const { result } = renderHook(() => useIsHypernativeGuard(providedSafeInfo))
+
+      // Should not be loading even though current Safe is not loaded
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+        expect(result.current.isHypernativeGuard).toBe(true)
+      })
+    })
+
+    it('should return false when provided safeInfo has no guard', async () => {
+      jest.spyOn(hypernativeGuardCheck, 'isHypernativeGuard').mockResolvedValue(true)
+
+      jest.spyOn(useSafeInfo, 'default').mockReturnValue({
+        safe: extendedSafeInfoBuilder()
+          .with({
+            guard: {
+              value: '0x4784e9bF408F649D04A0a3294e87B0c74C5A3020',
+              name: 'HypernativeGuard',
+              logoUri: null,
+            },
+          })
+          .build(),
+        safeAddress: '0x1234567890123456789012345678901234567890',
+        safeLoaded: true,
+        safeLoading: false,
+        safeError: undefined,
+      })
+
+      const providedSafeInfo = extendedSafeInfoBuilder().with({ guard: null }).build() as SafeInfo
+
+      const { result } = renderHook(() => useIsHypernativeGuard(providedSafeInfo))
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+        expect(result.current.isHypernativeGuard).toBe(false)
+      })
+
+      // Should not call the check function when there's no guard
+      expect(hypernativeGuardCheck.isHypernativeGuard).not.toHaveBeenCalled()
+    })
+
+    it('should re-check when provided safeInfo changes', async () => {
+      const firstGuardAddress = '0x1111111111111111111111111111111111111111'
+      const secondGuardAddress = '0x4784e9bF408F649D04A0a3294e87B0c74C5A3020'
+      const chainId = '10'
+
+      const isHypernativeGuardSpy = jest
+        .spyOn(hypernativeGuardCheck, 'isHypernativeGuard')
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true)
+
+      jest.spyOn(useSafeInfo, 'default').mockReturnValue({
+        safe: extendedSafeInfoBuilder().build(),
+        safeAddress: '0x1234567890123456789012345678901234567890',
+        safeLoaded: true,
+        safeLoading: false,
+        safeError: undefined,
+      })
+
+      const firstSafeInfo = extendedSafeInfoBuilder()
+        .with({
+          chainId,
+          guard: {
+            value: firstGuardAddress,
+            name: 'FirstGuard',
+            logoUri: null,
+          },
+        })
+        .build() as SafeInfo
+
+      const { result, rerender } = renderHook((props) => useIsHypernativeGuard(props?.safeInfo), {
+        initialProps: { safeInfo: firstSafeInfo },
+      })
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+        expect(result.current.isHypernativeGuard).toBe(false)
+      })
+
+      // Update to different Safe info
+      const secondSafeInfo = extendedSafeInfoBuilder()
+        .with({
+          chainId,
+          guard: {
+            value: secondGuardAddress,
+            name: 'SecondGuard',
+            logoUri: null,
+          },
+        })
+        .build() as SafeInfo
+
+      rerender({ safeInfo: secondSafeInfo })
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+        expect(result.current.isHypernativeGuard).toBe(true)
+      })
+
+      expect(isHypernativeGuardSpy).toHaveBeenCalledTimes(2)
+      expect(isHypernativeGuardSpy).toHaveBeenNthCalledWith(1, chainId, firstGuardAddress, mockProvider, false)
+      expect(isHypernativeGuardSpy).toHaveBeenNthCalledWith(2, chainId, secondGuardAddress, mockProvider, false)
+    })
+
+    it('should handle errors gracefully when using provided safeInfo', async () => {
+      const guardAddress = '0x4784e9bF408F649D04A0a3294e87B0c74C5A3020'
+      const chainId = '1'
+
+      jest.spyOn(hypernativeGuardCheck, 'isHypernativeGuard').mockRejectedValue(new Error('Network error'))
+
+      jest.spyOn(useSafeInfo, 'default').mockReturnValue({
+        safe: extendedSafeInfoBuilder().build(),
+        safeAddress: '0x1234567890123456789012345678901234567890',
+        safeLoaded: true,
+        safeLoading: false,
+        safeError: undefined,
+      })
+
+      const providedSafeInfo = extendedSafeInfoBuilder()
+        .with({
+          chainId,
+          guard: {
+            value: guardAddress,
+            name: 'HypernativeGuard',
+            logoUri: null,
+          },
+        })
+        .build() as SafeInfo
+
+      const { result } = renderHook(() => useIsHypernativeGuard(providedSafeInfo))
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+        expect(result.current.isHypernativeGuard).toBe(false)
+      })
+    })
+
+    it('should return loading true when provider is unavailable even with provided safeInfo', () => {
+      jest.spyOn(web3, 'useWeb3ReadOnly').mockReturnValue(undefined)
+
+      jest.spyOn(useSafeInfo, 'default').mockReturnValue({
+        safe: extendedSafeInfoBuilder().build(),
+        safeAddress: '0x1234567890123456789012345678901234567890',
+        safeLoaded: true,
+        safeLoading: false,
+        safeError: undefined,
+      })
+
+      const providedSafeInfo = extendedSafeInfoBuilder()
+        .with({
+          guard: {
+            value: '0x4784e9bF408F649D04A0a3294e87B0c74C5A3020',
+            name: 'HypernativeGuard',
+            logoUri: null,
+          },
+        })
+        .build() as SafeInfo
+
+      const { result } = renderHook(() => useIsHypernativeGuard(providedSafeInfo))
+
+      expect(result.current.loading).toBe(true)
+      expect(result.current.isHypernativeGuard).toBe(false)
+    })
+
+    it('should use skipAbiCheck flag from feature flag when safeInfo is provided', async () => {
+      const guardAddress = '0x4784e9bF408F649D04A0a3294e87B0c74C5A3020'
+      const chainId = '10'
+
+      jest.spyOn(hypernativeGuardCheck, 'isHypernativeGuard').mockResolvedValue(true)
+      jest.spyOn(useChains, 'useHasFeature').mockReturnValue(true) // Feature flag enabled
+
+      jest.spyOn(useSafeInfo, 'default').mockReturnValue({
+        safe: extendedSafeInfoBuilder().build(),
+        safeAddress: '0x1234567890123456789012345678901234567890',
+        safeLoaded: true,
+        safeLoading: false,
+        safeError: undefined,
+      })
+
+      const providedSafeInfo = extendedSafeInfoBuilder()
+        .with({
+          chainId,
+          guard: {
+            value: guardAddress,
+            name: 'HypernativeGuard',
+            logoUri: null,
+          },
+        })
+        .build() as SafeInfo
+
+      const { result } = renderHook(() => useIsHypernativeGuard(providedSafeInfo))
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+        expect(result.current.isHypernativeGuard).toBe(true)
+      })
+
+      // Should pass skipAbiCheck=true when feature flag is enabled
+      expect(hypernativeGuardCheck.isHypernativeGuard).toHaveBeenCalledWith(chainId, guardAddress, mockProvider, true)
     })
   })
 })

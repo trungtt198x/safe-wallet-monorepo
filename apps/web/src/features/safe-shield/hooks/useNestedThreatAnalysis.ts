@@ -54,15 +54,17 @@ export function useNestedThreatAnalysis(
     [nestedSafeInfo, safeAddress, chainId, isNested, nestedSafeTx, walletAddress, txOrigin, version],
   )
 
+  const shouldSkipAnalysis = !isNested || eligibilityLoading
+
   const nestedBlockaidAnalysis = useThreatAnalysisUtils({
     ...nestedTxProps,
-    skip: useHypernativeAnalysis || !isNested || eligibilityLoading,
+    skip: useHypernativeAnalysis || shouldSkipAnalysis,
   })
 
   const nestedHypernativeAnalysis = useThreatAnalysisHypernative({
     ...nestedTxProps,
     authToken: hypernativeAuthToken,
-    skip: !useHypernativeAnalysis || !hypernativeAuthToken || !isNested,
+    skip: !useHypernativeAnalysis || !hypernativeAuthToken || shouldSkipAnalysis,
   })
 
   if (!isNested) {

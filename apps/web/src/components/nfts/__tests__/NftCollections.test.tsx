@@ -6,7 +6,6 @@ import { trackEvent } from '@/services/analytics'
 import useCollectibles from '@/hooks/useCollectibles'
 
 jest.mock('@/services/datadog', () => ({
-  useDatadog: jest.fn(),
   logger: {
     debug: jest.fn(),
     error: jest.fn(),

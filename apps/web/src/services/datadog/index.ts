@@ -1,36 +1,49 @@
-import { useEffect } from 'react'
 import { datadogLogs } from '@datadog/browser-logs'
-import { DATADOG_CLIENT_TOKEN, IS_PRODUCTION } from '@/config/constants'
+import { datadogRum } from '@datadog/browser-rum'
+import { reactPlugin } from '@datadog/browser-rum-react'
+import { APP_ENV, DATADOG_APPLICATION_ID, DATADOG_CLIENT_TOKEN, IS_PRODUCTION } from '@/config/constants'
+import packageJson from '../../../package.json'
 
-let isDatadogInitialized = false
+const DATADOG_SITE = 'datadoghq.eu'
+const SERVICE_NAME = 'safe-wallet'
 
-function initDatadog() {
-  if (isDatadogInitialized) {
-    return
-  }
-  if (!DATADOG_CLIENT_TOKEN) {
-    console.warn('Datadog client token is not set. Skipping Datadog initialization.')
-    return
-  }
-  if (!IS_PRODUCTION) {
-    console.warn('Datadog is not initialized in non-production environments. Skipping Datadog initialization.')
+function initDatadog(): void {
+  if (!DATADOG_CLIENT_TOKEN || datadogLogs.getInitConfiguration?.()) {
     return
   }
 
   datadogLogs.init({
     clientToken: DATADOG_CLIENT_TOKEN,
-    site: 'datadoghq.eu',
+    site: DATADOG_SITE,
     forwardErrorsToLogs: true,
     sessionSampleRate: 100,
   })
 
-  isDatadogInitialized = true
-}
+  if (DATADOG_APPLICATION_ID) {
+    datadogRum.init({
+      applicationId: DATADOG_APPLICATION_ID,
+      clientToken: DATADOG_CLIENT_TOKEN,
+      site: DATADOG_SITE,
+      service: SERVICE_NAME,
+      env: APP_ENV,
+      version: packageJson.version,
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 0,
+      trackResources: true,
+      trackLongTasks: true,
+      defaultPrivacyLevel: 'mask-user-input',
+      plugins: [reactPlugin({ router: false })],
+    })
+  }
 
-export function useDatadog() {
-  useEffect(() => {
-    initDatadog()
-  }, [])
+  if (!IS_PRODUCTION) {
+    console.debug('[Datadog] initialized', { logs: true, rum: Boolean(DATADOG_APPLICATION_ID) })
+  }
 }
 
 export const logger = datadogLogs.logger
+
+// Client-side only
+if (typeof window !== 'undefined') {
+  initDatadog()
+}

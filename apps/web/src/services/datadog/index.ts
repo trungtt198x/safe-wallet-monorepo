@@ -1,11 +1,9 @@
 import { datadogLogs } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
-import { reactPlugin } from '@datadog/browser-rum-react'
-import { APP_ENV, DATADOG_APPLICATION_ID, DATADOG_CLIENT_TOKEN, IS_PRODUCTION } from '@/config/constants'
+import { APP_ENV, DATADOG_APPLICATION_ID, DATADOG_CLIENT_TOKEN, DATADOG_SERVICE } from '@/config/constants'
 import packageJson from '../../../package.json'
 
 const DATADOG_SITE = 'datadoghq.eu'
-const SERVICE_NAME = 'safe-wallet'
 
 function initDatadog(): void {
   if (!DATADOG_CLIENT_TOKEN || datadogLogs.getInitConfiguration?.()) {
@@ -24,20 +22,16 @@ function initDatadog(): void {
       applicationId: DATADOG_APPLICATION_ID,
       clientToken: DATADOG_CLIENT_TOKEN,
       site: DATADOG_SITE,
-      service: SERVICE_NAME,
+      service: DATADOG_SERVICE,
       env: APP_ENV,
       version: packageJson.version,
       sessionSampleRate: 100,
       sessionReplaySampleRate: 0,
+      trackUserInteractions: true,
       trackResources: true,
       trackLongTasks: true,
       defaultPrivacyLevel: 'mask-user-input',
-      plugins: [reactPlugin({ router: false })],
     })
-  }
-
-  if (!IS_PRODUCTION) {
-    console.debug('[Datadog] initialized', { logs: true, rum: Boolean(DATADOG_APPLICATION_ID) })
   }
 }
 

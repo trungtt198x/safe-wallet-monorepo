@@ -13,7 +13,7 @@ export type HypernativeGuardCheckResult = {
 }
 
 /**
- * Hook to check if the current Safe has a HypernativeGuard installed
+ * Hook to check if a Safe has a Hypernative Guard installed
  * @param safeInfo - The Safe info to check the guard for (optional, defaults to current Safe info)
  *
  * @returns HypernativeGuardCheckResult with isHypernativeGuard flag and loading state

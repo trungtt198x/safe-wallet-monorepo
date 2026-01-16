@@ -194,7 +194,7 @@ describe('useNestedThreatAnalysis', () => {
 
       await waitFor(() => {
         // Blockaid should be skipped while guard check is loading to prevent unnecessary API calls
-        // This uses skipChecks which includes HNGuardCheckLoading
+        // This uses shouldSkipAnalysis which includes HNGuardCheckLoading
         expect(mockUseThreatAnalysisUtils).toHaveBeenCalledWith(
           expect.objectContaining({
             skip: true,

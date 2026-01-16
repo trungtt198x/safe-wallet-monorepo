@@ -1,7 +1,7 @@
 import { datadogLogs } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
 import { APP_ENV, DATADOG_APPLICATION_ID, DATADOG_CLIENT_TOKEN, DATADOG_SERVICE } from '@/config/constants'
-import packageJson from '../../../package.json'
+import { APP_VERSION } from '@/config/version'
 
 const DATADOG_SITE = 'datadoghq.eu'
 
@@ -24,7 +24,7 @@ function initDatadog(): void {
       site: DATADOG_SITE,
       service: DATADOG_SERVICE,
       env: APP_ENV,
-      version: packageJson.version,
+      version: APP_VERSION,
       sessionSampleRate: 100,
       sessionReplaySampleRate: 0,
       trackUserInteractions: true,

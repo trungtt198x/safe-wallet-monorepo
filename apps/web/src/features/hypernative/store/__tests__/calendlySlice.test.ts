@@ -45,7 +45,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: false,
         hasScheduled: false,
-        hasError: false,
       })
     })
   })
@@ -65,7 +64,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: false,
         hasScheduled: false,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -80,7 +78,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: true,
         hasScheduled: true,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -108,7 +105,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: true,
         hasScheduled: false,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -123,7 +119,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: true,
         hasScheduled: false,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -138,7 +133,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: false,
         hasScheduled: true,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -166,7 +160,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: false,
         hasScheduled: true,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -181,7 +174,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: true,
         hasScheduled: false,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -200,7 +192,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: true,
         hasScheduled: true,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -211,7 +202,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: false,
         hasScheduled: false,
-        hasError: false,
       })
     })
 
@@ -220,7 +210,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: false,
         hasScheduled: false,
-        hasError: false,
       }
       const store = createTestStore(initialState)
 
@@ -231,7 +220,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: false,
         hasScheduled: false,
-        hasError: false,
       })
     })
   })
@@ -242,7 +230,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: true,
         hasScheduled: true,
-        hasError: false,
       }
       const store = createTestStore(initialState)
       const state = store.getState()
@@ -253,7 +240,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: true,
         hasScheduled: true,
-        hasError: false,
       })
     })
 
@@ -262,7 +248,6 @@ describe('calendlySlice', () => {
         isLoaded: true,
         isSecondStep: false,
         hasScheduled: false,
-        hasError: false,
       }
       const store = createTestStore(initialState)
       const state = store.getState()
@@ -275,7 +260,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: true,
         hasScheduled: false,
-        hasError: false,
       }
       const store = createTestStore(initialState)
       const state = store.getState()
@@ -288,7 +272,6 @@ describe('calendlySlice', () => {
         isLoaded: false,
         isSecondStep: false,
         hasScheduled: true,
-        hasError: false,
       }
       const store = createTestStore(initialState)
       const state = store.getState()

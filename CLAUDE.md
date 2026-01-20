@@ -41,6 +41,9 @@ Use `@AGENTS.md` in your prompts to include the full guidelines, which cover:
 
 ## Active Technologies
 
+- TypeScript 5.x with Next.js 14.x + XState v5 (new), React 18.x, Redux Toolkit, @safe-global/protocol-kit, @safe-global/api-ki (001-xstate-state-management)
+- Browser localStorage (state persistence), Redux store (global state), IndexedDB (WalletConnect sessions) (001-xstate-state-management)
+
 - TypeScript 5.x (Next.js 14.x) + Next.js (dynamic imports), ESLint (import restrictions), Redux Toolkit (state management) (001-feature-architecture)
 - N/A (architecture pattern, no new data storage) (001-feature-architecture)
 

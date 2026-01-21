@@ -81,32 +81,46 @@ export default [
       ],
 
       // Feature architecture: Prevent importing feature internals from outside the feature
-      // This enforces that features expose a clean public API through their index.ts barrel file
+      // Only allowed imports from features:
+      //   - @/features/{name} (index.ts - public API)
+      //   - @/features/{name}/contract (type definitions)
+      //   - @/features/{name}/types (shared types)
+      //   - @/features/__contracts__ (shared feature infrastructure)
       // Set to 'warn' during migration phase - will be changed to 'error' after all features are migrated
       'no-restricted-imports': [
         'warn',
         {
           patterns: [
             {
+              // Block internal feature folders
               group: [
                 '@/features/*/components/*',
                 '@/features/*/hooks/*',
                 '@/features/*/services/*',
                 '@/features/*/store/*',
+                '@/features/*/__internal__/*',
               ],
               message:
-                'Import from feature index file only (e.g., @/features/walletconnect). Internal feature imports are not allowed.',
+                'Import from feature index file only (e.g., @/features/walletconnect). Use @/features/{name}/contract for types.',
             },
             {
+              // Block internal file imports (handle.ts is internal, only index.ts is public)
+              group: ['@/features/*/handle'],
+              message: 'Import from feature index file only. The handle is internal - use @/features/{name} instead.',
+            },
+            {
+              // Same for relative imports
               group: [
                 '../features/*/components/*',
                 '../features/*/hooks/*',
                 '../features/*/services/*',
                 '../features/*/store/*',
+                '../features/*/__internal__/*',
                 '../../features/*/components/*',
                 '../../features/*/hooks/*',
                 '../../features/*/services/*',
                 '../../features/*/store/*',
+                '../../features/*/__internal__/*',
               ],
               message: 'Import from feature index file only. Internal feature imports are not allowed.',
             },

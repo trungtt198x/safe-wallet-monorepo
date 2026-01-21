@@ -11,7 +11,7 @@ import { Suspense, memo } from 'react'
  *
  * @example
  * // In handle.ts:
- * import { withSuspense } from '@/features/__contracts__'
+ * import { withSuspense } from '@/features/__core__'
  *
  * export const myFeatureHandle = {
  *   components: {

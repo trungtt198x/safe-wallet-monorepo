@@ -55,7 +55,7 @@ function getSnapshot<T extends FeatureContract>(name: string): T | null {
  * @example
  * ```typescript
  * import { WalletConnectFeature } from '@/features/walletconnect'
- * import { useLoadFeature } from '@/features/__contracts__'
+ * import { useLoadFeature } from '@/features/__core__'
  *
  * function MyComponent() {
  *   const walletConnect = useLoadFeature(WalletConnectFeature)

@@ -1,5 +1,6 @@
 import { createGlobalStyle } from 'styled-components'
 import DMSansFont from './assets/fonts/DMSansRegular.woff2'
+import DMSansSemiBoldFont from './assets/fonts/DMSans600.woff2'
 import DMSansBoldFont from './assets/fonts/DMSans700.woff2'
 
 const GlobalStyle = createGlobalStyle`
@@ -17,12 +18,19 @@ const GlobalStyle = createGlobalStyle`
     #root {
         height: 100%;
     }
-    
+
     @font-face {
         font-family: 'DM Sans';
         font-display: swap;
         font-weight: 400;
         src: url(${DMSansFont}) format('woff2');
+    }
+
+    @font-face {
+        font-family: 'DM Sans';
+        font-display: swap;
+        font-weight: 600;
+        src: url(${DMSansSemiBoldFont}) format('woff2');
     }
 
     @font-face {

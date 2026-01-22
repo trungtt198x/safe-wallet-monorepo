@@ -34,11 +34,7 @@ describe('[SMOKE] Create transactions tests', () => {
   })
 
   it('[SMOKE] Verify address input resolves a valid ENS name', () => {
-    // Use typeRecipientAddressENS instead of typeRecipientAddress because ENS names
-    // are automatically resolved to addresses. The original assertion
-    // `.should('have.value', address)` would fail since the input value changes
-    // from the ENS name to the resolved address (e.g., 'sep:0x...') immediately.
-    createtx.typeRecipientAddressENS(constants.ENS_TEST_SEPOLIA)
+    createtx.typeRecipientAddress(constants.ENS_TEST_SEPOLIA)
     createtx.verifyENSResolves(staticSafes.SEP_STATIC_SAFE_6)
   })
 

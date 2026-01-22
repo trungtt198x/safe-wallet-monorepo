@@ -391,13 +391,15 @@ const AddressAutocomplete = ({
           InputProps={{
             ...params.InputProps,
             ...InputProps,
-            startAdornment: startAdornment || (networkPrefix ? (
-              <InputAdornment position="start" sx={{ ml: 0, mr: 0.5 }}>
-                <Box component="span" sx={{ color: 'text.secondary' }}>
-                  {networkPrefix}:
-                </Box>
-              </InputAdornment>
-            ) : undefined),
+            startAdornment:
+              startAdornment ||
+              (networkPrefix ? (
+                <InputAdornment position="start" sx={{ ml: 0, mr: 0.5 }}>
+                  <Box component="span" sx={{ color: 'text.secondary' }}>
+                    {networkPrefix}:
+                  </Box>
+                </InputAdornment>
+              ) : undefined),
             endAdornment: (
               <>
                 {isLoading && (

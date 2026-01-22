@@ -124,10 +124,7 @@ const AddressBookInput = ({
           const isKnownAddress = !!(selectedContact && isValidAddress(field.value))
 
           return (
-            <div
-              data-testid={dataTestId}
-              className={classnames(css.wrapper, { [css.readOnly]: isKnownAddress })}
-            >
+            <div data-testid={dataTestId} className={classnames(css.wrapper, { [css.readOnly]: isKnownAddress })}>
               <AddressAutocomplete
                 id={`${name}-autocomplete`}
                 name={field.name}

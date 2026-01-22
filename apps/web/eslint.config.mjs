@@ -107,8 +107,7 @@ export default [
             // Block deep imports into feature hooks (should go through barrel)
             {
               group: ['@/features/*/hooks', '@/features/*/hooks/**'],
-              message:
-                'Import hooks from the feature barrel (@/features/myfeature) not from hooks folder directly.',
+              message: 'Import hooks from the feature barrel (@/features/myfeature) not from hooks folder directly.',
             },
             // Block deep imports into services internal files (barrel is OK for lightweight utils)
             {

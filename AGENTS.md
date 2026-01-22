@@ -95,11 +95,54 @@ To add or modify colors/tokens:
 Specifically for the web app:
 
 - New features must be created in a separate folder inside `src/features/` – only components, hooks, and services used globally across many features belong in top-level folders inside `src/`
-- **All features must follow the standard feature architecture pattern** – See `apps/web/docs/feature-architecture.md` for the complete guide including folder structure, feature flags, lazy loading, and public API patterns
+- **All features must follow the standard feature architecture pattern** – See `apps/web/docs/feature-architecture-v2.md` for the complete guide including folder structure, feature flags, lazy loading, and public API patterns
 - Each new feature must be behind a feature flag (stored on the CGW API in chains configs)
 - When making a new component, create a Storybook story file for it
 - Use theme variables from vars.css instead of hard-coded CSS values
 - Use MUI components and the Safe MUI theme
+
+### Feature Architecture Import Rules
+
+Features use a lazy-loading architecture to optimize bundle size. ESLint warns about these import restrictions (warnings until all features are migrated):
+
+**Allowed Imports:**
+
+```typescript
+import { SomeType, useLightweightHook } from '@/features/myfeature' // Feature barrel
+import { someSlice, selectSomething } from '@/features/myfeature/store' // Redux store
+import { lightweightUtil } from '@/features/myfeature/services' // Services barrel
+```
+
+**Forbidden Imports (ESLint will warn):**
+
+```typescript
+// ❌ NEVER import components directly - defeats lazy loading
+import { MyComponent } from '@/features/myfeature/components'
+import MyComponent from '@/features/myfeature/components/MyComponent'
+
+// ❌ NEVER import hooks from internal folder - use barrel
+import { useMyHook } from '@/features/myfeature/hooks/useMyHook'
+
+// ❌ NEVER import internal service files - use barrel or useLoadFeature
+import { heavyService } from '@/features/myfeature/services/heavyService'
+```
+
+**Accessing Feature Components:**
+
+Use the `useLoadFeature` hook to access lazy-loaded components:
+
+```typescript
+import { useLoadFeature } from '@/features/__core__'
+import { MyFeature } from '@/features/myfeature'
+
+function ParentComponent() {
+  const feature = useLoadFeature(MyFeature)
+  if (!feature) return null
+  return <feature.components.MyComponent />
+}
+```
+
+See `apps/web/docs/feature-architecture-v2.md` for the complete guide including the two-tier handle pattern and bundle leak pitfalls.
 
 ## Workflow
 

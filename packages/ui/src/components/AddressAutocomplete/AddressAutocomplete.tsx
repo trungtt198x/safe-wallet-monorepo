@@ -13,11 +13,20 @@ import { getAddress, isAddress, isHexString } from 'ethers'
 import type { AddressAutocompleteProps, AddressBookEntry } from './types'
 import AddressOptionItem from '../AddressOptionItem'
 
-// Save/bookmark icon for address book
-const SaveAddressIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
-    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
-  </svg>
+// Save/add contact icon paths (person with plus sign)
+const saveAddressIconPaths = (
+  <>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M9.49801 3C10.417 3 11.164 3.747 11.164 4.666C11.164 5.585 10.417 6.332 9.49801 6.332C8.58001 6.332 7.83301 5.585 7.83301 4.666C7.83301 3.747 8.58001 3 9.49801 3ZM16.458 13.715C15.787 11.413 14.604 8.512 11.877 7.432C12.658 6.759 13.164 5.775 13.164 4.666C13.164 2.645 11.519 1 9.49801 1C7.47701 1 5.83301 2.645 5.83301 4.666C5.83301 5.78 6.34301 6.768 7.13001 7.44C7.00201 7.492 6.87201 7.538 6.74801 7.599C6.25101 7.841 6.04501 8.439 6.28601 8.936C6.52901 9.432 7.12801 9.641 7.62301 9.397C8.17601 9.128 8.79001 8.997 9.50001 8.997C11.953 8.997 13.46 10.575 14.538 14.275C14.665 14.712 15.064 14.995 15.498 14.995C15.59 14.995 15.685 14.982 15.778 14.955C16.309 14.801 16.612 14.245 16.458 13.715Z"
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M5.498 10.9902H6.497C7.05 10.9902 7.497 11.4382 7.497 11.9902C7.497 12.5432 7.05 12.9902 6.497 12.9902H5.498V13.9892C5.498 14.5422 5.051 14.9892 4.498 14.9892C3.946 14.9892 3.498 14.5422 3.498 13.9892V12.9902H2.5C1.947 12.9902 1.5 12.5432 1.5 11.9902C1.5 11.4382 1.947 10.9902 2.5 10.9902H3.498V9.99219C3.498 9.43919 3.946 8.99219 4.498 8.99219C5.051 8.99219 5.498 9.43919 5.498 9.99219V10.9902Z"
+    />
+  </>
 )
 
 const MAX_RESULTS = 10
@@ -126,12 +135,16 @@ const AddressAutocomplete = ({
   validate,
   disabled = false,
   placeholder,
+  startAdornment,
   endAdornment,
   fullWidth = true,
   showErrorsInTheLabel = false,
+  showNameInLabel = true,
   renderOption: customRenderOption,
   onBlur,
+  onClick,
   onAddressBookClick,
+  onOpenChange,
   InputLabelProps,
   InputProps,
 }: AddressAutocompleteProps): ReactElement => {
@@ -191,11 +204,11 @@ const AddressAutocomplete = ({
 
   // Compute the label to display when a contact is selected
   const displayLabel = useMemo(() => {
-    if (selectedContact) {
+    if (showNameInLabel && selectedContact) {
       return `${label} (${selectedContact.name})`
     }
     return label
-  }, [label, selectedContact])
+  }, [label, selectedContact, showNameInLabel])
 
   // Handle ENS resolution with abort controller to prevent race conditions
   const resolveEnsName = useCallback(
@@ -230,7 +243,7 @@ const AddressAutocomplete = ({
         }
       }
     },
-    [resolveAddress, onChange, networkPrefix],
+    [resolveAddress, onChange],
   )
 
   // Cleanup abort controller on unmount
@@ -281,7 +294,7 @@ const AddressAutocomplete = ({
       setInputValue(newValue.address)
       setOpen(false)
     },
-    [onChange, processInputValue, networkPrefix],
+    [onChange, processInputValue],
   )
 
   // Handle typing in the input
@@ -302,12 +315,14 @@ const AddressAutocomplete = ({
     // Show dropdown if we have address book entries and no valid address yet
     if (addressBook.length > 0 && !isValidAddress(value)) {
       setOpen(true)
+      onOpenChange?.(true)
     }
-  }, [addressBook.length, value])
+  }, [addressBook.length, value, onOpenChange])
 
   const handleClose = useCallback(() => {
     setOpen(false)
-  }, [])
+    onOpenChange?.(false)
+  }, [onOpenChange])
 
   // Memoized getOptionLabel to prevent recreation on each render
   const getOptionLabel = useCallback((option: AddressBookEntry | string) => {
@@ -367,6 +382,7 @@ const AddressAutocomplete = ({
           placeholder={placeholder}
           fullWidth={fullWidth}
           onBlur={onBlur}
+          onClick={onClick}
           autoComplete="off"
           InputLabelProps={{
             ...params.InputLabelProps,
@@ -375,6 +391,13 @@ const AddressAutocomplete = ({
           InputProps={{
             ...params.InputProps,
             ...InputProps,
+            startAdornment: startAdornment || (networkPrefix ? (
+              <InputAdornment position="start" sx={{ ml: 0, mr: 0.5 }}>
+                <Box component="span" sx={{ color: 'text.secondary' }}>
+                  {networkPrefix}:
+                </Box>
+              </InputAdornment>
+            ) : undefined),
             endAdornment: (
               <>
                 {isLoading && (
@@ -385,7 +408,9 @@ const AddressAutocomplete = ({
                 {onAddressBookClick && !disabled && isValidAddress(value) && (
                   <InputAdornment position="end">
                     <IconButton onClick={onAddressBookClick} size="small" aria-label="Save to address book">
-                      <SvgIcon component={SaveAddressIcon} inheritViewBox fontSize="small" color="primary" />
+                      <SvgIcon viewBox="0 0 17 16" fontSize="small" color="primary">
+                        {saveAddressIconPaths}
+                      </SvgIcon>
                     </IconButton>
                   </InputAdornment>
                 )}

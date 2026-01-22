@@ -134,7 +134,6 @@ describe('AddressBookInput', () => {
   it('should allow to input and validate an address by typing an address', async () => {
     const invalidAddress = checksumAddress(faker.finance.ethereumAddress())
     const validationError = 'You cannot use this address'
-    // Validation receives the address without prefix from the form value
     const validation = (value: string) => (value === invalidAddress ? validationError : undefined)
 
     const { input, utils } = setup(
@@ -166,7 +165,6 @@ describe('AddressBookInput', () => {
       jest.advanceTimersByTime(1000)
     })
 
-    // The input value is the address without prefix (prefix is shown as visual adornment)
     expect(input.value).toBe(address)
     await waitFor(() => expect(utils.queryByLabelText(validationError, { exact: false })).toBeNull())
   })
@@ -202,22 +200,19 @@ describe('AddressBookInput', () => {
       jest.advanceTimersByTime(1000)
     })
 
-    // Should close auto completion and show validation error
+    // Should close auto completion and hide validation error
     await waitFor(() => {
       expect(utils.getByLabelText(validationError, { exact: false })).toBeDefined()
     })
 
-    // Clear the input using the clear button (MUI Autocomplete clear indicator)
-    const clearButton = utils.getByTitle('Clear')
+    // Clear the input by clicking on the readonly input
     act(() => {
-      fireEvent.click(clearButton)
-      jest.advanceTimersByTime(100)
+      // first click clears input
+      fireEvent.click(utils.getByLabelText(validationError, { exact: false }))
     })
 
-    // After clearing, the original label should be back
-    await waitFor(() => expect(utils.getByLabelText('Recipient address', { exact: false })).toBeDefined())
-    const newInput = utils.getByLabelText('Recipient address', { exact: false })
-    expect(newInput).toHaveValue('')
+    await waitFor(() => expect(utils.getByLabelText(validationError, { exact: false })).toHaveValue(''))
+    const newInput = utils.getByLabelText(validationError, { exact: false })
     expect(newInput).toBeVisible()
 
     act(() => {
@@ -235,10 +230,9 @@ describe('AddressBookInput', () => {
 
     await waitFor(() => expect(utils.queryByLabelText(validationError, { exact: false })).toBeNull())
 
-    // The contact name now appears in the label as "(ValidAddress)"
-    await waitFor(() => expect(utils.getByLabelText(/ValidAddress/)).toBeDefined())
-    // The input value is the address without prefix (prefix is shown as visual adornment)
-    await waitFor(() => expect(newInput).toHaveValue(validAddress))
+    // should display name of address as well as address
+    await waitFor(() => expect(utils.getByText('ValidAddress', { exact: false })).toBeDefined())
+    await waitFor(() => expect(utils.getByText(validAddress, { exact: false })).toBeDefined())
   })
 
   it('should offer to add unknown addresses if canAdd is true', async () => {
@@ -264,9 +258,7 @@ describe('AddressBookInput', () => {
       fireEvent.submit(nameInput)
     })
 
-    // After adding to address book, the contact name appears in the label
-    // Use getByLabelText since the name is now part of the label text
-    await waitFor(() => expect(utils.getByLabelText(/Tim Testermann/)).toBeDefined())
+    await waitFor(() => expect(utils.getByText('Tim Testermann', { exact: false })).toBeDefined())
   })
 
   it('should not offer to add unknown addresses if canAdd is false', async () => {

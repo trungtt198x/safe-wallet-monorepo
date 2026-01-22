@@ -34,16 +34,20 @@ export interface AddressAutocompleteProps {
   // UI
   disabled?: boolean
   placeholder?: string
+  startAdornment?: ReactNode
   endAdornment?: ReactNode
   fullWidth?: boolean
   showErrorsInTheLabel?: boolean
+  showNameInLabel?: boolean
 
   // Render customization (optional - defaults to AddressOptionItem)
   renderOption?: (entry: AddressBookEntry) => ReactNode
 
   // Events
   onBlur?: () => void
+  onClick?: () => void
   onAddressBookClick?: () => void
+  onOpenChange?: (open: boolean) => void
 
   // Additional TextField props
   InputLabelProps?: TextFieldProps['InputLabelProps']

@@ -1,6 +1,6 @@
 .unknownAddress {
-  margin-top: var(--space-1);
-  padding: 8px 12px;
+  margin-top: calc(-1 * var(--space-2));
+  padding: 20px 12px 4px;
   background-color: var(--color-background-main);
   color: var(--color-text-secondary);
   display: flex;
@@ -17,4 +17,27 @@
   color: inherit;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  background-color: var(--color-background-paper);
+  border-radius: 6px;
+}
+
+.readOnly :global .MuiInputBase-input {
+  visibility: hidden;
+}
+
+.readOnly :global .MuiSvgIcon-colorBorder {
+  color: var(--color-primary-main);
+}
+
+.openButton svg {
+  transition: transform 0.3s ease-in-out;
+}
+
+.rotated svg {
+  transform: rotate(180deg);
 }

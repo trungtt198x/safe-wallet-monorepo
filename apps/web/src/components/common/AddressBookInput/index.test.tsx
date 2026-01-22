@@ -166,8 +166,8 @@ describe('AddressBookInput', () => {
       jest.advanceTimersByTime(1000)
     })
 
-    // The component adds the network prefix to the display value
-    expect(input.value).toBe(`${mockChain.shortName}:${address}`)
+    // The input value is the address without prefix (prefix is shown as visual adornment)
+    expect(input.value).toBe(address)
     await waitFor(() => expect(utils.queryByLabelText(validationError, { exact: false })).toBeNull())
   })
 
@@ -237,8 +237,8 @@ describe('AddressBookInput', () => {
 
     // The contact name now appears in the label as "(ValidAddress)"
     await waitFor(() => expect(utils.getByLabelText(/ValidAddress/)).toBeDefined())
-    // The address with prefix should be in the input
-    await waitFor(() => expect(newInput).toHaveValue(`${mockChain.shortName}:${validAddress}`))
+    // The input value is the address without prefix (prefix is shown as visual adornment)
+    await waitFor(() => expect(newInput).toHaveValue(validAddress))
   })
 
   it('should offer to add unknown addresses if canAdd is true', async () => {

@@ -120,9 +120,108 @@ export function MyFeatureWidget(): ReactElement | null {
 
 ## Lazy Loading Pattern
 
-Every feature MUST be lazy-loaded using Next.js `dynamic()` imports.
+Features MUST be lazy-loaded to enable code splitting. We use a **two-tier handle pattern** that provides type-safe lazy loading through `useLoadFeature()`.
 
-### Basic Pattern
+### Two-Tier Handle Pattern (Recommended)
+
+For features with multiple components and services, use the feature handle pattern:
+
+```
+src/features/{feature-name}/
+├── index.ts              # Public API - exports handle, types, lightweight hooks
+├── contract.ts           # TypeScript interface defining what the feature provides
+├── feature.ts            # Implementation - bundles all components and services
+├── handle.ts             # Feature handle with flag check and lazy loader
+└── ...
+```
+
+#### Step 1: Define the Contract (`contract.ts`)
+
+```typescript
+// contract.ts - Defines what the lazy-loaded feature provides
+import type { ComponentType } from 'react'
+
+export interface MyFeatureContract {
+  components: {
+    MainWidget: ComponentType
+    SettingsPanel: ComponentType<{ onSave: () => void }>
+  }
+  services: {
+    processData: (input: string) => Promise<string>
+  }
+}
+```
+
+#### Step 2: Implement the Feature (`feature.ts`)
+
+```typescript
+// feature.ts - Bundles all lazy-loadable parts (only imported dynamically)
+import type { MyFeatureContract } from './contract'
+import MainWidget from './components/MainWidget'
+import SettingsPanel from './components/SettingsPanel'
+import { processData } from './services/dataProcessor'
+
+const myFeature: MyFeatureContract = {
+  components: { MainWidget, SettingsPanel },
+  services: { processData },
+}
+
+export default myFeature
+```
+
+#### Step 3: Create the Handle (`handle.ts`)
+
+```typescript
+// handle.ts - Lightweight handle that loads feature on demand
+import type { FeatureHandle } from '@/features/__core__/types'
+import type { MyFeatureContract } from './contract'
+import { FEATURES } from '@safe-global/utils/utils/chains'
+
+export const myFeatureHandle: FeatureHandle<MyFeatureContract> = {
+  featureFlag: FEATURES.MY_FEATURE,
+  load: () => import('./feature').then((m) => m.default),
+}
+```
+
+#### Step 4: Export from Barrel (`index.ts`)
+
+```typescript
+// index.ts - Public API
+export { myFeatureHandle as MyFeature } from './handle'
+export type { MyFeatureContract } from './contract'
+
+// Lightweight exports only - types, constants, feature flag hooks
+export type { MyFeatureConfig } from './types'
+export { useIsMyFeatureEnabled } from './hooks'
+export { MY_FEATURE_CONSTANT } from './constants'
+```
+
+#### Step 5: Use with `useLoadFeature()`
+
+```typescript
+// Consumer component
+import { MyFeature } from '@/features/my-feature'
+import { useLoadFeature } from '@/features/__core__'
+
+function MyPage() {
+  const feature = useLoadFeature(MyFeature)
+
+  if (!feature) return null // Loading or disabled
+
+  return (
+    <>
+      <feature.components.MainWidget />
+      <button onClick={() => feature.services.processData('input')}>
+        Process
+      </button>
+    </>
+  )
+}
+```
+
+### Basic Pattern (Simple Features)
+
+For simple features with a single component, use Next.js `dynamic()`:
 
 ```typescript
 // index.ts
@@ -330,6 +429,148 @@ store / index.ts
 mySlice.ts
 components / MyComponent / index.tsx
 ```
+
+## Bundle Leak Pitfalls
+
+These are subtle mistakes that defeat lazy loading and cause features to be bundled in the main chunk. ESLint rules help catch these, but understanding the root causes is important.
+
+### ❌ Barrel File Re-exports All Components
+
+```typescript
+// components/index.ts - DANGEROUS
+export { default as ComponentA } from './ComponentA'
+export { default as ComponentB } from './ComponentB'
+export { default as ComponentC } from './ComponentC' // Heavy component!
+
+// When ANY component is imported from this barrel, ALL components are bundled
+import { ComponentA } from '@/features/my-feature/components' // Bundles everything!
+```
+
+**Solution**: Don't create component barrels. Access components via `useLoadFeature()`:
+
+```typescript
+const feature = useLoadFeature(MyFeature)
+return <feature.components.ComponentA />
+```
+
+### ❌ Hooks Import Heavy Services
+
+```typescript
+// hooks/useMyData.ts - DANGEROUS
+import { heavyService } from '../services/heavyService' // Pulls in SDK, etc.
+
+export function useMyData() {
+  return useAsync(() => heavyService.fetch(), [])
+}
+```
+
+**Solution**: Lazy-load heavy services via the feature contract:
+
+```typescript
+// hooks/useMyData.ts - SAFE
+import { useLoadFeature } from '@/features/__core__'
+import { myFeatureHandle } from '../handle'
+
+export function useMyData() {
+  const feature = useLoadFeature(myFeatureHandle)
+  return useAsync(() => {
+    if (!feature) return
+    return feature.services.heavyService.fetch()
+  }, [feature])
+}
+```
+
+### ❌ Lightweight Export Re-exports Heavy Code
+
+```typescript
+// hooks/index.ts - DANGEROUS
+export { useFeatureEnabled } from './useFeatureEnabled' // Lightweight
+export { statusMapping } from './usePendingStatus' // Seems lightweight...
+
+// But usePendingStatus.ts imports heavy services!
+// hooks/usePendingStatus.ts
+import { heavyChecker } from '../services/heavyService' // This gets bundled!
+export const statusMapping = { ... }
+```
+
+**Solution**: Move lightweight constants to separate files:
+
+```typescript
+// hooks/statusMapping.ts - Isolated, no heavy imports
+export const statusMapping = { ... }
+
+// hooks/index.ts - Safe
+export { useFeatureEnabled } from './useFeatureEnabled'
+export { statusMapping } from './statusMapping' // No transitive heavy imports
+```
+
+### ❌ Global Component Imports from Feature Internals
+
+```typescript
+// pages/_app.tsx - DANGEROUS
+import { FeatureHooks } from '@/features/my-feature/components'
+
+function App() {
+  return (
+    <>
+      <FeatureHooks /> {/* Entire feature bundled in every page! */}
+    </>
+  )
+}
+```
+
+**Solution**: Use `useLoadFeature()` for global feature components:
+
+```typescript
+// pages/_app.tsx - SAFE
+import { MyFeature } from '@/features/my-feature'
+import { useLoadFeature } from '@/features/__core__'
+
+function FeatureHooksLoader() {
+  const feature = useLoadFeature(MyFeature)
+  if (!feature) return null
+  return <feature.components.FeatureHooks />
+}
+
+function App() {
+  return <FeatureHooksLoader />
+}
+```
+
+### ❌ Scattered `next/dynamic` Instead of Feature Handle
+
+```typescript
+// ComponentA.tsx
+const FeatureWidget = dynamic(() => import('@/features/my-feature/components/Widget'))
+
+// ComponentB.tsx
+const FeaturePanel = dynamic(() => import('@/features/my-feature/components/Panel'))
+
+// _app.tsx
+const FeatureHooks = dynamic(() => import('@/features/my-feature/components/Hooks'))
+
+// Result: Multiple small chunks instead of one feature chunk
+```
+
+**Solution**: Single entry point via feature handle:
+
+```typescript
+// All components loaded through one feature chunk
+const feature = useLoadFeature(MyFeature)
+<feature.components.Widget />
+<feature.components.Panel />
+<feature.components.Hooks />
+```
+
+### Verification: Check Bundle Contents
+
+After making changes, verify with bundle analysis:
+
+```bash
+ANALYZE=true yarn workspace @safe-global/web build
+```
+
+Look for your feature in the main chunk - if it appears there, you have a bundle leak.
 
 ## Feature Creation Guide
 

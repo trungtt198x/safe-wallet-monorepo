@@ -100,9 +100,11 @@ const checksumValidAddress = (address: string) => {
   return address
 }
 
-// Add network prefix if needed
+// Add network prefix if needed (only for valid addresses)
 const formatAddressWithPrefix = (address: string, networkPrefix?: string): string => {
   if (!address || !networkPrefix) return address
+  // Only add prefix to valid Ethereum addresses, not to invalid inputs or ENS names
+  if (!isValidAddress(address)) return address
   const hasPrefix = !!getNetworkPrefix(address)
   if (!hasPrefix) {
     return addNetworkPrefix(address, networkPrefix)

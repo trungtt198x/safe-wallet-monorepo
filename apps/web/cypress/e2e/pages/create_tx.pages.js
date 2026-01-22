@@ -735,6 +735,11 @@ export function typeRecipientAddress(address) {
   cy.get(recepientInput).clear().type(address).should('have.value', address)
 }
 
+// Type address without value assertion - for ENS names that get resolved automatically
+export function typeRecipientAddressENS(ensName) {
+  cy.get(recepientInput).clear().type(ensName)
+}
+
 export function typeRecipientAddress_(index, address) {
   cy.get(recepientInput_(index)).clear().type(address).should('have.value', address)
 }
@@ -742,7 +747,8 @@ export function typeRecipientAddress_(index, address) {
 export function verifyENSResolves(fullAddress) {
   let split = fullAddress.split(':')
   let noPrefixAddress = split[1]
-  cy.get(recepientInput).should('have.value', noPrefixAddress)
+  // Wait for ENS resolution to complete - the input will show the resolved address
+  cy.get(recepientInput, { timeout: 15000 }).should('have.value', noPrefixAddress)
 }
 
 export function verifyRandomStringAddress(randomAddressString) {

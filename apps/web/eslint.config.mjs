@@ -1,6 +1,7 @@
 import unusedImports from 'eslint-plugin-unused-imports'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import noOnlyTests from 'eslint-plugin-no-only-tests'
+import boundaries from 'eslint-plugin-boundaries'
 import tsParser from '@typescript-eslint/parser'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -32,6 +33,15 @@ export default [
       'unused-imports': unusedImports,
       '@typescript-eslint': typescriptEslint,
       'no-only-tests': noOnlyTests,
+      boundaries: boundaries,
+    },
+
+    settings: {
+      'boundaries/elements': [
+        { type: 'feature', pattern: 'src/features/*', capture: ['featureName'] },
+        { type: 'shared', pattern: 'src/*', mode: 'folder' },
+      ],
+      'boundaries/ignore': ['**/*.test.ts', '**/*.test.tsx', '**/*.stories.tsx'],
     },
 
     languageOptions: {
@@ -81,48 +91,57 @@ export default [
       ],
 
       // Feature architecture: Prevent importing feature internals from outside the feature
-      // Only allowed imports from features:
+      // Allowed imports:
       //   - @/features/{name} (index.ts - public API)
-      //   - @/features/{name}/contract (type definitions)
       //   - @/features/{name}/types (shared types)
-      //   - @/features/__contracts__ (shared feature infrastructure)
+      //   - @/features/{name}/components (sub-barrel for complex features)
+      //   - @/features/{name}/hooks (sub-barrel for complex features)
+      //   - @/features/{name}/services (sub-barrel for complex features)
+      //   - @/features/{name}/store (sub-barrel for complex features)
+      // Blocked: Anything inside those folders like @/features/*/components/Foo
       // Set to 'warn' during migration phase - will be changed to 'error' after all features are migrated
       'no-restricted-imports': [
         'warn',
         {
           patterns: [
             {
-              // Block internal feature folders
+              // Block internal imports (anything inside sub-folders)
+              // Allows: @/features/foo/components (sub-barrel index.ts)
+              // Blocks: @/features/foo/components/Bar (individual component)
               group: [
                 '@/features/*/components/*',
                 '@/features/*/hooks/*',
                 '@/features/*/services/*',
                 '@/features/*/store/*',
-                '@/features/*/__internal__/*',
               ],
               message:
-                'Import from feature index file only (e.g., @/features/walletconnect). Use @/features/{name}/contract for types.',
+                'Import from feature barrel or sub-barrel only (e.g., @/features/foo or @/features/foo/components).',
             },
+          ],
+        },
+      ],
+
+      // Feature boundaries: Features must use relative imports internally
+      // This ensures barrel exports are only used by external consumers,
+      // which allows tools like knip to detect truly unused barrel exports.
+      'boundaries/element-types': [
+        'warn',
+        {
+          default: 'allow',
+          rules: [
             {
-              // Block internal file imports (handle.ts is internal, only index.ts is public)
-              group: ['@/features/*/handle'],
-              message: 'Import from feature index file only. The handle is internal - use @/features/{name} instead.',
-            },
-            {
-              // Same for relative imports
-              group: [
-                '../features/*/components/*',
-                '../features/*/hooks/*',
-                '../features/*/services/*',
-                '../features/*/store/*',
-                '../features/*/__internal__/*',
-                '../../features/*/components/*',
-                '../../features/*/hooks/*',
-                '../../features/*/services/*',
-                '../../features/*/store/*',
-                '../../features/*/__internal__/*',
+              // Features can import from other features, but only through barrels
+              from: ['feature'],
+              allow: [
+                // Allow importing from other features' public APIs
+                ['feature', { featureName: '!${from.featureName}' }],
               ],
-              message: 'Import from feature index file only. Internal feature imports are not allowed.',
+              disallow: [
+                // Disallow importing from same feature via absolute paths (use relative instead)
+                ['feature', { featureName: '${from.featureName}' }],
+              ],
+              message:
+                'Use relative imports within a feature. Absolute @/features/* imports are for cross-feature only.',
             },
           ],
         },

@@ -6,56 +6,44 @@
  * ## Usage
  *
  * ```typescript
- * import { WalletConnectFeature } from '@/features/walletconnect'
- * import { useLoadFeature } from '@/features/__core__'
+ * import WalletConnectWidget, { useIsWalletConnectEnabled } from '@/features/walletconnect'
  *
  * function MyComponent() {
- *   const walletConnect = useLoadFeature(WalletConnectFeature)
- *   if (!walletConnect) return null
- *   return <walletConnect.components.WalletConnectWidget />
+ *   const isEnabled = useIsWalletConnectEnabled()
+ *   if (!isEnabled) return null
+ *   return <WalletConnectWidget />
  * }
  * ```
- *
- * For backward compatibility, this file also exports:
- * - Feature handle for registration
- * - Contract type for type-safe registry usage
- * - Public types
- * - Some services/stores that are used directly by safe-wallet-provider
  */
+import dynamic from 'next/dynamic'
 
-// Feature handle - primary export for use with useLoadFeature()
-export { walletConnectHandle as WalletConnectFeature } from './handle'
+// Default export: Lazy-loaded WalletConnect widget component
+const WalletConnectWidget = dynamic(() => import('./components/WalletConnectUi'), { ssr: false })
+export default WalletConnectWidget
 
-// Also export with original name for backward compatibility
-export { walletConnectHandle } from './handle'
-
-// Contract type (for type-safe registry lookup)
-export type { WalletConnectContract } from './contract'
+// Feature flag hook (REQUIRED for feature architecture)
+export { useIsWalletConnectEnabled } from './hooks/useIsWalletConnectEnabled'
 
 // Public types
 export type { WalletConnectContextType, WcChainSwitchRequest, WcAutoApproveProps } from './types'
 export { WCLoadingState } from './types'
 
-// --- Backward compatibility exports ---
-// These are exported for existing consumers during migration.
-// New code should use the feature registry instead.
-
 // Stores (used by safe-wallet-provider)
 export { wcPopupStore, openWalletConnect, wcChainSwitchStore } from './store'
 
-// Services (used by safe-wallet-provider, AppFrame)
+// Services - lightweight utils only (heavy services must be imported from sub-barrel)
 export { isSafePassApp } from './services/utils'
-export { default as walletConnectInstance } from './services/walletConnectInstance'
+// NOTE: walletConnectInstance is NOT exported here to avoid bundling 600KB WalletConnect SDK
+// Import from '@/features/walletconnect/services' if you need the instance
 
 // Hooks (used by wc.tsx page)
 export { WC_URI_SEARCH_PARAM, useWalletConnectSearchParamUri } from './hooks/useWalletConnectSearchParamUri'
-export { useIsWalletConnectEnabled } from './hooks/useIsWalletConnectEnabled'
 export { default as useWcUri } from './hooks/useWcUri'
 
-// Components (used by Header)
-export { WalletConnectContext, WalletConnectProvider } from './components/WalletConnectContext'
+// NOTE: WalletConnectContext/WalletConnectProvider are NOT exported - they're internal to the feature
+// and import heavy dependencies. They're only used by the lazy-loaded WalletConnectUi component.
 
-// Constants (exported for completeness)
+// Constants
 export {
   SAFE_COMPATIBLE_METHODS,
   SAFE_COMPATIBLE_EVENTS,
@@ -65,7 +53,3 @@ export {
   WarnedBridges,
   WarnedBridgeNames,
 } from './constants'
-
-// Default export: WalletConnect widget component
-// Note: For lazy loading, use useLoadFeature(WalletConnectFeature) instead
-export { default as default } from './components/WalletConnectUi'

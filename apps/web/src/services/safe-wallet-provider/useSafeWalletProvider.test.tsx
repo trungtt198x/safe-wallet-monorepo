@@ -18,7 +18,8 @@ import * as chainHooks from '@/hooks/useChains'
 import { chainBuilder } from '@/tests/builders/chains'
 import useAllSafes from '@/features/myAccounts/hooks/useAllSafes'
 import { useGetHref } from '@/features/myAccounts/hooks/useGetHref'
-import { wcPopupStore, wcChainSwitchStore, walletConnectInstance } from '@/features/walletconnect'
+import { wcPopupStore, wcChainSwitchStore } from '@/features/walletconnect'
+import { walletConnectInstance } from '@/features/walletconnect/services'
 import type { TransactionDetails } from '@safe-global/store/gateway/AUTO_GENERATED/transactions'
 
 const createMockStore = <T,>(initialValue: T) => {
@@ -51,6 +52,12 @@ jest.mock('@/features/walletconnect', () => {
     get wcChainSwitchStore() {
       return mockWcChainSwitchStore
     },
+  }
+})
+
+jest.mock('@/features/walletconnect/services', () => {
+  return {
+    __esModule: true,
     get walletConnectInstance() {
       return mockWalletConnectInstance
     },

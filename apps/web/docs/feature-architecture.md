@@ -1,629 +1,288 @@
-# Feature Architecture Standard
+# Feature Architecture
 
-This document defines the standard architecture pattern for features in the Safe{Wallet} web application. All features must follow this pattern to ensure consistency, maintainability, and proper isolation.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Standard Folder Structure](#standard-folder-structure)
-- [Feature Flag Pattern](#feature-flag-pattern)
-- [Lazy Loading Pattern](#lazy-loading-pattern)
-- [Public API Barrel File](#public-api-barrel-file)
-- [Cross-Feature Communication](#cross-feature-communication)
-- [Common Mistakes & Anti-Patterns](#common-mistakes--anti-patterns)
-- [Feature Creation Guide](#feature-creation-guide)
-- [Migration Guide](#migration-guide)
-- [ESLint Enforcement](#eslint-enforcement)
-- [Bundle Verification](#bundle-verification)
-- [Checklist](#checklist)
+This document defines the architecture pattern for domain features in the Safe{Wallet} web application.
 
 ## Overview
 
 A **feature** is a self-contained domain module that:
 
-- Resides in its own directory under `src/features/{feature-name}/`
-- Has a clear public API exposed through an `index.ts` barrel file
-- Is associated with a feature flag from the `FEATURES` enum
-- Is lazy-loaded to enable code splitting
-- Has no side effects when its feature flag is disabled
+- Resides in `src/features/{feature-name}/`
+- Exposes a public API through a barrel file (`index.ts`)
+- Is gated by a feature flag
+- Is lazy-loaded for bundle optimization
 
-### Key Principles
-
-1. **Isolation**: Features don't import each other's internals
-2. **Lazy Loading**: Features are loaded on-demand, not in the initial bundle
-3. **Feature Flags**: Features can be disabled per chain without loading their code
-4. **Type Safety**: All feature interfaces are strongly typed
-
-## Standard Folder Structure
-
-Every feature MUST have this structure:
+## Directory Structure
 
 ```
 src/features/{feature-name}/
-├── index.ts              # Public API (barrel file) - REQUIRED
-├── types.ts              # TypeScript interfaces - REQUIRED
-├── constants.ts          # Feature constants - REQUIRED
+├── index.ts                      # Public API (required)
+├── types.ts                      # Shared types
+├── constants.ts                  # Constants
 ├── components/
-│   ├── index.ts          # Component exports - REQUIRED
 │   └── {ComponentName}/
-│       ├── index.tsx     # Component implementation
-│       └── index.test.tsx
+│       └── index.tsx
 ├── hooks/
-│   ├── index.ts          # Hook exports - REQUIRED
-│   ├── useIs{FeatureName}Enabled.ts - REQUIRED
+│   ├── useIs{Feature}Enabled.ts  # Feature flag hook (required)
 │   └── use{HookName}.ts
 ├── services/
-│   ├── index.ts          # Service exports - REQUIRED if services exist
 │   └── {ServiceName}.ts
-└── store/                # Redux slice - OPTIONAL
-    ├── index.ts          # Store exports
+└── store/
     └── {sliceName}Slice.ts
 ```
 
-### File Purposes
+## Public API Design
 
-| File                             | Purpose                                                         | Required          |
-| -------------------------------- | --------------------------------------------------------------- | ----------------- |
-| `index.ts`                       | Public API barrel - only exports meant for external consumption | Yes               |
-| `types.ts`                       | All TypeScript interfaces, types, and enums for the feature     | Yes               |
-| `constants.ts`                   | Feature-specific constants, magic strings, configuration        | Yes               |
-| `components/index.ts`            | Re-exports public components                                    | Yes               |
-| `hooks/index.ts`                 | Re-exports public hooks                                         | Yes               |
-| `hooks/useIs{Feature}Enabled.ts` | Feature flag check hook                                         | Yes               |
-| `services/index.ts`              | Re-exports public services                                      | If services exist |
-| `store/index.ts`                 | Re-exports Redux slice and selectors                            | If store exists   |
+### The Barrel File (`index.ts`)
 
-## Feature Flag Pattern
-
-Every feature MUST have a feature flag hook that checks if the feature is enabled.
-
-### Required Hook
+The barrel file defines what external consumers can import. **Only export what is actually needed by code outside the feature.**
 
 ```typescript
-// hooks/useIsWalletConnectEnabled.ts
+import dynamic from 'next/dynamic'
+
+// Lazy-loaded component (code-split, loaded on demand)
+const FeatureWidget = dynamic(() => import('./components/FeatureWidget'), { ssr: false })
+export default FeatureWidget
+
+// Feature flag hook
+export { useIsFeatureEnabled } from './hooks/useIsFeatureEnabled'
+
+// Types (zero runtime cost)
+export type { FeatureConfig } from './types'
+
+// Only export utilities/stores that ARE used externally
+export { featureStore } from './store'
+```
+
+### What NOT to Export
+
+Do not export items that are only used within the feature:
+
+```typescript
+// ❌ BAD: Internal-only items exported from barrel
+export { InternalContext } from './components/InternalContext' // Only used inside feature
+export { heavyServiceInstance } from './services/heavyService' // Only used inside feature
+export { internalHelper } from './utils' // Only used inside feature
+```
+
+**Why this matters:** When you import _anything_ from a barrel, the bundler evaluates _all_ exports. If you export a heavy service that's only used internally, it ends up in the main bundle—even if external code only imports a small utility from that barrel.
+
+**Real example:** Exporting `walletConnectInstance` from the walletconnect barrel added 600KB to the initial bundle, even though no external code imported it. The service was only used internally by components that were already lazy-loaded via `dynamic()`.
+
+## Import Rules
+
+### External Consumers
+
+External code imports from the barrel only:
+
+```typescript
+// ✓ Main barrel
+import Feature, { useIsFeatureEnabled } from '@/features/my-feature'
+
+// ✓ Types
+import type { FeatureConfig } from '@/features/my-feature/types'
+
+// ✗ Internal paths are blocked by ESLint
+import { InternalComponent } from '@/features/my-feature/components/InternalComponent'
+```
+
+### Internal Code
+
+Code within a feature uses **relative imports**:
+
+```typescript
+// Inside src/features/my-feature/components/Widget.tsx
+
+// ✓ Relative imports
+import { FeatureContext } from '../FeatureContext'
+import { helperFn } from '../../services/utils'
+
+// ✗ Absolute feature paths are blocked by ESLint
+import { something } from '@/features/my-feature'
+```
+
+This separation ensures:
+
+1. Barrel exports are only consumed by external code
+2. Tools like Knip can detect unused barrel exports
+3. Internal refactoring doesn't affect external consumers
+
+## Feature Flags
+
+Every feature requires a flag hook:
+
+```typescript
+// hooks/useIsFeatureEnabled.ts
 import { useHasFeature } from '@/hooks/useChains'
 import { FEATURES } from '@safe-global/utils/utils/chains'
 
-export function useIsWalletConnectEnabled(): boolean | undefined {
-  return useHasFeature(FEATURES.NATIVE_WALLETCONNECT)
+export const useIsFeatureEnabled = (): boolean | undefined => {
+  return useHasFeature(FEATURES.MY_FEATURE)
 }
 ```
 
-### Return Values
+Return values:
 
-| Value       | Meaning                               | Behavior       |
-| ----------- | ------------------------------------- | -------------- |
-| `undefined` | Loading (chain config not yet loaded) | Render nothing |
-| `false`     | Feature disabled for current chain    | Render nothing |
-| `true`      | Feature enabled                       | Render feature |
-
-### Component Usage
-
-```typescript
-// components/MyFeatureWidget/index.tsx
-import type { ReactElement } from 'react'
-import { useIsMyFeatureEnabled } from '../../hooks'
-
-export function MyFeatureWidget(): ReactElement | null {
-  const isEnabled = useIsMyFeatureEnabled()
-
-  // CRITICAL: Return null if not enabled
-  if (isEnabled !== true) return null
-
-  return (
-    <div data-testid="my-feature-widget">
-      {/* Feature content */}
-    </div>
-  )
-}
-```
-
-## Lazy Loading Pattern
-
-Every feature MUST be lazy-loaded using Next.js `dynamic()` imports.
-
-### Basic Pattern
-
-```typescript
-// index.ts
-import dynamic from 'next/dynamic'
-
-const MyFeatureWidget = dynamic(
-  () => import('./components/MyFeatureWidget').then((mod) => ({ default: mod.MyFeatureWidget })),
-  { ssr: false },
-)
-
-export default MyFeatureWidget
-```
-
-### When to Use `{ ssr: false }`
-
-Use `{ ssr: false }` when the feature:
-
-- Uses browser-only APIs (WalletConnect, Web3, localStorage, etc.)
-- Depends on window or document objects
-- Uses libraries that don't support SSR
-
-### Consumer Usage
-
-```typescript
-// pages/my-page.tsx
-import dynamic from 'next/dynamic'
-import { useIsMyFeatureEnabled } from '@/features/my-feature'
-
-const MyFeature = dynamic(() => import('@/features/my-feature'), { ssr: false })
-
-export default function MyPage() {
-  const isEnabled = useIsMyFeatureEnabled()
-
-  return (
-    <main>
-      {isEnabled && <MyFeature />}
-    </main>
-  )
-}
-```
-
-## Public API Barrel File
-
-The `index.ts` file is the feature's public API. It defines what the feature exposes to the rest of the application.
-
-### Complete Example
-
-```typescript
-// src/features/my-feature/index.ts
-import dynamic from 'next/dynamic'
-
-// Types (tree-shakeable, always safe to export)
-export type { MyFeatureConfig, MyFeatureState, MyFeatureEvent } from './types'
-
-// Feature flag hook (REQUIRED)
-export { useIsMyFeatureEnabled } from './hooks'
-
-// Store selectors (if feature has Redux state)
-export { selectMyFeatureState, selectMyFeatureStatus } from './store'
-
-// Constants (if needed externally)
-export { MY_FEATURE_EVENTS } from './constants'
-
-// Lazy-loaded component (default export)
-const MyFeatureWidget = dynamic(() => import('./components/MyFeatureWidget'), { ssr: false })
-
-export default MyFeatureWidget
-```
-
-### Allowed Exports
-
-| Export Type       | Example                          | Notes                      |
-| ----------------- | -------------------------------- | -------------------------- |
-| Default component | `export default FeatureWidget`   | Lazy-loaded entry point    |
-| Types             | `export type { FeatureConfig }`  | Always tree-shakeable      |
-| Feature flag hook | `export { useIsFeatureEnabled }` | Required                   |
-| Store selectors   | `export { selectFeatureState }`  | If feature has Redux state |
-| Constants         | `export { FEATURE_CONSTANT }`    | If needed externally       |
-
-### Forbidden Exports
-
-- Internal components (anything in component subdirectories)
-- Internal hooks (except the feature flag hook)
-- Service implementations
-- Internal utilities
+- `undefined` — Loading state, render nothing
+- `false` — Feature disabled, render nothing
+- `true` — Feature enabled, render feature
 
 ## Cross-Feature Communication
 
-Features must NOT import each other's internals. Use these patterns instead:
+| Need                     | Solution                         |
+| ------------------------ | -------------------------------- |
+| Share data               | Redux store                      |
+| Share types              | Import from `@/features/x/types` |
+| Use feature capabilities | Import from feature barrel       |
 
-### Via Redux Store
+## Circular Dependencies
 
-```typescript
-// Feature A dispatches action
-dispatch(someAction(payload))
+Circular dependencies occur when module A imports from module B, and module B imports from module A (directly or indirectly). They are a **code smell** indicating poor module boundaries.
 
-// Feature B selects state
-const state = useSelector(selectSomeState)
+### Symptoms
+
+- Jest fails with "cannot access before initialization" errors
+- Webpack warnings about circular imports
+- Undefined values at runtime
+
+### Common Causes in Features
+
+1. **Barrel imports internal modules that import the barrel**
+
+   ```typescript
+   // index.ts exports ComponentA
+   // ComponentA imports something else from index.ts
+   ```
+
+2. **Services and components with bidirectional dependencies**
+   ```typescript
+   // Service imports a component's types
+   // Component imports the service
+   ```
+
+### Solutions
+
+**Preferred: Restructure to eliminate the cycle**
+
+- Move shared types to a separate `types.ts` file
+- Extract shared utilities to a dedicated module
+- Reconsider module boundaries
+
+**Workaround: Sub-barrels**
+
+If restructuring is impractical, split exports across multiple barrel files:
+
 ```
-
-### Via Defined Service Interfaces
-
-```typescript
-// Shared service interface in src/services/
-export interface FeatureCommunicationService {
-  notify(event: string, data: unknown): void
-  subscribe(event: string, handler: (data: unknown) => void): () => void
-}
-```
-
-### Shared Code Location
-
-| Code Type                            | Location          |
-| ------------------------------------ | ----------------- |
-| Utilities used by multiple features  | `src/utils/`      |
-| Hooks used by multiple features      | `src/hooks/`      |
-| Components used by multiple features | `src/components/` |
-
-## Common Mistakes & Anti-Patterns
-
-### ❌ Importing Internal Files
-
-```typescript
-// WRONG - imports feature internals
-import { WcInput } from '@/features/walletconnect/components/WcInput'
-import { useWcUri } from '@/features/walletconnect/hooks/useWcUri'
-```
-
-```typescript
-// CORRECT - imports from feature index only
-import WalletConnect, { useIsWalletConnectEnabled } from '@/features/walletconnect'
-```
-
-### ❌ Missing Feature Flag Check
-
-```typescript
-// WRONG - no feature flag check, always renders
-export function MyFeature() {
-  return <div>Always renders</div>
-}
-```
-
-```typescript
-// CORRECT - checks feature flag
-export function MyFeature() {
-  const isEnabled = useIsMyFeatureEnabled()
-  if (!isEnabled) return null
-  return <div>Conditionally renders</div>
-}
-```
-
-### ❌ Static Import of Feature
-
-```typescript
-// WRONG - static import bundles feature in main chunk
-import MyFeature from '@/features/my-feature/components/MyFeatureWidget'
+src/features/{feature-name}/
+├── index.ts              # Main exports (no cycles)
+├── components/
+│   └── index.ts          # Component exports (breaks cycle)
+├── services/
+│   └── index.ts          # Service exports (breaks cycle)
 ```
 
 ```typescript
-// CORRECT - dynamic import enables code splitting
-const MyFeature = dynamic(() => import('@/features/my-feature'), { ssr: false })
+// External code imports from sub-barrel to avoid cycle
+import { ComponentA } from '@/features/my-feature/components'
 ```
 
-### ❌ Side Effects When Disabled
+**Note:** Sub-barrels are a workaround, not a best practice. They add complexity and can cause the same bundling issues as the main barrel if misused. Prefer restructuring when possible.
 
-```typescript
-// WRONG - API call happens even when disabled
-export function MyFeature() {
-  const isEnabled = useIsMyFeatureEnabled()
-  const { data } = useQuery('my-feature-data') // Always fetches!
+## Automated Enforcement
 
-  if (!isEnabled) return null
-  return <div>{data}</div>
-}
-```
+The architecture is enforced by tooling, not discipline.
 
-```typescript
-// CORRECT - no side effects when disabled
-export function MyFeature() {
-  const isEnabled = useIsMyFeatureEnabled()
+### ESLint: External Import Boundaries
 
-  if (!isEnabled) return null
-
-  // Data fetching only happens when enabled
-  return <MyFeatureContent />
-}
-
-function MyFeatureContent() {
-  const { data } = useQuery('my-feature-data')
-  return <div>{data}</div>
-}
-```
-
-### ❌ Store Inside Component Directory
-
-```typescript
-// WRONG - store logic mixed with UI
-components / MyComponent / index.tsx
-store.ts // Should be in feature's store/ directory
-```
-
-```typescript
-// CORRECT - store in dedicated directory
-store / index.ts
-mySlice.ts
-components / MyComponent / index.tsx
-```
-
-## Feature Creation Guide
-
-### Step 1: Create Directory Structure
-
-```bash
-mkdir -p src/features/{feature-name}/{components,hooks,services,store}
-```
-
-### Step 2: Create Required Files
-
-```bash
-touch src/features/{feature-name}/index.ts
-touch src/features/{feature-name}/types.ts
-touch src/features/{feature-name}/constants.ts
-touch src/features/{feature-name}/components/index.ts
-touch src/features/{feature-name}/hooks/index.ts
-touch src/features/{feature-name}/hooks/useIs{FeatureName}Enabled.ts
-```
-
-### Step 3: Add Feature Flag (if new)
-
-1. Add to `FEATURES` enum in `packages/utils/src/utils/chains.ts`:
-
-```typescript
-export enum FEATURES {
-  // ... existing features
-  MY_NEW_FEATURE = 'MY_NEW_FEATURE',
-}
-```
-
-2. Configure in CGW API chain configs (coordinate with backend team)
-
-### Step 4: Implement Feature Flag Hook
-
-```typescript
-// hooks/useIsMyFeatureEnabled.ts
-import { useHasFeature } from '@/hooks/useChains'
-import { FEATURES } from '@safe-global/utils/utils/chains'
-
-export function useIsMyFeatureEnabled(): boolean | undefined {
-  return useHasFeature(FEATURES.MY_NEW_FEATURE)
-}
-```
-
-### Step 5: Export Hook from Barrel
-
-```typescript
-// hooks/index.ts
-export { useIsMyFeatureEnabled } from './useIsMyFeatureEnabled'
-```
-
-### Step 6: Create Main Component
-
-```typescript
-// components/MyFeatureWidget/index.tsx
-import type { ReactElement } from 'react'
-import { useIsMyFeatureEnabled } from '../../hooks'
-
-export function MyFeatureWidget(): ReactElement | null {
-  const isEnabled = useIsMyFeatureEnabled()
-
-  if (!isEnabled) return null
-
-  return (
-    <div data-testid="my-feature-widget">
-      {/* Feature content */}
-    </div>
-  )
-}
-```
-
-### Step 7: Export Component from Barrel
-
-```typescript
-// components/index.ts
-export { MyFeatureWidget } from './MyFeatureWidget'
-```
-
-### Step 8: Create Public API
-
-```typescript
-// index.ts
-import dynamic from 'next/dynamic'
-
-export type { MyFeatureConfig } from './types'
-export { useIsMyFeatureEnabled } from './hooks'
-
-const MyFeatureWidget = dynamic(
-  () => import('./components/MyFeatureWidget').then((mod) => ({ default: mod.MyFeatureWidget })),
-  { ssr: false },
-)
-
-export default MyFeatureWidget
-```
-
-## Migration Guide
-
-### Step 1: Assess Current State
-
-Check what's missing against the standard structure:
-
-| Required                         | Check                              |
-| -------------------------------- | ---------------------------------- |
-| `index.ts`                       | Feature root barrel file           |
-| `types.ts`                       | All TypeScript interfaces          |
-| `constants.ts`                   | Feature constants                  |
-| `components/index.ts`            | Component barrel file              |
-| `hooks/index.ts`                 | Hook barrel file                   |
-| `hooks/useIs{Feature}Enabled.ts` | Feature flag hook                  |
-| `services/index.ts`              | Service barrel (if services exist) |
-| `store/index.ts`                 | Store barrel (if store exists)     |
-
-### Step 2: Create Missing Files
-
-Add barrel files and required hooks.
-
-### Step 3: Extract Types
-
-Move all interfaces to `types.ts`.
-
-### Step 4: Relocate Store
-
-If store is inside component directory, move to feature's `store/` directory.
-
-### Step 5: Update External Imports
-
-Find all imports to feature internals and update to use public API.
-
-### Step 6: Verify
-
-```bash
-yarn workspace @safe-global/web lint
-yarn workspace @safe-global/web type-check
-yarn workspace @safe-global/web test
-```
-
-## ESLint Enforcement
-
-The codebase uses ESLint's `no-restricted-imports` rule to enforce feature architecture compliance.
-
-### Current Configuration
+Blocks imports to internal feature paths:
 
 ```javascript
-// apps/web/eslint.config.mjs
-'no-restricted-imports': [
-  'warn', // Will change to 'error' after migration
-  {
-    patterns: [
-      {
-        group: [
-          '@/features/*/components/*',
-          '@/features/*/hooks/*',
-          '@/features/*/services/*',
-          '@/features/*/store/*',
-        ],
-        message: 'Import from feature index file only.',
-      },
+// eslint.config.mjs
+'no-restricted-imports': ['warn', {
+  patterns: [{
+    group: [
+      '@/features/*/components/*',
+      '@/features/*/hooks/*',
+      '@/features/*/services/*',
+      '@/features/*/store/*',
     ],
-  },
-]
+    message: 'Import from feature barrel only.',
+  }],
+}]
 ```
 
-### Migration Strategy
+### ESLint: Internal Relative Imports
 
-1. **During Migration**: Rule is set to `'warn'` - violations show warnings but don't fail builds
-2. **After Migration**: Rule changes to `'error'` - violations fail builds
+Forces features to use relative imports internally (via `eslint-plugin-boundaries`):
 
-## Bundle Verification
-
-Verify that features are properly code-split:
-
-### Build and Analyze
-
-```bash
-yarn workspace @safe-global/web build
+```javascript
+// eslint.config.mjs
+'boundaries/element-types': ['warn', {
+  rules: [{
+    from: ['feature'],
+    disallow: [['feature', { featureName: '${from.featureName}' }]],
+    message: 'Use relative imports within a feature.',
+  }],
+}]
 ```
 
-### Check Chunks
+### Knip: Unused Export Detection
 
-Look in `.next/static/chunks/` for feature-specific chunks:
+Detects barrel exports with no external consumers:
 
 ```bash
-ls -la apps/web/.next/static/chunks/ | grep -i feature
+yarn knip:exports
 ```
 
-Each feature should have its own chunk file, indicating proper code splitting.
+Since internal code uses relative imports, any barrel export without external consumers is flagged as unused and should be removed.
 
-### Bundle Analysis (Optional)
+## Enforcement Flow
 
-For detailed analysis, use `@next/bundle-analyzer`:
+```
+Developer adds export to barrel
+            │
+            ▼
+   Is it used externally?
+            │
+      ┌─────┴─────┐
+      │           │
+     Yes          No
+      │           │
+      ▼           ▼
+   Correct    ESLint enforces
+   export     relative imports
+                   │
+                   ▼
+              Knip flags as
+              unused export
+                   │
+                   ▼
+              Remove from barrel
+```
 
-```bash
-ANALYZE=true yarn workspace @safe-global/web build
+## Testing
+
+Mock features at the barrel level:
+
+```typescript
+jest.mock('@/features/my-feature', () => ({
+  __esModule: true,
+  default: () => <div>MockedFeature</div>,
+  useIsFeatureEnabled: jest.fn(),
+}))
 ```
 
 ## Checklist
 
-Use this checklist when creating or reviewing features:
+### New Feature
 
-### Structure
+- [ ] Create `index.ts` with lazy-loaded default export
+- [ ] Create `useIs{Feature}Enabled` hook
+- [ ] Add feature flag to `FEATURES` enum
+- [ ] Export only items that are used externally
 
-- [ ] Feature directory uses kebab-case
-- [ ] `index.ts` exists at feature root
-- [ ] `types.ts` exists with all interfaces
-- [ ] `constants.ts` exists
-- [ ] `components/index.ts` exists
-- [ ] `hooks/index.ts` exists
-- [ ] `services/index.ts` exists (if services present)
-- [ ] `store/index.ts` exists (if store present)
+### Code Review
 
-### Feature Flag
-
-- [ ] Feature has entry in `FEATURES` enum
-- [ ] `useIs{FeatureName}Enabled` hook exists
-- [ ] Main component checks feature flag
-- [ ] Component renders `null` when disabled
-
-### Lazy Loading
-
-- [ ] Main component uses `dynamic()` import
-- [ ] `{ ssr: false }` set for browser-only features
-- [ ] No static imports from outside the feature
-
-### Isolation
-
-- [ ] No external imports to feature internals
-- [ ] Shared code extracted to `src/utils/` or `src/hooks/`
-- [ ] Cross-feature communication via Redux or services
-
-### Verification
-
-- [ ] `yarn lint` passes (no restricted import warnings)
-- [ ] `yarn type-check` passes
-- [ ] `yarn test` passes
-- [ ] `yarn build` succeeds
-- [ ] Feature chunk exists in build output
-
-## TypeScript Interface Examples
-
-### Feature Types File
-
-```typescript
-// types.ts
-
-/**
- * Configuration for the feature
- */
-export interface MyFeatureConfig {
-  enabled: boolean
-  options?: MyFeatureOptions
-}
-
-/**
- * Feature options
- */
-export interface MyFeatureOptions {
-  mode: 'basic' | 'advanced'
-  timeout?: number
-}
-
-/**
- * Feature state (if using Redux)
- */
-export interface MyFeatureState {
-  status: 'idle' | 'loading' | 'success' | 'error'
-  data: MyFeatureData | null
-  error: string | null
-}
-
-/**
- * Feature data structure
- */
-export interface MyFeatureData {
-  id: string
-  name: string
-  createdAt: Date
-}
-
-/**
- * Feature event types
- */
-export type MyFeatureEventType = 'initialized' | 'updated' | 'completed' | 'error'
-
-/**
- * Feature event payload
- */
-export interface MyFeatureEvent {
-  type: MyFeatureEventType
-  payload?: unknown
-  timestamp: number
-}
-```
-
-## Reference Implementation
-
-See `src/features/walletconnect/` for a complete reference implementation of this architecture.
+- [ ] Barrel exports only externally-used items
+- [ ] Internal code uses relative imports
+- [ ] No circular dependencies (or documented workaround)
+- [ ] No unused barrel exports (`yarn knip:exports`)

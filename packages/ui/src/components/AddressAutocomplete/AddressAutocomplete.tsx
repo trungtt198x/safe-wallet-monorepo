@@ -1,4 +1,4 @@
-import { ReactElement, useMemo, SyntheticEvent, useCallback, useState, useEffect } from 'react'
+import { ReactElement, useMemo, SyntheticEvent, useCallback, useState, useEffect, useRef } from 'react'
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -139,6 +139,9 @@ const AddressAutocomplete = ({
   const [validationError, setValidationError] = useState<string | undefined>(undefined)
   const [isValidating, setIsValidating] = useState(false)
 
+  // Abort controller ref to cancel in-flight ENS resolution requests
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   // Custom filter that accounts for network prefix
   const filterOptions = useMemo(() => {
     return createFilterOptions<AddressBookEntry>({
@@ -192,27 +195,47 @@ const AddressAutocomplete = ({
     return label
   }, [label, selectedContact])
 
-  // Handle ENS resolution
+  // Handle ENS resolution with abort controller to prevent race conditions
   const resolveEnsName = useCallback(
     async (ensName: string) => {
       if (!resolveAddress || !isValidEnsName(ensName)) return
 
+      // Cancel any previous in-flight ENS request
+      abortControllerRef.current?.abort()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
       setIsResolvingEns(true)
       try {
         const resolvedAddress = await resolveAddress(ensName)
+
+        // Check if this request was aborted (newer request started)
+        if (controller.signal.aborted) return
+
         if (resolvedAddress && resolvedAddress !== ensName) {
           const checksummed = checksumValidAddress(resolvedAddress)
           onChange(checksummed)
           setInputValue(formatAddressWithPrefix(checksummed, networkPrefix))
         }
-      } catch {
-        // ENS resolution failed, keep the original value
+      } catch (e) {
+        // Ignore abort errors, keep original value for other errors
+        if (e instanceof Error && e.name === 'AbortError') return
       } finally {
-        setIsResolvingEns(false)
+        // Only update loading state if this request wasn't aborted
+        if (!controller.signal.aborted) {
+          setIsResolvingEns(false)
+        }
       }
     },
     [resolveAddress, onChange, networkPrefix],
   )
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+    }
+  }, [])
 
   // Process input value and update form state
   const processInputValue = useCallback(

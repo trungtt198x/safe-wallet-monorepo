@@ -8,7 +8,7 @@ import EntryDialog from '@/components/address-book/EntryDialog'
 import css from './styles.module.css'
 import inputCss from '@/styles/inputs.module.css'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
-import { isValidAddress } from '@safe-global/utils/utils/validation'
+import { validateAddress } from '@safe-global/utils/utils/validation'
 import { useMergedAddressBooks } from '@/hooks/useAllAddressBooks'
 import { useCurrentChain } from '@/hooks/useChains'
 import { useWeb3ReadOnly } from '@/hooks/wallets/web3'
@@ -86,10 +86,11 @@ const AddressBookInput = ({
         control={control}
         rules={{
           validate: {
-            // Address format validation
+            // Address format and checksum validation
             format: (value: string) => {
               if (!value) return true // Empty is handled by required
-              return isValidAddress(value) || 'Invalid address format'
+              const error = validateAddress(value)
+              return error || true // Return error message or true for valid
             },
             // Custom validation from props
             ...(validate && { custom: validate }),

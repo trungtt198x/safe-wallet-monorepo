@@ -4,11 +4,14 @@ import { safeFormatUnits, safeParseUnits } from '@safe-global/utils/utils/format
 export const validateAddress = (address: string) => {
   const ADDRESS_RE = /^0x[0-9a-f]{40}$/i
 
-  if (!ADDRESS_RE.test(address)) {
+  // Normalize the prefix to lowercase for validation
+  const normalizedAddress = address.startsWith('0X') ? '0x' + address.slice(2) : address
+
+  if (!ADDRESS_RE.test(normalizedAddress)) {
     return 'Invalid address format'
   }
 
-  if (!isChecksummedAddress(address)) {
+  if (!isChecksummedAddress(normalizedAddress)) {
     return 'Invalid address checksum'
   }
 }

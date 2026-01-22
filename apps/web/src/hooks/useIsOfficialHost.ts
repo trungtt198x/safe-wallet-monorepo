@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { IPFS_HOSTS, IS_OFFICIAL_HOST, OFFICIAL_HOSTS } from '@/config/constants'
 import { APP_VERSION } from '@/config/version'
 import useAsync from '@safe-global/utils/hooks/useAsync'
@@ -25,15 +25,26 @@ function isIpfs() {
 }
 
 export const useIsOfficialHost = (): boolean => {
-  const isOfficialHost = useMemo(
-    () => IS_OFFICIAL_HOST && (typeof window === 'undefined' || OFFICIAL_HOSTS.test(window.location.host)),
-    [],
-  )
+  // Use state to avoid hydration mismatch - start with SSR value
+  const [hasMounted, setHasMounted] = useState(false)
+
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+
+  const isOfficialHost = useMemo(() => {
+    // During SSR and initial client render, use the SSR-safe value
+    if (!hasMounted) {
+      return IS_OFFICIAL_HOST
+    }
+    // After hydration, check the actual host
+    return IS_OFFICIAL_HOST && OFFICIAL_HOSTS.test(window.location.host)
+  }, [hasMounted])
 
   const [isTrustedIpfs = false] = useAsync<boolean>(() => {
-    if (isOfficialHost || !isIpfs()) return
+    if (!hasMounted || isOfficialHost || !isIpfs()) return
     return isOfficialIpfs()
-  }, [isOfficialHost])
+  }, [hasMounted, isOfficialHost])
 
   return isOfficialHost || isTrustedIpfs
 }

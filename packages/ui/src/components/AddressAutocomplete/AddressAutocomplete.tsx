@@ -157,9 +157,9 @@ const AddressAutocomplete = ({
 
   // Sync input value with external value changes
   useEffect(() => {
-    const formatted = formatAddressWithPrefix(checksumValidAddress(value), networkPrefix)
-    setInputValue(formatted)
-  }, [value, networkPrefix])
+    // Don't add network prefix to input display value - keep it clean
+    setInputValue(checksumValidAddress(value))
+  }, [value])
 
   // Find if current value matches an address book entry
   const selectedContact = useMemo(() => {
@@ -217,7 +217,8 @@ const AddressAutocomplete = ({
         if (resolvedAddress && resolvedAddress !== ensName) {
           const checksummed = checksumValidAddress(resolvedAddress)
           onChange(checksummed)
-          setInputValue(formatAddressWithPrefix(checksummed, networkPrefix))
+          // Don't add network prefix to input display value
+          setInputValue(checksummed)
         }
       } catch (e) {
         // Ignore abort errors, keep original value for other errors
@@ -276,7 +277,8 @@ const AddressAutocomplete = ({
 
       // Selected from address book
       onChange(newValue.address)
-      setInputValue(formatAddressWithPrefix(newValue.address, networkPrefix))
+      // Don't add network prefix to input display value
+      setInputValue(newValue.address)
       setOpen(false)
     },
     [onChange, processInputValue, networkPrefix],

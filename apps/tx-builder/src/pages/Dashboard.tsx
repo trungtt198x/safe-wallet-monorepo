@@ -18,7 +18,7 @@ import Text from '../components/Text'
 import Switch from '../components/Switch'
 import { Typography } from '@mui/material'
 import Divider from '../components/Divider'
-import AddressAutocomplete from '../components/forms/fields/AddressAutocomplete'
+import AddressAutocompleteWrapper from '../components/forms/fields/AddressAutocompleteWrapper'
 import Wrapper from '../components/Wrapper'
 
 const Dashboard = (): ReactElement => {
@@ -121,7 +121,7 @@ const Dashboard = (): ReactElement => {
           <StyledDivider />
 
           {/* ABI Address Input */}
-          <AddressAutocomplete
+          <AddressAutocompleteWrapper
             id="address"
             name="address"
             label="Enter Address or ENS Name"

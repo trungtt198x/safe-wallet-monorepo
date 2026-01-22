@@ -1,60 +1,72 @@
-import { type ReactElement, useState, useMemo } from 'react'
+import { type ReactElement, useState, useMemo, useCallback } from 'react'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import { SvgIcon, Typography } from '@mui/material'
-import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete'
-import AddressInput, { type AddressInputProps } from '../AddressInput'
-import EthHashInfo from '../EthHashInfo'
+import { AddressAutocomplete, type AddressBookEntry } from '@safe-global/ui'
+import type { AddressInputProps } from '../AddressInput'
 import InfoIcon from '@/public/images/notifications/info.svg'
 import EntryDialog from '@/components/address-book/EntryDialog'
 import css from './styles.module.css'
 import inputCss from '@/styles/inputs.module.css'
-import { isValidAddress } from '@safe-global/utils/utils/validation'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
+import { isValidAddress } from '@safe-global/utils/utils/validation'
 import { useMergedAddressBooks } from '@/hooks/useAllAddressBooks'
-
-const abFilterOptions = createFilterOptions({
-  stringify: (option: { label: string; name: string }) => option.name + ' ' + option.label,
-})
+import { useCurrentChain } from '@/hooks/useChains'
+import { useWeb3ReadOnly } from '@/hooks/wallets/web3'
+import { resolveName, isDomain } from '@/services/ens'
+import { FEATURES, hasFeature } from '@safe-global/utils/utils/chains'
 
 /**
- *  Temporary component until revamped safe components are done
+ * Address input with address book autocomplete using shared @safe-global/ui component
  */
-const AddressBookInput = ({ name, canAdd, ...props }: AddressInputProps & { canAdd?: boolean }): ReactElement => {
-  const [open, setOpen] = useState(false)
+const AddressBookInput = ({
+  name,
+  canAdd,
+  validate,
+  ...props
+}: AddressInputProps & { canAdd?: boolean }): ReactElement => {
   const [openAddressBook, setOpenAddressBook] = useState<boolean>(false)
   const mergedAddressBook = useMergedAddressBooks()
 
-  const { setValue, control } = useFormContext()
+  const { control, trigger } = useFormContext()
   const addressValue = useWatch({ name, control })
 
-  const allAddressBookEntries = useMemo(
+  const currentChain = useCurrentChain()
+  const ethersProvider = useWeb3ReadOnly()
+
+  const networkPrefix = currentChain?.shortName || ''
+  const isDomainLookupEnabled = !!currentChain && hasFeature(currentChain, FEATURES.DOMAIN_LOOKUP)
+
+  // Convert merged address book to format expected by AddressAutocomplete
+  const addressBook: AddressBookEntry[] = useMemo(
     () =>
       mergedAddressBook.list.map((entry) => ({
-        label: entry.address,
+        address: entry.address,
         name: entry.name,
+        chainId: entry.chainIds[0],
       })),
     [mergedAddressBook],
   )
 
-  const hasVisibleOptions = useMemo(
-    () => !!allAddressBookEntries.filter((entry) => entry.label.includes(addressValue)).length,
-    [allAddressBookEntries, addressValue],
-  )
-
   const isInAddressBook = useMemo(
-    () => allAddressBookEntries.some((entry) => sameAddress(entry.label, addressValue)),
-    [allAddressBookEntries, addressValue],
+    () => addressBook.some((entry) => sameAddress(entry.address, addressValue)),
+    [addressBook, addressValue],
   )
 
-  const customFilterOptions = (options: any, state: any) => {
-    // Don't show suggestions from the address book once a valid address has been entered.
-    if (isValidAddress(addressValue)) return []
-    return abFilterOptions(options, state)
-  }
-
-  const handleOpenAutocomplete = () => {
-    setOpen((value) => !value)
-  }
+  // ENS resolution function
+  const resolveAddress = useCallback(
+    async (nameOrDomain: string): Promise<string | null> => {
+      if (!ethersProvider || !isDomainLookupEnabled || !isDomain(nameOrDomain)) {
+        return null
+      }
+      try {
+        const resolved = await resolveName(ethersProvider, nameOrDomain)
+        return resolved || null
+      } catch {
+        return null
+      }
+    },
+    [ethersProvider, isDomainLookupEnabled],
+  )
 
   const onAddressBookClick = canAdd
     ? () => {
@@ -62,50 +74,55 @@ const AddressBookInput = ({ name, canAdd, ...props }: AddressInputProps & { canA
       }
     : undefined
 
+  const defaultLabel = isDomainLookupEnabled ? 'Recipient address or ENS' : 'Recipient address'
+
+  // Extract data-testid from props for test compatibility, default to 'address-item'
+  const dataTestId = (props as { 'data-testid'?: string })['data-testid'] || 'address-item'
+
   return (
     <>
       <Controller
         name={name}
         control={control}
-        // eslint-disable-next-line
-        render={({ field: { ref, ...field } }) => (
-          <Autocomplete
-            {...field}
-            className={inputCss.input}
-            disableClearable
-            disabled={props.disabled}
-            readOnly={props.InputProps?.readOnly}
-            freeSolo
-            options={allAddressBookEntries}
-            onChange={(_, value) => (typeof value === 'string' ? field.onChange(value) : field.onChange(value.label))}
-            onInputChange={(_, value) => setValue(name, value)}
-            filterOptions={customFilterOptions}
-            componentsProps={{
-              paper: {
-                elevation: 2,
-              },
-            }}
-            renderOption={(props, option) => {
-              const { key, ...rest } = props
-              return (
-                <Typography data-testid="address-item" component="li" variant="body2" {...rest} key={key}>
-                  <EthHashInfo address={option.label} name={option.name} shortAddress={false} copyAddress={false} />
-                </Typography>
-              )
-            }}
-            renderInput={(params) => (
-              <AddressInput
-                data-testid="address-item"
-                {...params}
-                {...props}
-                focused={props.focused || !addressValue}
-                name={name}
-                onOpenListClick={hasVisibleOptions ? handleOpenAutocomplete : undefined}
-                isAutocompleteOpen={open}
-                onAddressBookClick={canAdd && !isInAddressBook ? onAddressBookClick : undefined}
-              />
-            )}
-          />
+        rules={{
+          validate: {
+            // Address format validation
+            format: (value: string) => {
+              if (!value) return true // Empty is handled by required
+              return isValidAddress(value) || 'Invalid address format'
+            },
+            // Custom validation from props
+            ...(validate && { custom: validate }),
+          },
+        }}
+        render={({ field, fieldState }) => (
+          <div data-testid={dataTestId}>
+            <AddressAutocomplete
+              id={`${name}-autocomplete`}
+              name={field.name}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={() => {
+                field.onBlur()
+                // Workaround for react-hook-form caching errors
+                setTimeout(() => trigger(name), 100)
+              }}
+              label={typeof props.label === 'string' ? props.label : defaultLabel}
+              addressBook={addressBook}
+              resolveAddress={resolveAddress}
+              networkPrefix={networkPrefix}
+              disabled={props.disabled}
+              error={fieldState.error?.message}
+              onAddressBookClick={canAdd && !isInAddressBook ? onAddressBookClick : undefined}
+              showErrorsInTheLabel
+              InputLabelProps={{
+                shrink: true,
+              }}
+              InputProps={{
+                className: inputCss.input,
+              }}
+            />
+          </div>
         )}
       />
 

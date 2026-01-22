@@ -75,7 +75,9 @@ describe('<SolidityForm>', () => {
 
     // testAddressMethod is selected by default
     await waitFor(() => {
-      input = screen.getByRole('combobox')
+      // Use getAllByRole and find the contract method selector by its expected value
+      const comboboxes = screen.getAllByRole('combobox')
+      input = comboboxes.find((cb) => cb.getAttribute('value') === 'testAddressValue') || comboboxes[0]
       expect(input).toHaveValue('testAddressValue')
     })
 

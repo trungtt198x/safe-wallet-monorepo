@@ -1,48 +1,95 @@
 import { ReactElement, useMemo, SyntheticEvent, useCallback, useState, useEffect } from 'react'
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
+import Paper from '@mui/material/Paper'
+import TextField from '@mui/material/TextField'
 import CircularProgress from '@mui/material/CircularProgress'
 import InputAdornment from '@mui/material/InputAdornment'
-import type { AddressBookItem } from '@safe-global/safe-apps-sdk'
-import { useAddressBook } from '../../../store/addressBookContext'
-import TextFieldInput from './TextFieldInput'
-import {
-  isValidAddress,
-  isValidEnsName,
-  checksumAddress,
-  isChecksumAddress,
-  addNetworkPrefix,
-  getAddressWithoutNetworkPrefix,
-  getNetworkPrefix,
-} from '../../../utils/address'
+import IconButton from '@mui/material/IconButton'
+import SvgIcon from '@mui/material/SvgIcon'
+import { styled } from '@mui/material/styles'
+import { getAddress, isAddress, isHexString } from 'ethers'
 
-interface AddressAutocompleteProps {
-  id: string
-  name: string
-  value: string
-  onChange: (value: string) => void
-  label: string
-  error?: string
-  getAddressFromDomain?: (name: string) => Promise<string>
-  networkPrefix?: string
-  onBlur?: () => void
-  showLoadingSpinner?: boolean
-  endAdornment?: React.ReactNode
-}
+import type { AddressAutocompleteProps, AddressBookEntry } from './types'
+import AddressOptionItem from '../AddressOptionItem'
+
+// Save/bookmark icon for address book
+const SaveAddressIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
+  </svg>
+)
 
 const MAX_RESULTS = 10
 
-// Hoisted slotProps to prevent recreation on each render
-const PAPER_SLOT_PROPS = {
-  paper: {
-    sx: {
-      border: '1px solid',
-      borderColor: 'divider',
-      boxShadow: 3,
-      mt: 0.5,
+// Custom Paper component that properly inherits theme
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+  boxShadow: theme.shadows[3],
+  marginTop: theme.spacing(0.5),
+  '& .MuiAutocomplete-listbox': {
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
+  },
+  '& .MuiAutocomplete-option': {
+    '&:hover': {
+      backgroundColor: theme.palette.action.hover,
+    },
+    '&[aria-selected="true"]': {
+      backgroundColor: theme.palette.action.selected,
+    },
+    '&.Mui-focused': {
+      backgroundColor: theme.palette.action.hover,
     },
   },
+}))
+
+// Address utility functions
+const isValidAddress = (address?: string): boolean => {
+  if (address) {
+    return isHexString(address, 20) && isAddress(address)
+  }
+  return false
+}
+
+const isChecksumAddress = (address?: string): boolean => {
+  if (address) {
+    try {
+      return getAddress(address) === address
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
+const checksumAddress = (address: string): string => getAddress(address)
+
+// Based on https://docs.ens.domains/dapp-developer-guide/resolving-names
+const validENSRegex = /[^[\]]+\.[^[\]]/
+const isValidEnsName = (name: string): boolean => validENSRegex.test(name)
+
+const getAddressWithoutNetworkPrefix = (address = ''): string => {
+  const hasPrefix = address.includes(':')
+  if (!hasPrefix) {
+    return address
+  }
+  const [, ...addressWithoutNetworkPrefix] = address.split(':')
+  return addressWithoutNetworkPrefix.join('')
+}
+
+const getNetworkPrefix = (address = ''): string => {
+  const splitAddress = address.split(':')
+  const hasPrefixDefined = splitAddress.length > 1
+  const [prefix] = splitAddress
+  return hasPrefixDefined ? prefix : ''
+}
+
+const addNetworkPrefix = (address: string, prefix: string | undefined): string => {
+  return prefix ? `${prefix}:${address}` : address
 }
 
 // Checksum valid addresses
@@ -69,21 +116,32 @@ const AddressAutocomplete = ({
   value,
   onChange,
   label,
-  error,
-  getAddressFromDomain,
+  addressBook,
+  resolveAddress,
+  isResolvingAddress = false,
   networkPrefix,
-  onBlur,
-  showLoadingSpinner,
+  error,
+  validate,
+  disabled = false,
+  placeholder,
   endAdornment,
+  fullWidth = true,
+  showErrorsInTheLabel = false,
+  renderOption: customRenderOption,
+  onBlur,
+  onAddressBookClick,
+  InputLabelProps,
+  InputProps,
 }: AddressAutocompleteProps): ReactElement => {
-  const { addressBook } = useAddressBook()
   const [inputValue, setInputValue] = useState('')
   const [open, setOpen] = useState(false)
   const [isResolvingEns, setIsResolvingEns] = useState(false)
+  const [validationError, setValidationError] = useState<string | undefined>(undefined)
+  const [isValidating, setIsValidating] = useState(false)
 
   // Custom filter that accounts for network prefix
   const filterOptions = useMemo(() => {
-    return createFilterOptions<AddressBookItem>({
+    return createFilterOptions<AddressBookEntry>({
       stringify: (option) => {
         const prefixedAddress = networkPrefix ? addNetworkPrefix(option.address, networkPrefix) : option.address
         return `${option.name} ${option.address} ${prefixedAddress}`
@@ -104,6 +162,28 @@ const AddressAutocomplete = ({
     return addressBook.find((item) => item.address.toLowerCase() === value.toLowerCase()) || null
   }, [addressBook, value])
 
+  // Run validation when value changes
+  useEffect(() => {
+    if (!validate || !value) {
+      setValidationError(undefined)
+      return
+    }
+
+    const runValidation = async () => {
+      setIsValidating(true)
+      try {
+        const result = await validate(value)
+        setValidationError(result)
+      } catch {
+        setValidationError(undefined)
+      } finally {
+        setIsValidating(false)
+      }
+    }
+
+    runValidation()
+  }, [value, validate])
+
   // Compute the label to display when a contact is selected
   const displayLabel = useMemo(() => {
     if (selectedContact) {
@@ -115,11 +195,11 @@ const AddressAutocomplete = ({
   // Handle ENS resolution
   const resolveEnsName = useCallback(
     async (ensName: string) => {
-      if (!getAddressFromDomain || !isValidEnsName(ensName)) return
+      if (!resolveAddress || !isValidEnsName(ensName)) return
 
       setIsResolvingEns(true)
       try {
-        const resolvedAddress = await getAddressFromDomain(ensName)
+        const resolvedAddress = await resolveAddress(ensName)
         if (resolvedAddress && resolvedAddress !== ensName) {
           const checksummed = checksumValidAddress(resolvedAddress)
           onChange(checksummed)
@@ -131,7 +211,7 @@ const AddressAutocomplete = ({
         setIsResolvingEns(false)
       }
     },
-    [getAddressFromDomain, onChange, networkPrefix],
+    [resolveAddress, onChange, networkPrefix],
   )
 
   // Process input value and update form state
@@ -157,7 +237,7 @@ const AddressAutocomplete = ({
 
   // Handle option selection from dropdown
   const handleChange = useCallback(
-    (_event: SyntheticEvent, newValue: AddressBookItem | string | null) => {
+    (_event: SyntheticEvent, newValue: AddressBookEntry | string | null) => {
       if (newValue === null) {
         onChange('')
         setInputValue('')
@@ -203,21 +283,27 @@ const AddressAutocomplete = ({
   }, [])
 
   // Memoized getOptionLabel to prevent recreation on each render
-  const getOptionLabel = useCallback((option: AddressBookItem | string) => {
+  const getOptionLabel = useCallback((option: AddressBookEntry | string) => {
     if (typeof option === 'string') return option
     return option.address
   }, [])
 
   // Memoized isOptionEqualToValue to prevent recreation on each render
-  const isOptionEqualToValue = useCallback((option: AddressBookItem, val: AddressBookItem | string | null) => {
+  const isOptionEqualToValue = useCallback((option: AddressBookEntry, val: AddressBookEntry | string | null) => {
     if (!val || typeof val === 'string') return false
     return option.address.toLowerCase() === val.address.toLowerCase()
   }, [])
+
+  // Combine external error with internal validation error
+  const displayError = error || validationError
+  const hasError = !!displayError
+  const isLoading = isResolvingEns || isResolvingAddress || isValidating
 
   return (
     <Autocomplete
       id={`${id}-autocomplete`}
       freeSolo
+      disablePortal
       open={open}
       onOpen={handleOpen}
       onClose={handleClose}
@@ -227,41 +313,53 @@ const AddressAutocomplete = ({
       onChange={handleChange}
       onInputChange={handleInputChange}
       filterOptions={filterOptions}
-      slotProps={PAPER_SLOT_PROPS}
+      slots={{ paper: StyledPaper }}
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={isOptionEqualToValue}
+      disabled={disabled}
       renderOption={(props, option) => {
         const { key: _key, ...rest } = props
         return (
           <Box component="li" key={option.address} {...rest}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <Typography variant="body2" fontWeight="bold" noWrap>
-                {option.name}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                {option.address}
-              </Typography>
-            </Box>
+            {customRenderOption ? (
+              customRenderOption(option)
+            ) : (
+              <AddressOptionItem address={option.address} name={option.name} networkPrefix={networkPrefix} />
+            )}
           </Box>
         )
       }}
       renderInput={(params) => (
-        <TextFieldInput
+        <TextField
           {...params}
           id={id}
           name={name}
-          label={displayLabel}
-          error={error}
-          fullWidth
+          label={showErrorsInTheLabel && hasError ? displayError : displayLabel}
+          helperText={!showErrorsInTheLabel && hasError ? displayError : undefined}
+          error={hasError}
+          placeholder={placeholder}
+          fullWidth={fullWidth}
           onBlur={onBlur}
           autoComplete="off"
+          InputLabelProps={{
+            ...params.InputLabelProps,
+            ...InputLabelProps,
+          }}
           InputProps={{
             ...params.InputProps,
+            ...InputProps,
             endAdornment: (
               <>
-                {(isResolvingEns || showLoadingSpinner) && (
+                {isLoading && (
                   <InputAdornment position="end">
-                    <CircularProgress size={16} />
+                    <CircularProgress size={16} aria-label="Loading" />
+                  </InputAdornment>
+                )}
+                {onAddressBookClick && !disabled && isValidAddress(value) && (
+                  <InputAdornment position="end">
+                    <IconButton onClick={onAddressBookClick} size="small" aria-label="Save to address book">
+                      <SvgIcon component={SaveAddressIcon} inheritViewBox fontSize="small" color="primary" />
+                    </IconButton>
                   </InputAdornment>
                 )}
                 {endAdornment}

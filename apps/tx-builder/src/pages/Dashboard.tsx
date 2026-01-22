@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom'
 import styled from 'styled-components'
 import { styled as muiStyled } from '@mui/material/styles'
 import InputAdornment from '@mui/material/InputAdornment'
-import { Grid2 as Grid } from '@mui/material'
+import { Grid2 as Grid, Box, CircularProgress } from '@mui/material'
 import CheckCircle from '@mui/icons-material/CheckCircle'
 import detectProxyTarget from 'evm-proxy-detection'
 
@@ -18,7 +18,7 @@ import Text from '../components/Text'
 import Switch from '../components/Switch'
 import { Typography } from '@mui/material'
 import Divider from '../components/Divider'
-import AddressInput from '../components/forms/fields/AddressInput'
+import AddressAutocomplete from '../components/forms/fields/AddressAutocomplete'
 import Wrapper from '../components/Wrapper'
 
 const Dashboard = (): ReactElement => {
@@ -91,7 +91,13 @@ const Dashboard = (): ReactElement => {
   )
 
   if (!chainInfo) {
-    return <div />
+    return (
+      <Wrapper>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px" aria-busy="true">
+          <CircularProgress aria-label="Loading chain information" />
+        </Box>
+      </Wrapper>
+    )
   }
 
   return (
@@ -115,27 +121,23 @@ const Dashboard = (): ReactElement => {
           <StyledDivider />
 
           {/* ABI Address Input */}
-          <AddressInput
+          <AddressAutocomplete
             id="address"
             name="address"
             label="Enter Address or ENS Name"
-            hiddenLabel={false}
-            address={abiAddress}
-            fullWidth
-            showNetworkPrefix={!!networkPrefix}
+            value={abiAddress}
             networkPrefix={networkPrefix}
             error={isAbiAddressInputFieldValid ? '' : 'The address is not valid'}
             showLoadingSpinner={abiStatus === FETCH_STATUS.LOADING}
-            showErrorsInTheLabel={false}
             getAddressFromDomain={getAddressFromDomain}
-            onChangeAddress={handleAbiAddressInput}
-            InputProps={{
-              endAdornment: contractHasMethods && isValidAddress(abiAddress) && (
+            onChange={handleAbiAddressInput}
+            endAdornment={
+              contractHasMethods && isValidAddress(abiAddress) ? (
                 <InputAdornment position="end">
                   <CheckIconAddressAdornment />
                 </InputAdornment>
-              ),
-            }}
+              ) : undefined
+            }
           />
 
           {/* ABI Warning */}

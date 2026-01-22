@@ -11571,6 +11571,7 @@ __metadata:
     "@types/styled-components": "npm:^5.1.34"
     "@typescript-eslint/eslint-plugin": "npm:^8.31.1"
     "@typescript-eslint/parser": "npm:^8.31.1"
+    "@vitejs/plugin-basic-ssl": "npm:^2.1.4"
     "@vitejs/plugin-react": "npm:^4.3.4"
     axios: "npm:^1.8.2"
     eslint: "npm:^9.29.0"
@@ -16703,6 +16704,15 @@ __metadata:
   peerDependencies:
     "@urql/core": ^5.0.0
   checksum: 10/5bbc914a58a6de6ee7146d55fa8d6454cbf0fb5f6d7a3f7b1770d95dfbaa9e44fad041d4655f00f38ce87f12b52fdd694a1ccb8df487265185f5b425d5e12177
+  languageName: node
+  linkType: hard
+
+"@vitejs/plugin-basic-ssl@npm:^2.1.4":
+  version: 2.1.4
+  resolution: "@vitejs/plugin-basic-ssl@npm:2.1.4"
+  peerDependencies:
+    vite: ^6.0.0 || ^7.0.0
+  checksum: 10/b42d0f9bb73f3fac213d9ad045722313390db10f24cf2e252fea388729a18f787471d84fc97127fd26eef37902da0c8afb9ad9e610af2d2b063dd9d01f720c55
   languageName: node
   linkType: hard
 

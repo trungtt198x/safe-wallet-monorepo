@@ -14,7 +14,7 @@ import {
   isAddressFieldType,
   isBooleanFieldType,
 } from './fields'
-import AddressContractField from './AddressContractField'
+import AddressAutocomplete from './AddressAutocomplete'
 import SelectContractField from './SelectContractField'
 import TextareaContractField from './TextareaContractField'
 import TextContractField from './TextContractField'
@@ -119,7 +119,7 @@ interface FieldComponentBaseProps {
 
 const getFieldComponent = (fieldType: string): React.FC<FieldComponentBaseProps> => {
   if (isAddressFieldType(fieldType)) {
-    return AddressContractField as unknown as React.FC<FieldComponentBaseProps>
+    return AddressAutocomplete as unknown as React.FC<FieldComponentBaseProps>
   }
 
   if (isBooleanFieldType(fieldType)) {

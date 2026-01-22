@@ -1,6 +1,7 @@
 import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig({
   plugins: [
@@ -14,6 +15,7 @@ export default defineConfig({
       },
       include: '**/*.svg',
     }),
+    basicSsl(),
   ],
   base: '/tx-builder/',
   build: {
@@ -23,6 +25,7 @@ export default defineConfig({
   server: {
     port: 4000,
     open: false,
+    https: true,
   },
   preview: {
     port: 4000,

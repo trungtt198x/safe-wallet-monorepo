@@ -25,7 +25,6 @@ export default defineConfig({
   server: {
     port: 4000,
     open: false,
-    https: true,
   },
   preview: {
     port: 4000,

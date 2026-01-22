@@ -1,53 +1,14 @@
 'use client'
 
-import { useEffect, useSyncExternalStore } from 'react'
-import type { FeatureHandle, FeatureImplementation, FeatureContract } from './types'
-
-/**
- * Module-level cache for loaded features.
- * This cache is shared across all components using useFeature.
- */
-const cache = new Map<string, FeatureContract>()
-
-/**
- * Set of features currently being loaded (prevents concurrent loads).
- */
-const loading = new Set<string>()
-
-/**
- * Set of subscribers to notify when cache changes.
- */
-const subscribers = new Set<() => void>()
-
-/**
- * Subscribe to cache changes for useSyncExternalStore.
- */
-function subscribe(callback: () => void): () => void {
-  subscribers.add(callback)
-  return () => subscribers.delete(callback)
-}
-
-/**
- * Notify all subscribers that the cache has changed.
- */
-function notifySubscribers(): void {
-  subscribers.forEach((cb) => cb())
-}
-
-/**
- * Get a cached feature by name for useSyncExternalStore.
- */
-function getSnapshot<T extends FeatureContract>(name: string): T | null {
-  return (cache.get(name) as T) ?? null
-}
+import { useEffect, useState } from 'react'
+import type { FeatureHandle, FeatureImplementation } from './types'
 
 /**
  * Hook to load a feature lazily based on its handle.
  *
  * This hook combines:
  * 1. Feature flag check (via handle.useIsEnabled)
- * 2. Lazy loading of the full implementation
- * 3. Module-level caching with useSyncExternalStore for reactivity
+ * 2. Lazy loading of the full implementation (cached by bundler)
  *
  * @param handle - The feature handle with name, useIsEnabled, and load function
  * @returns The loaded feature contract, or null if not enabled/loaded
@@ -67,57 +28,31 @@ function getSnapshot<T extends FeatureContract>(name: string): T | null {
 export function useLoadFeature<T extends FeatureImplementation>(
   handle: FeatureHandle<T>,
 ): (T & { name: string; useIsEnabled: () => boolean | undefined }) | null {
+  type LoadedFeature = T & { name: string; useIsEnabled: () => boolean | undefined }
+
   // Check feature flag (must be called unconditionally as it's a hook)
   const isEnabled = handle.useIsEnabled()
 
-  // Subscribe to cache changes for reactivity
-  const cached = useSyncExternalStore(
-    subscribe,
-    () => getSnapshot<T & { name: string; useIsEnabled: () => boolean | undefined }>(handle.name),
-    () => getSnapshot<T & { name: string; useIsEnabled: () => boolean | undefined }>(handle.name),
-  )
+  const [feature, setFeature] = useState<LoadedFeature | null>(null)
 
-  // Load the feature when enabled and not already loaded/loading
+  // Load the feature when enabled
   useEffect(() => {
-    // Only load if enabled, not cached, and not currently loading
-    if (isEnabled !== true || cached || loading.has(handle.name)) {
-      return
-    }
+    if (isEnabled !== true || feature) return
 
-    // Mark as loading to prevent concurrent loads
-    loading.add(handle.name)
-
+    // Dynamic import is cached by the bundler - multiple calls return the same Promise
     handle.load().then((module) => {
-      // Combine handle info with loaded implementation
-      const fullFeature = {
+      setFeature({
         name: handle.name,
         useIsEnabled: handle.useIsEnabled,
         ...module.default,
-      }
-
-      // Cache the loaded feature
-      cache.set(handle.name, fullFeature as FeatureContract)
-      loading.delete(handle.name)
-
-      // Notify subscribers to trigger re-render
-      notifySubscribers()
+      } as LoadedFeature)
     })
-  }, [isEnabled, cached, handle])
+  }, [isEnabled, feature, handle])
 
   // Return null if not enabled or not yet loaded
-  if (isEnabled !== true || !cached) {
+  if (isEnabled !== true) {
     return null
   }
 
-  return cached
-}
-
-/**
- * Clear the feature cache.
- * Useful for testing or hot module replacement.
- */
-export function clearFeatureCache(): void {
-  cache.clear()
-  loading.clear()
-  notifySubscribers()
+  return feature
 }

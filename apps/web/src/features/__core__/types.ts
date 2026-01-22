@@ -11,7 +11,7 @@ import type { RootState } from '@/store'
  * export const myFeatureHandle: FeatureHandle<MyFeatureImpl> = {
  *   name: 'my-feature',
  *   useIsEnabled: () => useHasFeature(FEATURES.MY_FEATURE),
- *   load: () => import('./__internal__/feature'),
+ *   load: () => import('./feature'),
  * }
  */
 export interface FeatureHandle<TImpl extends FeatureImplementation = FeatureImplementation> {
@@ -51,7 +51,7 @@ export interface ComponentContract {
    * Use React.lazy() for code splitting:
    * @example
    * components: {
-   *   Widget: lazy(() => import('./__internal__/components/Widget')),
+   *   Widget: lazy(() => import('./components/Widget')),
    * }
    */
   components?: Record<string, ComponentType<any>>

@@ -15,7 +15,7 @@ import { Suspense, memo } from 'react'
  *
  * export const myFeatureHandle = {
  *   components: {
- *     Widget: withSuspense(lazy(() => import('./__internal__/components/Widget'))),
+ *     Widget: withSuspense(lazy(() => import('./components/Widget'))),
  *   },
  * }
  *

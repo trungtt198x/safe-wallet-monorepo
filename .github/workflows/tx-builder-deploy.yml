@@ -87,7 +87,7 @@ jobs:
             ✅ Deploy successful!
 
             **Preview URL:**
-            https://${{ steps.extract_branch.outputs.branch }}--tx-builder.review.5afe.dev/tx-builder/
+            https://${{ steps.extract_branch.outputs.branch }}--tx-builder.review.5afe.dev
           message-failure: |
             ## tx-builder Preview
             ❌ Deploy failed!

@@ -1,6 +1,6 @@
 # Feature Architecture Standard v2
 
-This document defines the revised architecture pattern for features in the Safe{Wallet} web application. It addresses tight coupling, unclear boundaries, testing difficulties, and circular import issues through **Feature Contracts**, **Feature Handles**, and **tiered structure**.
+This document defines the revised architecture pattern for features in the Safe{Wallet} web application. It addresses tight coupling, unclear boundaries, testing difficulties, and circular import issues through **Feature Contracts** and **Feature Handles**.
 
 ## Table of Contents
 
@@ -8,8 +8,9 @@ This document defines the revised architecture pattern for features in the Safe{
 - [Core Concepts](#core-concepts)
 - [Feature Contract](#feature-contract)
 - [Feature Handles](#feature-handles)
-- [Feature Tiers](#feature-tiers)
-- [Folder Structure by Tier](#folder-structure-by-tier)
+- [Helper: createFeatureHandle](#helper-createfeaturehandle)
+- [Reducing Boilerplate with typeof Pattern](#reducing-boilerplate-with-typeof-pattern)
+- [Folder Structure](#folder-structure)
 - [Public API Pattern](#public-api-pattern)
 - [Cross-Feature Communication](#cross-feature-communication)
 - [Testing Strategy](#testing-strategy)
@@ -23,7 +24,6 @@ A **feature** is a self-contained domain module that:
 
 - Implements a typed **Feature Contract** interface
 - Exports a **Feature Handle** for lazy loading
-- Follows one of three **tiers** based on complexity
 - Has explicit **public API** enforced via ESLint (only `index.ts` exports)
 - Communicates with other features via **Redux** (data) or direct imports of feature handles
 
@@ -31,18 +31,18 @@ A **feature** is a self-contained domain module that:
 
 1. **Contract-First**: Every feature defines what it exposes through a typed contract
 2. **Lazy Loading**: Features are loaded on-demand via handles with `useLoadFeature()`
-3. **Tiered Complexity**: Simple features stay simple; complex features have structure
-4. **Type Safety**: Direct handle imports provide full type inference
+3. **Type Safety**: Direct handle imports provide full type inference
+4. **Flexibility**: Features can be simple or complex based on their needs
 
 ### Problems This Architecture Solves
 
-| Problem                              | Solution                                                 |
-| ------------------------------------ | -------------------------------------------------------- |
-| Tight coupling between features      | Feature handles with lazy loading                        |
-| Unclear boundaries                   | Feature Contract defines exactly what's public           |
-| Testing difficulties                 | Module-level cache can be cleared; handles can be mocked |
-| Forced structure for simple features | Three tiers: Minimal, Standard, Full                     |
-| Bundle size                          | Lazy loading ensures disabled features aren't bundled    |
+| Problem                         | Solution                                                 |
+| ------------------------------- | -------------------------------------------------------- |
+| Tight coupling between features | Feature handles with lazy loading                        |
+| Unclear boundaries              | Feature Contract defines exactly what's public           |
+| Testing difficulties            | Module-level cache can be cleared; handles can be mocked |
+| Excessive boilerplate           | Helper functions simplify common patterns                |
+| Bundle size                     | Lazy loading ensures disabled features aren't bundled    |
 
 ## Core Concepts
 
@@ -73,24 +73,34 @@ The `useLoadFeature()` hook combines flag check + lazy loading in one step:
 import { WalletConnectFeature } from '@/features/walletconnect'
 import { useLoadFeature } from '@/features/__core__'
 
-// Consumer component
+// Consumer component with loading state
 function MyPage() {
-  // Returns null if: disabled or still loading
   const walletConnect = useLoadFeature(WalletConnectFeature)
 
-  if (!walletConnect) return null
+  // Show skeleton while loading (feature flag or code)
+  if (walletConnect === undefined) return <Skeleton />
 
-  // Feature is enabled and loaded - safe to use components
+  // Hide if feature is disabled
+  if (walletConnect === null) return null
+
+  // Feature is loaded - safe to use
+  return <walletConnect.components.WalletConnectWidget />
+}
+
+// Simple pattern: treat loading same as disabled
+function SimpleComponent() {
+  const walletConnect = useLoadFeature(WalletConnectFeature)
+  if (!walletConnect) return null
   return <walletConnect.components.WalletConnectWidget />
 }
 ```
 
 **`useLoadFeature()` return values:**
-| Condition | Returns |
-|-----------|---------|
-| Feature flag disabled | `null` |
-| Feature flag loading (undefined) | `null` |
-| Feature flag enabled + loaded | The loaded feature contract |
+| Condition | Returns | When to use |
+|-----------|---------|-------------|
+| Feature flag or code loading | `undefined` | Show loading UI (Skeleton, Spinner) |
+| Feature flag disabled | `null` | Hide feature completely |
+| Feature loaded successfully | Feature object | Render feature components |
 
 ### The Loading Flow
 
@@ -104,14 +114,18 @@ function MyPage() {
 ┌─────────────────────────────────────────────────────────────────┐
 │ 2. CONSUMER calls useLoadFeature (flag check + lazy load)      │
 │    const wc = useLoadFeature(WalletConnectFeature)             │
-│    // Returns null if disabled, full contract if enabled       │
+│    // Returns: undefined | null | feature                      │
 └─────────────────────────────────────────────────────────────────┘
                               │
-                              ▼ if not null
-┌─────────────────────────────────────────────────────────────────┐
-│ 3. CONSUMER renders component (already wrapped with Suspense)  │
-│    return <wc.components.WalletConnectWidget />                │
-└─────────────────────────────────────────────────────────────────┘
+                 ┌────────────┼────────────┐
+                 ▼            ▼            ▼
+           ┌──────────┐ ┌──────────┐ ┌─────────┐
+           │   null   │ │undefined │ │ feature │
+           │(disabled)│ │(loading) │ │(loaded) │
+           └──────────┘ └──────────┘ └─────────┘
+                 │            │            │
+                 ▼            ▼            ▼
+            return null  <Skeleton/>  <wc.components.Widget />
 ```
 
 ### Benefits of This Pattern
@@ -126,9 +140,12 @@ const walletConnect = useLoadFeature(WalletConnectFeature)
 Benefits:
 
 - **Type-safe**: Full TypeScript inference from the handle
+- **Simple API**: Returns `undefined` (loading), `null` (disabled), or the feature object
+- **Loading states**: Can distinguish between loading and disabled for better UX
 - **IDE-friendly**: Cmd+click on `WalletConnectFeature` jumps to the handle definition
 - **Tree-shakeable**: Unused features won't be bundled
-- **Simple**: No context providers, no string lookups
+- **No boilerplate**: No context providers, no string lookups
+- **Better UX**: Show skeletons/spinners during loading instead of blank screens
 - **Testable**: Just mock the feature module with Jest
 
 ## Feature Contract
@@ -224,17 +241,50 @@ import { WalletConnectFeature } from '@/features/walletconnect'
 //       Cmd+click jumps to handle definition in index.ts
 ```
 
-For navigating to implementation details from contracts, use `typeof` imports:
+**IMPORTANT: Always use `typeof` pattern in contracts for IDE navigation.**
+
+For navigating to implementation details from contracts, use `typeof` imports. This enables Cmd+click to jump directly to the implementation:
 
 ```typescript
 // contract.ts
+import type MyComponent from './components/MyComponent'
 import type { myService } from './services/myService'
+import type { myStore } from './store/myStore'
 
 export interface MyFeatureContract {
-  services: {
-    // Cmd+click on 'typeof myService' jumps to implementation
-    myService: typeof myService
+  components: {
+    // ✅ CORRECT: Cmd+click on 'typeof MyComponent' jumps to implementation
+    MyComponent: typeof MyComponent
   }
+  services: {
+    // ✅ CORRECT: Cmd+click on 'typeof myService' jumps to implementation
+    myService: typeof myService
+
+    // ✅ CORRECT: For stores, always use typeof
+    myStore: typeof myStore
+  }
+}
+```
+
+**Why this matters:**
+
+- **IDE Navigation**: `typeof` creates a direct link to the implementation file
+- **Type Safety**: Automatically keeps the contract in sync with implementation changes
+- **Refactoring**: Renaming/moving files updates the type automatically
+- **Developer Experience**: Cmd+click takes you directly to the source
+
+**Anti-patterns to avoid:**
+
+```typescript
+// ❌ WRONG: Generic ComponentType loses IDE navigation
+import type { ComponentType } from 'react'
+components: {
+  MyComponent: ComponentType // Can't jump to definition
+}
+
+// ❌ WRONG: Manual type annotation requires maintenance
+components: {
+  MyComponent: React.FC<{ prop: string }> // Must update manually when props change
 }
 ```
 
@@ -244,13 +294,15 @@ export interface MyFeatureContract {
 
 ```typescript
 // src/features/bridge/contract.ts
-import type { ComponentType } from 'react'
 import type { FeatureImplementation } from '@/features/__core__'
+import type Bridge from './components/Bridge'
+import type BridgeWidget from './components/BridgeWidget'
 
 export interface BridgeImplementation extends FeatureImplementation {
   components: {
-    Bridge: ComponentType
-    BridgeWidget: ComponentType
+    // Use typeof for IDE navigation (Cmd+click jumps to implementation)
+    Bridge: typeof Bridge
+    BridgeWidget: typeof BridgeWidget
   }
 }
 
@@ -265,17 +317,23 @@ export interface BridgeContract extends BridgeImplementation {
 ```typescript
 // src/features/multichain/contract.ts
 import type { BaseFeatureContract, ComponentContract, HooksContract } from '@/features/__core__/types'
+import type CreateSafeOnNewChain from './components/CreateSafeOnNewChain'
+import type NetworkLogosList from './components/NetworkLogosList'
+import type { useIsMultichainSafe } from './hooks/useIsMultichainSafe'
+import type { useSafeCreationData } from './hooks/useSafeCreationData'
 
 export interface MultichainContract extends BaseFeatureContract, ComponentContract, HooksContract {
   readonly name: 'multichain'
   useIsEnabled: () => boolean | undefined // Static flag check
   components: {
-    CreateSafeOnNewChain: React.LazyExoticComponent<React.ComponentType>
-    NetworkLogosList: React.LazyExoticComponent<React.ComponentType<{ chainIds: string[] }>>
+    // Use typeof for IDE navigation
+    CreateSafeOnNewChain: typeof CreateSafeOnNewChain
+    NetworkLogosList: typeof NetworkLogosList
   }
   hooks: {
-    useIsMultichainSafe: () => boolean
-    useSafeCreationData: (chainId: string) => SafeCreationData | undefined
+    // Use typeof for hooks too
+    useIsMultichainSafe: typeof useIsMultichainSafe
+    useSafeCreationData: typeof useSafeCreationData
   }
 }
 ```
@@ -285,25 +343,34 @@ export interface MultichainContract extends BaseFeatureContract, ComponentContra
 ```typescript
 // src/features/walletconnect/contract.ts
 import type { FeatureContract } from '@/features/__core__/types'
+import type WalletConnectWidget from './components/WalletConnectWidget'
+import type WcSessionManager from './components/WcSessionManager'
+import type { useWcUri } from './hooks/useWcUri'
+import type { useWalletConnectSearchParamUri } from './hooks/useWalletConnectSearchParamUri'
+import type WalletConnectWallet from './services/WalletConnectWallet'
+import type { wcPopupStore } from './store/wcPopupStore'
+import type { wcSessionStore } from './store/wcSessionStore'
 
 export interface WalletConnectContract extends FeatureContract {
   readonly name: 'walletconnect'
   useIsEnabled: () => boolean | undefined // Static flag check
   components: {
-    WalletConnectWidget: React.LazyExoticComponent<React.ComponentType>
-    WcSessionManager: React.LazyExoticComponent<React.ComponentType>
+    // Use typeof for components - enables IDE navigation
+    WalletConnectWidget: typeof WalletConnectWidget
+    WcSessionManager: typeof WcSessionManager
   }
   hooks: {
-    useWcUri: () => string | undefined
-    useWalletConnectSearchParamUri: () => string | null
+    // Use typeof for hooks
+    useWcUri: typeof useWcUri
+    useWalletConnectSearchParamUri: typeof useWalletConnectSearchParamUri
   }
   services: {
-    connect: (uri: string) => Promise<void>
-    disconnect: (topic: string) => Promise<void>
-  }
-  selectors: {
-    selectWcPopupOpen: (state: RootState) => boolean
-    selectWcSessions: (state: RootState) => WcSession[]
+    // Use typeof for services
+    walletConnectInstance: WalletConnectWallet
+
+    // Use typeof for stores
+    wcPopupStore: typeof wcPopupStore
+    wcSessionStore: typeof wcSessionStore
   }
 }
 ```
@@ -405,132 +472,232 @@ function Header() {
 }
 ```
 
-## Feature Tiers
+## Helper: createFeatureHandle
 
-Features are categorized into three tiers based on complexity:
+The `createFeatureHandle` function simplifies creating feature handles by auto-deriving feature flags from folder names.
 
-### Tier 1: Minimal
+```typescript
+import { createFeatureHandle } from '@/features/__core__'
+import { FEATURES } from '@safe-global/utils/utils/chains'
 
-For simple, self-contained features (typically a single component).
+// Auto-derive feature flag from folder name
+export const BridgeFeature = createFeatureHandle('bridge')
+// Creates handle with FEATURES.BRIDGE
 
-**Characteristics:**
+// Override when flag doesn't match folder name
+export const WalletConnectFeature = createFeatureHandle('walletconnect', FEATURES.NATIVE_WALLETCONNECT)
+```
 
-- No state shared with other features
-- No services or complex logic
-- Single component or small set of related components
+**Auto-derivation rules:**
 
-**Required files:**
+- `bridge` → `FEATURES.BRIDGE`
+- `tx-notes` → `FEATURES.TX_NOTES`
+- `wallet-connect` → `FEATURES.WALLET_CONNECT`
 
-- `index.ts` - Default export of main component
-- `contract.ts` - Feature contract type definition
+**Benefits:**
 
-**Examples:** bridge, speedup, tx-notes
+- Reduces boilerplate (one line vs manual handle definition)
+- Prevents typos in feature flag names
+- Provides type inference for the handle
 
-### Tier 2: Standard
+**When to use explicit flag:**
 
-For features with hooks, selectors, or shared state.
+- When the feature flag doesn't follow folder name convention
+- Example: `walletconnect` folder uses `FEATURES.NATIVE_WALLETCONNECT`
 
-**Characteristics:**
+## Reducing Boilerplate with typeof Pattern
 
-- Has feature-specific hooks for external use
-- May have Redux state
-- May have shared types
+You can further reduce boilerplate by using TypeScript's `typeof` operator to infer types from implementation instead of manually defining contract interfaces.
 
-**Required files:**
+### The Pattern
 
-- `index.ts` - Public API (only externally-accessible exports)
-- `contract.ts` - Feature contract type definition
-- `types.ts` - Public type definitions (optional if no public types)
-- `components/`, `hooks/`, etc. - Implementation (ESLint blocks external imports)
+**Traditional approach (manual contract):**
 
-**Examples:** multichain, positions, myAccounts
+```typescript
+// contract.ts (~50 lines)
+import type { FeatureContract } from '@/features/__core__'
+import type MyComponent from './components/MyComponent'
+import type { useMyHook } from './hooks/useMyHook'
 
-### Tier 3: Full
+export interface MyFeatureContract extends FeatureContract {
+  readonly name: 'my-feature'
+  components: {
+    MyComponent: typeof MyComponent
+  }
+  hooks: {
+    useMyHook: typeof useMyHook
+  }
+}
 
-For complex features with services, extensive state, and cross-feature interactions.
+// handle.ts (~15 lines)
+export const MyFeatureHandle: FeatureHandle<MyFeatureContract> = {
+  name: 'my-feature',
+  useIsEnabled: () => useHasFeature(FEATURES.MY_FEATURE),
+  load: () => import('./feature'),
+}
 
-**Characteristics:**
+// feature.ts
+export default {
+  components: { MyComponent },
+  hooks: { useMyHook },
+} satisfies MyFeatureContract
 
-- Has services that other features may call
-- Complex state management
-- Multiple entry points/components
+// index.ts
+export { MyFeatureHandle } from './handle'
+export type { MyFeatureContract } from './contract'
+```
 
-**Required files:**
+**Simplified approach (typeof inference):**
 
-- `index.ts` - Public API (only externally-accessible exports)
-- `contract.ts` - Full feature contract
-- `types.ts` - Public type definitions
-- `handle.ts` - Feature handle (internal)
-- `feature.ts` - Lazy-loaded implementation
-- `components/`, `hooks/`, `services/`, `store/` - Implementation details
+```typescript
+// feature.ts (~20 lines)
+import MyComponent from './components/MyComponent'
+import { useMyHook } from './hooks/useMyHook'
 
-**Examples:** walletconnect, recovery, hypernative
+export default {
+  components: { MyComponent },
+  hooks: { useMyHook },
+}
 
-### Tier Comparison
+// index.ts (~5 lines)
+import { createFeatureHandle } from '@/features/__core__'
+import featureImpl from './feature'
 
-| Aspect        | Minimal  | Standard  | Full   |
-| ------------- | -------- | --------- | ------ |
-| `contract.ts` | ✓        | ✓         | ✓      |
-| `index.ts`    | ✓        | ✓         | ✓      |
-| `types.ts`    | Optional | If needed | ✓      |
-| `handle.ts`   | Optional | ✓         | ✓      |
-| Feature flag  | Optional | ✓         | ✓      |
-| Redux store   | ✗        | Optional  | Common |
-| Services      | ✗        | Optional  | Common |
+export const MyFeature = createFeatureHandle<typeof featureImpl>('my-feature')
+export type * from './types'
+```
 
-## Folder Structure by Tier
+**Reduction: 100 lines across 4 files → 25 lines across 2 files (75% reduction)**
 
-### Tier 1: Minimal
+### Bundle Size Impact
+
+**Zero impact.** TypeScript types are compile-time only and completely stripped during transpilation:
+
+```typescript
+// TypeScript source
+export const MyFeature = createFeatureHandle<typeof featureImpl>('my-feature')
+
+// Compiled JavaScript (all types removed)
+export const MyFeature = createFeatureHandle('my-feature')
+```
+
+All `interface`, `type`, `typeof`, and generic parameters are erased before bundling.
+
+### Type Safety Preserved
+
+Full type inference and autocomplete still work:
+
+```typescript
+const feature = useLoadFeature(MyFeature)
+//    ^? {
+//      components: { MyComponent: ComponentType<...> },
+//      hooks: { useMyHook: () => ... }
+//    } | null | undefined
+
+if (!feature) return null
+
+feature.components.MyComponent // ✅ Full autocomplete
+feature.hooks.useMyHook() // ✅ Type-safe
+```
+
+### Benefits
+
+- ✅ **Less boilerplate**: No manual contract definitions to maintain
+- ✅ **Auto-sync**: Types update automatically when implementation changes
+- ✅ **Zero bundle cost**: TypeScript types don't affect bundle size
+- ✅ **Type-safe**: Full type checking and IDE autocomplete preserved
+- ✅ **Fewer files**: Eliminates contract.ts and handle.ts
+
+### Trade-offs
+
+- ⚠️ **IDE navigation**: Cmd+click on `MyFeature` goes to index.ts first, not directly to components
+- ⚠️ **Anonymous type**: No explicitly named contract interface
+- ⚠️ **Less documentation**: Contract interface can serve as API documentation
+
+### When to Use
+
+**Use typeof pattern when:**
+
+- Feature has simple to moderate complexity
+- You want minimal boilerplate
+- Types naturally describe themselves through implementation
+
+**Keep manual contracts when:**
+
+- Feature contract serves as important API documentation
+- Multiple features depend on explicit contract interface
+- You need named contract types for external references
+
+### Example: Standard Feature
+
+```typescript
+// src/features/multichain/feature.ts
+import { lazy } from 'react'
+import { useIsMultichainSafe } from './hooks/useIsMultichainSafe'
+import { useSafeCreationData } from './hooks/useSafeCreationData'
+
+export default {
+  components: {
+    CreateSafeOnNewChain: lazy(() => import('./components/CreateSafeOnNewChain')),
+    NetworkLogosList: lazy(() => import('./components/NetworkLogosList')),
+  },
+  hooks: {
+    useIsMultichainSafe,
+    useSafeCreationData,
+  },
+}
+
+// src/features/multichain/index.ts
+import { createFeatureHandle } from '@/features/__core__'
+import featureImpl from './feature'
+
+export const MultichainFeature = createFeatureHandle<typeof featureImpl>('multichain')
+
+// Re-export public types
+export type * from './types'
+
+// Consumers can now use the feature with full type safety
+import { MultichainFeature } from '@/features/multichain'
+import { useLoadFeature } from '@/features/__core__'
+
+function MyComponent() {
+  const mc = useLoadFeature(MultichainFeature)
+  if (!mc) return null
+
+  return (
+    <div>
+      <mc.components.CreateSafeOnNewChain />
+      <mc.components.NetworkLogosList networks={mc.hooks.useIsMultichainSafe()} />
+    </div>
+  )
+}
+```
+
+## Folder Structure
+
+Features can be organized based on their complexity:
+
+### Simple Features
+
+For straightforward features with minimal logic:
 
 ```
 src/features/bridge/
 ├── index.ts              # Lazy default export
-├── contract.ts           # BridgeContract type
-└── Bridge.tsx            # Implementation (can be flat for simple features)
+└── Bridge.tsx            # Implementation
 ```
 
-**index.ts:**
+### Complex Features
 
-```typescript
-import dynamic from 'next/dynamic'
-
-export type { BridgeContract } from './contract'
-
-const Bridge = dynamic(() => import('./Bridge'), { ssr: false })
-export default Bridge
-```
-
-### Tier 2: Standard
-
-```
-src/features/multichain/
-├── index.ts              # Public API exports
-├── handle.ts             # Feature handle (static flag + lazy refs)
-├── contract.ts           # MultichainContract type
-├── types.ts              # Public types (SafeSetup, etc.)
-├── components/           # (ESLint blocks external imports)
-│   ├── CreateSafeOnNewChain.tsx
-│   └── NetworkLogosList.tsx
-├── hooks/
-│   └── useIsMultichainSafe.ts
-└── utils/
-    └── addressPrediction.ts
-```
-
-### Tier 3: Full
+For features with multiple components, hooks, and services:
 
 ```
 src/features/walletconnect/
 ├── index.ts              # Public API exports
-├── handle.ts             # Feature handle (static flag + lazy refs)
-├── contract.ts           # WalletConnectContract type
 ├── types.ts              # Public types
-├── feature.ts            # Lazy-loaded implementation
 ├── constants.ts          # Feature constants
 ├── components/           # (ESLint blocks external imports)
 │   ├── WalletConnectWidget/
-│   │   ├── index.tsx
-│   │   └── index.test.tsx
 │   └── WcSessionManager/
 ├── hooks/
 │   ├── useWcUri.ts
@@ -543,7 +710,11 @@ src/features/walletconnect/
     └── selectors.ts
 ```
 
-**Note:** ESLint enforces that external code can only import from `index.ts`, `contract.ts`, and `types.ts`. All other files (components/, hooks/, services/, etc.) are internal and blocked from external imports.
+**Key points:**
+
+- Structure adapts to feature needs
+- ESLint enforces that external code can only import from `index.ts` and `types.ts`
+- Internal folders (components/, hooks/, services/) are implementation details
 
 ## Public API Pattern
 
@@ -786,10 +957,13 @@ import { HypernativeFeature } from '@/features/hypernative'
 import { useLoadFeature } from '@/features/__core__'
 
 function SafeShieldScanner() {
-  // Type inferred from HypernativeFeature, null if disabled or loading
   const hypernative = useLoadFeature(HypernativeFeature)
 
-  if (!hypernative) return null
+  // Show loading state
+  if (hypernative === undefined) return <Skeleton />
+
+  // Hide if disabled
+  if (hypernative === null) return null
 
   return <hypernative.components.Banner />
 }
@@ -801,6 +975,7 @@ function SafeShieldScanner() {
 
 - [ ] Determined feature tier (Minimal/Standard/Full)
 - [ ] Created `contract.ts` with typed contract interface
+- [ ] **Used `typeof` pattern in contract for all components, hooks, services, and stores (for IDE navigation)**
 - [ ] Created `handle.ts` with static `useIsEnabled` + lazy `load()` function
 - [ ] Created `index.ts` exporting `{FeatureName}Feature` from handle
 - [ ] Organized implementation in `components/`, `hooks/`, `services/`, `store/`
@@ -811,6 +986,7 @@ function SafeShieldScanner() {
 ### For Existing Features (Migration)
 
 - [ ] Created `contract.ts`
+- [ ] **Used `typeof` pattern in contract for all components, hooks, services, and stores (for IDE navigation)**
 - [ ] Created `handle.ts`
 - [ ] Created `index.ts` with `{FeatureName}Feature` export
 - [ ] Organized internals in `components/`, `hooks/`, `services/`, `store/`
@@ -822,7 +998,8 @@ function SafeShieldScanner() {
 ### For Feature Consumers
 
 - [ ] Using `useLoadFeature()` hook with feature handle
-- [ ] Handling `null` return (feature disabled or loading)
+- [ ] Handling return values: `undefined` (loading), `null` (disabled), or feature object (loaded)
+- [ ] Optionally showing loading UI for better UX (instead of blank screen)
 - [ ] Type-safe (types inferred from handle)
 - [ ] No direct imports from feature internal folders (components/, hooks/, etc.)
 
@@ -855,16 +1032,24 @@ import { useLoadFeature } from '@/features/__core__'
 
 const feature = useLoadFeature(WalletConnectFeature)
 // Returns:
+// - undefined if feature flag or code is loading
 // - null if feature flag is disabled
-// - null if feature flag is loading (undefined)
 // - the full feature contract if enabled and loaded
 ```
 
-This means one simple null check handles all cases:
+You can handle loading states explicitly:
 
 ```typescript
-if (!feature) return null // Not available (any reason)
-// Feature is enabled and ready to use
+if (feature === undefined) return <Skeleton />  // Loading
+if (feature === null) return null  // Disabled
+return <feature.components.Widget />  // Loaded
+```
+
+Or use a simple null check to treat loading same as disabled:
+
+```typescript
+if (!feature) return null  // Not available (loading or disabled)
+return <feature.components.Widget />  // Loaded
 ```
 
 ### Q: How do I share types between features?

@@ -4,7 +4,12 @@ import EthHashInfo from '@/components/common/EthHashInfo'
 import NameInput from '@/components/common/NameInput'
 import NetworkWarning from '@/components/new-safe/create/NetworkWarning'
 import ErrorMessage from '@/components/tx/ErrorMessage'
-import { signProposerData, signProposerTypedData } from '@/features/proposers/utils/utils'
+import {
+  encodeEIP1271Signature,
+  signProposerData,
+  signProposerTypedData,
+  signProposerTypedDataForSafe,
+} from '@/features/proposers/utils/utils'
 import useChainId from '@/hooks/useChainId'
 import useSafeAddress from '@/hooks/useSafeAddress'
 import useWallet from '@/hooks/wallets/useWallet'
@@ -38,6 +43,8 @@ import {
 import { type BaseSyntheticEvent, useCallback, useMemo, useState } from 'react'
 import { FormProvider, useForm, type Validate } from 'react-hook-form'
 import useSafeInfo from '@/hooks/useSafeInfo'
+import { useIsNestedSafeOwner } from '@/hooks/useIsNestedSafeOwner'
+import { useNestedSafeOwners } from '@/hooks/useNestedSafeOwners'
 
 type UpsertProposerProps = {
   onClose: () => void
@@ -66,6 +73,8 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
   const wallet = useWallet()
   const safeAddress = useSafeAddress()
   const { safe } = useSafeInfo()
+  const isNestedSafeOwner = useIsNestedSafeOwner()
+  const nestedSafeOwners = useNestedSafeOwners()
 
   const methods = useForm<ProposerEntry>({
     defaultValues: {
@@ -95,19 +104,34 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
     try {
       const shouldEthSign = isEthSignWallet(wallet)
       const signer = await getAssertedChainSigner(wallet.provider)
-      const signature = shouldEthSign
-        ? await signProposerData(data.address, signer)
-        : await signProposerTypedData(chainId, data.address, signer)
+      const parentSafeAddress = isNestedSafeOwner && nestedSafeOwners ? nestedSafeOwners[0] : undefined
+
+      let signature: string
+      let delegator: string
+
+      if (parentSafeAddress) {
+        // Nested Safe owner: sign the SafeMessage-wrapped delegate hash, then encode as EIP-1271
+        const eoaSignature = await signProposerTypedDataForSafe(chainId, data.address, parentSafeAddress, signer)
+        signature = encodeEIP1271Signature(parentSafeAddress, eoaSignature)
+        delegator = parentSafeAddress
+      } else {
+        // Direct owner: sign delegate typed data directly
+        const eoaSignature = shouldEthSign
+          ? await signProposerData(data.address, signer)
+          : await signProposerTypedData(chainId, data.address, signer)
+        signature = eoaSignature
+        delegator = wallet.address
+      }
 
       const createDelegateDto: CreateDelegateDto = {
         delegate: data.address,
-        delegator: wallet.address,
+        delegator,
         label: data.name,
         signature,
         safe: safeAddress,
       }
 
-      if (shouldEthSign) {
+      if (shouldEthSign && !parentSafeAddress) {
         await addDelegateV1({ chainId, createDelegateDto }).unwrap()
       } else {
         await addDelegateV2({ chainId, createDelegateDto }).unwrap()

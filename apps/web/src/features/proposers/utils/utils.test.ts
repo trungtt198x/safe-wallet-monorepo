@@ -1,0 +1,161 @@
+import { encodeEIP1271Signature, signProposerTypedDataForSafe } from './utils'
+import { faker } from '@faker-js/faker'
+import { getAddress } from 'ethers'
+import * as web3Utils from '@safe-global/utils/utils/web3'
+import * as delegateUtils from '@safe-global/utils/services/delegates'
+
+describe('encodeEIP1271Signature', () => {
+  const parentSafeAddress = getAddress(faker.finance.ethereumAddress())
+  // A typical 65-byte ECDSA signature (r + s + v)
+  const ownerSignature =
+    '0x' +
+    'a'.repeat(64) + // r (32 bytes)
+    'b'.repeat(64) + // s (32 bytes)
+    '1c' // v (1 byte = 28)
+
+  it('should return a valid hex string', () => {
+    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+
+    expect(result).toMatch(/^0x[0-9a-fA-F]+$/)
+  })
+
+  it('should contain the parent Safe address left-padded to 32 bytes in the r-value', () => {
+    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+
+    // r is bytes 0-31 (hex chars 2-66, after "0x")
+    const rValue = result.slice(2, 66)
+
+    // parentSafeAddress is 20 bytes, left-padded with 12 zero bytes (24 hex chars)
+    const expectedR = '0'.repeat(24) + parentSafeAddress.slice(2).toLowerCase()
+
+    expect(rValue.toLowerCase()).toBe(expectedR.toLowerCase())
+  })
+
+  it('should have s-value of 65 (0x41) left-padded to 32 bytes', () => {
+    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+
+    // s is bytes 32-63 (hex chars 66-130)
+    const sValue = result.slice(66, 130)
+
+    // 65 decimal = 0x41, left-padded to 32 bytes
+    const expectedS = '0'.repeat(62) + '41'
+
+    expect(sValue).toBe(expectedS)
+  })
+
+  it('should have v-value of 0x00 (contract signature type)', () => {
+    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+
+    // v is byte 64 (hex chars 130-132)
+    const vValue = result.slice(130, 132)
+
+    expect(vValue).toBe('00')
+  })
+
+  it('should include ABI-encoded owner signature in the dynamic data portion', () => {
+    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+
+    // Dynamic data starts at byte 65 (hex char 132)
+    const dynamicData = result.slice(132)
+
+    // The dynamic data contains the length-prefixed owner signature
+    // ABI encoding of bytes: 32 bytes length + padded data
+    // Length of ownerSignature = 65 bytes = 0x41
+    const lengthHex = dynamicData.slice(0, 64)
+    expect(parseInt(lengthHex, 16)).toBe(65) // 65 bytes for ECDSA signature
+
+    // The actual signature data follows the length
+    const sigData = dynamicData.slice(64, 64 + 130) // 65 bytes = 130 hex chars
+    expect(sigData.toLowerCase()).toBe(ownerSignature.slice(2).toLowerCase())
+  })
+
+  it('should produce consistent output for the same inputs', () => {
+    const result1 = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+    const result2 = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+
+    expect(result1).toBe(result2)
+  })
+})
+
+describe('signProposerTypedDataForSafe', () => {
+  const mockChainId = '11155111'
+  const mockProposerAddress = getAddress(faker.finance.ethereumAddress())
+  const mockParentSafeAddress = getAddress(faker.finance.ethereumAddress())
+  const mockSignature = '0x' + 'ab'.repeat(65)
+  const mockDelegateHash = '0x' + 'dd'.repeat(32)
+  const mockSigner = {} as any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should hash the delegate typed data and sign the SafeMessage-wrapped hash', async () => {
+    jest.spyOn(web3Utils, 'hashTypedData').mockReturnValue(mockDelegateHash)
+    jest.spyOn(web3Utils, 'signTypedData').mockResolvedValue(mockSignature)
+
+    const result = await signProposerTypedDataForSafe(
+      mockChainId,
+      mockProposerAddress,
+      mockParentSafeAddress,
+      mockSigner,
+    )
+
+    // Should hash the delegate typed data first
+    expect(web3Utils.hashTypedData).toHaveBeenCalledWith(
+      delegateUtils.getDelegateTypedData(mockChainId, mockProposerAddress),
+    )
+
+    // Should sign the SafeMessage typed data (not the raw delegate typed data)
+    expect(web3Utils.signTypedData).toHaveBeenCalledWith(
+      mockSigner,
+      expect.objectContaining({
+        domain: {
+          verifyingContract: mockParentSafeAddress,
+          chainId: Number(mockChainId),
+        },
+        types: {
+          SafeMessage: [{ type: 'bytes', name: 'message' }],
+        },
+        message: {
+          message: mockDelegateHash,
+        },
+        primaryType: 'SafeMessage',
+      }),
+    )
+
+    expect(result).toBe(mockSignature)
+  })
+
+  it('should use the correct parent Safe address in the domain', async () => {
+    const specificParentSafe = getAddress(faker.finance.ethereumAddress())
+    jest.spyOn(web3Utils, 'hashTypedData').mockReturnValue(mockDelegateHash)
+    jest.spyOn(web3Utils, 'signTypedData').mockResolvedValue(mockSignature)
+
+    await signProposerTypedDataForSafe(mockChainId, mockProposerAddress, specificParentSafe, mockSigner)
+
+    expect(web3Utils.signTypedData).toHaveBeenCalledWith(
+      mockSigner,
+      expect.objectContaining({
+        domain: expect.objectContaining({
+          verifyingContract: specificParentSafe,
+        }),
+      }),
+    )
+  })
+
+  it('should use the correct chainId in the domain', async () => {
+    jest.spyOn(web3Utils, 'hashTypedData').mockReturnValue(mockDelegateHash)
+    jest.spyOn(web3Utils, 'signTypedData').mockResolvedValue(mockSignature)
+
+    await signProposerTypedDataForSafe('1', mockProposerAddress, mockParentSafeAddress, mockSigner)
+
+    expect(web3Utils.signTypedData).toHaveBeenCalledWith(
+      mockSigner,
+      expect.objectContaining({
+        domain: expect.objectContaining({
+          chainId: 1,
+        }),
+      }),
+    )
+  })
+})

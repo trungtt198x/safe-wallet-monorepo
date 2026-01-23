@@ -6,8 +6,11 @@ import Track from '@/components/common/Track'
 import UpsertProposer from '@/features/proposers/components/UpsertProposer'
 import DeleteProposerDialog from '@/features/proposers/components/DeleteProposerDialog'
 import EditProposerDialog from '@/features/proposers/components/EditProposerDialog'
+import PendingDelegationsList from '@/features/proposers/components/PendingDelegationsList'
+import { useParentSafeThreshold } from '@/features/proposers/hooks/useParentSafeThreshold'
 import { useHasFeature } from '@/hooks/useChains'
 import useProposers from '@/hooks/useProposers'
+import { useIsNestedSafeOwner } from '@/hooks/useIsNestedSafeOwner'
 import AddIcon from '@/public/images/common/add.svg'
 import { SETTINGS_EVENTS } from '@/services/analytics'
 import { Box, Button, Grid, Paper, SvgIcon, Typography } from '@mui/material'
@@ -42,6 +45,9 @@ const ProposersList = () => {
   const isEnabled = useHasFeature(FEATURES.PROPOSERS)
   const { safe } = useSafeInfo()
   const isUndeployedSafe = !safe.deployed
+  const isNestedSafeOwner = useIsNestedSafeOwner()
+  const { threshold: parentThreshold } = useParentSafeThreshold()
+  const showPendingDelegations = isNestedSafeOwner && parentThreshold !== undefined && parentThreshold > 1
 
   const rows = useMemo(() => {
     if (!proposers.data) return []
@@ -124,6 +130,8 @@ const ProposersList = () => {
                 </CheckWallet>
               </Box>
             )}
+
+            {showPendingDelegations && <PendingDelegationsList />}
 
             {rows.length > 0 && <EnhancedTable rows={rows} headCells={headCells} />}
           </Grid>

@@ -10,6 +10,8 @@ import {
   signProposerTypedData,
   signProposerTypedDataForSafe,
 } from '@/features/proposers/utils/utils'
+import { useParentSafeThreshold } from '@/features/proposers/hooks/useParentSafeThreshold'
+import { buildDelegationOrigin, createDelegationMessage } from '@/features/proposers/services/delegationMessages'
 import useChainId from '@/hooks/useChainId'
 import useSafeAddress from '@/hooks/useSafeAddress'
 import useWallet from '@/hooks/wallets/useWallet'
@@ -40,11 +42,13 @@ import {
   type CreateDelegateDto,
   type Delegate,
 } from '@safe-global/store/gateway/AUTO_GENERATED/delegates'
+import { getDelegateTypedData } from '@safe-global/utils/services/delegates'
 import { type BaseSyntheticEvent, useCallback, useMemo, useState } from 'react'
 import { FormProvider, useForm, type Validate } from 'react-hook-form'
 import useSafeInfo from '@/hooks/useSafeInfo'
 import { useIsNestedSafeOwner } from '@/hooks/useIsNestedSafeOwner'
 import { useNestedSafeOwners } from '@/hooks/useNestedSafeOwners'
+import type { TypedData } from '@safe-global/store/gateway/AUTO_GENERATED/messages'
 
 type UpsertProposerProps = {
   onClose: () => void
@@ -65,6 +69,7 @@ type ProposerEntry = {
 const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) => {
   const [error, setError] = useState<Error>()
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [multiSigInitiated, setMultiSigInitiated] = useState<boolean>(false)
   const [addDelegateV1] = useDelegatesPostDelegateV1Mutation()
   const [addDelegateV2] = useDelegatesPostDelegateV2Mutation()
   const dispatch = useAppDispatch()
@@ -75,6 +80,7 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
   const { safe } = useSafeInfo()
   const isNestedSafeOwner = useIsNestedSafeOwner()
   const nestedSafeOwners = useNestedSafeOwners()
+  const { threshold: parentThreshold, owners: parentOwners } = useParentSafeThreshold()
 
   const methods = useForm<ProposerEntry>({
     defaultValues: {
@@ -95,6 +101,8 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
 
   const { handleSubmit, formState } = methods
 
+  const isMultiSigRequired = isNestedSafeOwner && parentThreshold !== undefined && parentThreshold > 1
+
   const onConfirm = handleSubmit(async (data: ProposerEntry) => {
     if (!wallet) return
 
@@ -110,7 +118,20 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
       let delegator: string
 
       if (parentSafeAddress) {
-        // Nested Safe owner: sign the SafeMessage-wrapped delegate hash, then encode as EIP-1271
+        if (isMultiSigRequired) {
+          // Multi-sig flow: create off-chain message on parent Safe for signature collection
+          const eoaSignature = await signProposerTypedDataForSafe(chainId, data.address, parentSafeAddress, signer)
+          const delegateTypedData = getDelegateTypedData(chainId, data.address) as TypedData
+          const origin = buildDelegationOrigin('add', data.address, safeAddress, data.name)
+
+          await createDelegationMessage(dispatch, chainId, parentSafeAddress, delegateTypedData, eoaSignature, origin)
+
+          setMultiSigInitiated(true)
+          trackEvent(SETTINGS_EVENTS.PROPOSERS.SUBMIT_ADD_PROPOSER)
+          return
+        }
+
+        // Single-sig nested Safe owner: sign and submit immediately
         const eoaSignature = await signProposerTypedDataForSafe(chainId, data.address, parentSafeAddress, signer)
         signature = encodeEIP1271Signature(parentSafeAddress, eoaSignature)
         delegator = parentSafeAddress
@@ -174,6 +195,50 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
   const isEditing = !!proposer
   const canEdit = wallet?.address === proposer?.delegator
 
+  if (multiSigInitiated) {
+    return (
+      <Dialog open onClose={onClose}>
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <Typography variant="h6" fontWeight={700}>
+              Signature collection initiated
+            </Typography>
+            <Box flexGrow={1} />
+            <IconButton aria-label="close" onClick={onClose}>
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            1 of {parentThreshold} signatures collected
+          </Alert>
+
+          <Typography variant="body2" mb={2}>
+            The delegation request has been created as an off-chain message on your parent Safe. Other owners of the
+            parent Safe need to sign it before the proposer can be added.
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary">
+            The other parent Safe owners can find and sign this pending delegation on the proposer settings page of this
+            Safe.
+          </Typography>
+        </DialogContent>
+
+        <Divider />
+
+        <DialogActions sx={{ padding: 3 }}>
+          <Button variant="contained" onClick={onClose}>
+            Done
+          </Button>
+        </DialogActions>
+      </Dialog>
+    )
+  }
+
   return (
     <Dialog open onClose={onCancel}>
       <FormProvider {...methods}>
@@ -195,6 +260,13 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
           <Divider />
 
           <DialogContent>
+            {isMultiSigRequired && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                This requires {parentThreshold} of {parentOwners?.length ?? '?'} parent Safe owner signatures to
+                complete.
+              </Alert>
+            )}
+
             <Box mb={2}>
               <Typography variant="body2">
                 You&apos;re about to grant this address the ability to propose transactions. To complete the setup,
@@ -202,7 +274,7 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
               </Typography>
             </Box>
 
-            <Alert severity="info">Proposer’s name and address are publicly visible.</Alert>
+            <Alert severity="info">Proposer&apos;s name and address are publicly visible.</Alert>
 
             <Box my={2}>
               {isEditing ? (

@@ -75,6 +75,57 @@ describe('encodeEIP1271Signature', () => {
 
     expect(result1).toBe(result2)
   })
+
+  it('should correctly encode multi-owner preparedSignature (2 concatenated 65-byte signatures)', () => {
+    // Two 65-byte signatures concatenated (as returned by preparedSignature for a 2/N Safe)
+    const sig1 = 'a'.repeat(64) + 'b'.repeat(64) + '1b' // 65 bytes
+    const sig2 = 'c'.repeat(64) + 'd'.repeat(64) + '1c' // 65 bytes
+    const multiOwnerSignature = '0x' + sig1 + sig2 // 130 bytes total
+
+    const result = encodeEIP1271Signature(parentSafeAddress, multiOwnerSignature)
+
+    expect(result).toMatch(/^0x[0-9a-fA-F]+$/)
+
+    // r: parent Safe address
+    const rValue = result.slice(2, 66)
+    const expectedR = '0'.repeat(24) + parentSafeAddress.slice(2).toLowerCase()
+    expect(rValue.toLowerCase()).toBe(expectedR.toLowerCase())
+
+    // s: offset 65
+    const sValue = result.slice(66, 130)
+    expect(sValue).toBe('0'.repeat(62) + '41')
+
+    // v: 0x00
+    expect(result.slice(130, 132)).toBe('00')
+
+    // Dynamic data: length should be 130 bytes (2 * 65)
+    const dynamicData = result.slice(132)
+    const lengthHex = dynamicData.slice(0, 64)
+    expect(parseInt(lengthHex, 16)).toBe(130)
+
+    // The actual multi-owner signature data
+    const sigData = dynamicData.slice(64, 64 + 260) // 130 bytes = 260 hex chars
+    expect(sigData.toLowerCase()).toBe((sig1 + sig2).toLowerCase())
+  })
+
+  it('should correctly encode multi-owner preparedSignature (3 concatenated 65-byte signatures)', () => {
+    // Three 65-byte signatures concatenated (as returned by preparedSignature for a 3/N Safe)
+    const sig1 = '1'.repeat(130) // 65 bytes
+    const sig2 = '2'.repeat(130) // 65 bytes
+    const sig3 = '3'.repeat(130) // 65 bytes
+    const multiOwnerSignature = '0x' + sig1 + sig2 + sig3 // 195 bytes total
+
+    const result = encodeEIP1271Signature(parentSafeAddress, multiOwnerSignature)
+
+    // Dynamic data: length should be 195 bytes
+    const dynamicData = result.slice(132)
+    const lengthHex = dynamicData.slice(0, 64)
+    expect(parseInt(lengthHex, 16)).toBe(195)
+
+    // The actual multi-owner signature data
+    const sigData = dynamicData.slice(64, 64 + 390) // 195 bytes = 390 hex chars
+    expect(sigData.toLowerCase()).toBe((sig1 + sig2 + sig3).toLowerCase())
+  })
 })
 
 describe('signProposerTypedDataForSafe', () => {

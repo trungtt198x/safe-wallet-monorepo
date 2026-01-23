@@ -1,6 +1,7 @@
 'use client'
 
 import useAsync from '@safe-global/utils/hooks/useAsync'
+import { logError, Errors } from '@/services/exceptions'
 import type { FeatureHandle, FeatureImplementation } from './types'
 
 /**
@@ -61,7 +62,7 @@ export function useLoadFeature<T extends FeatureImplementation>(
 
   // Log errors for debugging
   if (error) {
-    console.error(`Failed to load feature "${handle.name}":`, error)
+    logError(Errors._906, error)
   }
 
   // Return null if not enabled or not yet loaded

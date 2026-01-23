@@ -45,6 +45,6 @@ export function createFeatureHandle<T extends FeatureImplementation = FeatureImp
   return {
     name: folderName,
     useIsEnabled: () => useHasFeature(flag),
-    load: () => import(`@/features/${folderName}/feature`) as Promise<{ default: T }>,
+    load: () => import(/* webpackMode: "lazy" */ `../${folderName}/feature`) as Promise<{ default: T }>,
   }
 }

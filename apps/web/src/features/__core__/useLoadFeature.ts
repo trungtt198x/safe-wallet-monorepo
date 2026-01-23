@@ -17,13 +17,30 @@ import type { FeatureHandle, FeatureImplementation } from './types'
  * @param handle - The feature handle with name, useIsEnabled, and load function.
  *   **Important:** The handle should be a module-level constant to avoid unnecessary
  *   re-renders due to reference changes in the dependency array.
- * @returns The loaded feature contract, or null if not enabled/loaded
+ * @returns The loaded feature, `undefined` while loading, or `null` if disabled
  *
  * @example
  * ```typescript
  * import { WalletConnectFeature } from '@/features/walletconnect'
  * import { useLoadFeature } from '@/features/__core__'
  *
+ * function MyComponent() {
+ *   const walletConnect = useLoadFeature(WalletConnectFeature)
+ *
+ *   // Show loading state while feature flag or code is loading
+ *   if (walletConnect === undefined) return <Skeleton />
+ *
+ *   // Hide if disabled
+ *   if (walletConnect === null) return null
+ *
+ *   // Feature is loaded - safe to use
+ *   return <walletConnect.components.WalletConnectWidget />
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Simple pattern: treat loading same as disabled
  * function MyComponent() {
  *   const walletConnect = useLoadFeature(WalletConnectFeature)
  *   if (!walletConnect) return null
@@ -33,7 +50,7 @@ import type { FeatureHandle, FeatureImplementation } from './types'
  */
 export function useLoadFeature<T extends FeatureImplementation>(
   handle: FeatureHandle<T>,
-): (T & { name: string; useIsEnabled: () => boolean | undefined }) | null {
+): (T & { name: string; useIsEnabled: () => boolean | undefined }) | null | undefined {
   type LoadedFeature = T & { name: string; useIsEnabled: () => boolean | undefined }
 
   // Check feature flag (must be called unconditionally as it's a hook)
@@ -44,7 +61,7 @@ export function useLoadFeature<T extends FeatureImplementation>(
   // - Error handling
   // - Loading state management
   // Dynamic import is cached by the bundler - multiple calls return the same Promise
-  const [feature, error] = useAsync(
+  const [feature, error, loading] = useAsync(
     () => {
       if (isEnabled !== true) return
       return handle.load().then(
@@ -65,10 +82,16 @@ export function useLoadFeature<T extends FeatureImplementation>(
     logError(Errors._906, error)
   }
 
-  // Return null if not enabled or not yet loaded
-  if (isEnabled !== true) {
+  // Feature flag is disabled -> null
+  if (isEnabled === false) {
     return null
   }
 
-  return feature ?? null
+  // Feature flag is loading or code is loading -> undefined
+  if (isEnabled === undefined || loading || !feature) {
+    return undefined
+  }
+
+  // Feature is loaded and ready -> feature object
+  return feature
 }

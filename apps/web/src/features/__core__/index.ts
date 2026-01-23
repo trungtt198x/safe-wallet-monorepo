@@ -17,3 +17,4 @@ export type {
 
 export { withSuspense } from './withSuspense'
 export { useLoadFeature } from './useLoadFeature'
+export { createFeatureHandle } from './createFeatureHandle'

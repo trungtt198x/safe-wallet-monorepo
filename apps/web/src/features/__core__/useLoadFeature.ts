@@ -25,16 +25,16 @@ import type { FeatureHandle, FeatureImplementation } from './types'
  * import { useLoadFeature } from '@/features/__core__'
  *
  * function MyComponent() {
- *   const walletConnect = useLoadFeature(WalletConnectFeature)
+ *   const wc = useLoadFeature(WalletConnectFeature)
  *
  *   // Show loading state while feature flag or code is loading
- *   if (walletConnect === undefined) return <Skeleton />
+ *   if (wc === undefined) return <Skeleton />
  *
  *   // Hide if disabled
- *   if (walletConnect === null) return null
+ *   if (wc === null) return null
  *
- *   // Feature is loaded - safe to use
- *   return <walletConnect.components.WalletConnectWidget />
+ *   // Feature is loaded - flat access pattern
+ *   return <wc.WalletConnectWidget />
  * }
  * ```
  *
@@ -42,9 +42,9 @@ import type { FeatureHandle, FeatureImplementation } from './types'
  * ```typescript
  * // Simple pattern: treat loading same as disabled
  * function MyComponent() {
- *   const walletConnect = useLoadFeature(WalletConnectFeature)
- *   if (!walletConnect) return null
- *   return <walletConnect.components.WalletConnectWidget />
+ *   const wc = useLoadFeature(WalletConnectFeature)
+ *   if (!wc) return null
+ *   return <wc.WalletConnectWidget />
  * }
  * ```
  */

@@ -127,9 +127,9 @@ import { useMyHook } from '@/features/myfeature/hooks/useMyHook'
 import { heavyService } from '@/features/myfeature/services/heavyService'
 ```
 
-**Accessing Feature Components:**
+**Accessing Feature Exports:**
 
-Use the `useLoadFeature` hook to access lazy-loaded components:
+Use the `useLoadFeature` hook to access lazy-loaded features. Features use a **flat structure** with **proxy-based stubs**:
 
 ```typescript
 import { useLoadFeature } from '@/features/__core__'
@@ -137,12 +137,56 @@ import { MyFeature } from '@/features/myfeature'
 
 function ParentComponent() {
   const feature = useLoadFeature(MyFeature)
-  if (!feature) return null
-  return <feature.components.MyComponent />
+
+  // No null check needed - always returns an object
+  // Components render null when not ready (proxy stub)
+  // Hooks return undefined when not ready (proxy stub)
+  return <feature.MyComponent />
+}
+
+// For explicit loading/disabled states:
+function ParentWithStates() {
+  const feature = useLoadFeature(MyFeature)
+
+  if (feature.$isLoading) return <Skeleton />
+  if (feature.$isDisabled) return null
+
+  return <feature.MyComponent />
 }
 ```
 
-See `apps/web/docs/feature-architecture-v2.md` for the complete guide including the two-tier handle pattern and bundle leak pitfalls.
+**feature.ts Pattern (IMPORTANT):**
+
+Use **direct imports** with a **flat structure** - do NOT use `lazy()` or nested categories:
+
+```typescript
+// feature.ts - This file is already lazy-loaded via createFeatureHandle
+import MyComponent from './components/MyComponent'
+import { useMyHook } from './hooks/useMyHook'
+import { myService } from './services/myService'
+
+// ✅ CORRECT: Flat structure, naming conventions determine stub behavior
+export default {
+  MyComponent, // PascalCase → component (stub renders null)
+  useMyHook, // useSomething → hook (stub returns {})
+  myService, // camelCase → service (stub is no-op)
+}
+```
+
+```typescript
+// ❌ WRONG - Don't use nested categories
+export default {
+  components: { MyComponent }, // ❌ No nesting!
+  hooks: { useMyHook }, // ❌ No nesting!
+}
+
+// ❌ WRONG - Don't use lazy() inside feature.ts
+export default {
+  MyComponent: lazy(() => import('./components/MyComponent')), // ❌
+}
+```
+
+See `apps/web/docs/feature-architecture-v2.md` for the complete guide including proxy-based stubs and meta properties (`$isLoading`, `$isDisabled`, `$isReady`).
 
 ## Workflow
 
@@ -324,6 +368,7 @@ Avoid these common mistakes when contributing:
 6. **Not handling chain-specific logic** – Always consider multi-chain scenarios
 7. **Skipping Storybook stories** – New components should have stories for documentation
 8. **Incomplete error handling** – Always handle loading, error, and empty states in UI components
+9. **Using lazy() or nested structure in feature.ts** – The `feature.ts` file is already lazy-loaded via `createFeatureHandle`. Do NOT add `lazy()` calls for individual components, and do NOT use nested categories (`components`, `hooks`, `services`). Use a flat structure with direct imports. Naming conventions determine stub behavior: `useSomething` → hook, `PascalCase` → component, `camelCase` → service.
 
 ## Debugging Tips
 

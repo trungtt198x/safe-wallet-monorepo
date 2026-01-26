@@ -62,10 +62,10 @@ A **Feature Handle** is a tiny object (~100 bytes) that contains:
 
 Each feature exposes a **handle** with two parts:
 
-| Part                              | Bundled?   | Purpose                                    |
-| --------------------------------- | ---------- | ------------------------------------------ |
-| `useIsEnabled()`                  | Yes (tiny) | Flag check via `useHasFeature(FEATURES.X)` |
-| `components`, `hooks`, `services` | No (lazy)  | Actual feature code, loaded on demand      |
+| Part             | Bundled?   | Purpose                                    |
+| ---------------- | ---------- | ------------------------------------------ |
+| `useIsEnabled()` | Yes (tiny) | Flag check via `useHasFeature(FEATURES.X)` |
+| Feature exports  | No (lazy)  | Actual feature code, loaded on demand      |
 
 The `useLoadFeature()` hook combines flag check + lazy loading in one step:
 
@@ -73,34 +73,67 @@ The `useLoadFeature()` hook combines flag check + lazy loading in one step:
 import { WalletConnectFeature } from '@/features/walletconnect'
 import { useLoadFeature } from '@/features/__core__'
 
-// Consumer component with loading state
 function MyPage() {
-  const walletConnect = useLoadFeature(WalletConnectFeature)
+  const wc = useLoadFeature(WalletConnectFeature)
 
-  // Show skeleton while loading (feature flag or code)
-  if (walletConnect === undefined) return <Skeleton />
+  // No null checks needed! Always returns an object.
+  // Hooks return {} when not ready (safe destructuring), components render null.
+  const uri = wc.useWcUri()
 
-  // Hide if feature is disabled
-  if (walletConnect === null) return null
-
-  // Feature is loaded - safe to use
-  return <walletConnect.components.WalletConnectWidget />
+  return <wc.WalletConnectWidget />
 }
 
-// Simple pattern: treat loading same as disabled
-function SimpleComponent() {
-  const walletConnect = useLoadFeature(WalletConnectFeature)
-  if (!walletConnect) return null
-  return <walletConnect.components.WalletConnectWidget />
+// If you need explicit loading/disabled handling:
+function MyPageWithStates() {
+  const wc = useLoadFeature(WalletConnectFeature)
+
+  if (wc.$isLoading) return <Skeleton />
+  if (wc.$isDisabled) return null
+
+  return <wc.WalletConnectWidget />
 }
 ```
 
-**`useLoadFeature()` return values:**
-| Condition | Returns | When to use |
-|-----------|---------|-------------|
-| Feature flag or code loading | `undefined` | Show loading UI (Skeleton, Spinner) |
-| Feature flag disabled | `null` | Hide feature completely |
-| Feature loaded successfully | Feature object | Render feature components |
+### Proxy-Based Stubs
+
+`useLoadFeature()` **always returns an object** - never `null` or `undefined`. When the feature is loading or disabled, it returns a Proxy that provides automatic stubs based on naming conventions:
+
+| Naming Pattern              | Type      | Stub Behavior               |
+| --------------------------- | --------- | --------------------------- |
+| `useSomething`              | Hook      | Returns `{}` (empty object) |
+| `PascalCase` (not `use...`) | Component | Renders `null`              |
+| `camelCase` (not `use...`)  | Service   | No-op function `() => {}`   |
+
+**Why `{}` for hooks?** Allows safe destructuring: `const { data } = feature.useMyHook()` won't throw when not ready (individual values will be `undefined`).
+
+**Meta properties** (prefixed with `$`) provide state information:
+
+| Property      | Type      | Description                          |
+| ------------- | --------- | ------------------------------------ |
+| `$isLoading`  | `boolean` | `true` while feature code is loading |
+| `$isDisabled` | `boolean` | `true` if feature flag is off        |
+| `$isReady`    | `boolean` | `true` when loaded and enabled       |
+| `$error`      | `Error?`  | Error if loading failed              |
+
+### Why Proxy-Based Stubs?
+
+This design solves two problems:
+
+1. **No optional chaining** - Eliminates `feature?.hooks.useX() ?? default` patterns that increase cyclomatic complexity
+2. **React hooks rules** - Hooks are always called unconditionally (stubs return defaults when not ready)
+
+```typescript
+// ❌ OLD: Optional chaining + null checks (complexity, rules violation)
+const feature = useLoadFeature(MyFeature)
+const show = feature?.hooks.useShowBanner() ?? false  // Conditional hook call!
+if (!feature) return null
+return <feature.components.Banner />
+
+// ✅ NEW: Always callable, no optional chaining
+const feature = useLoadFeature(MyFeature)
+const show = feature.useShowBanner()  // Always called, returns {} if not ready
+return <feature.Banner />              // Always renders, returns null if not ready
+```
 
 ### The Loading Flow
 
@@ -114,19 +147,97 @@ function SimpleComponent() {
 ┌─────────────────────────────────────────────────────────────────┐
 │ 2. CONSUMER calls useLoadFeature (flag check + lazy load)      │
 │    const wc = useLoadFeature(WalletConnectFeature)             │
-│    // Returns: undefined | null | feature                      │
+│    // ALWAYS returns object (Proxy stubs when not ready)       │
 └─────────────────────────────────────────────────────────────────┘
                               │
-                 ┌────────────┼────────────┐
-                 ▼            ▼            ▼
-           ┌──────────┐ ┌──────────┐ ┌─────────┐
-           │   null   │ │undefined │ │ feature │
-           │(disabled)│ │(loading) │ │(loaded) │
-           └──────────┘ └──────────┘ └─────────┘
-                 │            │            │
-                 ▼            ▼            ▼
-            return null  <Skeleton/>  <wc.components.Widget />
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+        ┌───────────┐  ┌───────────┐  ┌───────────┐
+        │ $isLoading│  │$isDisabled│  │  $isReady │
+        │   true    │  │   true    │  │   true    │
+        └───────────┘  └───────────┘  └───────────┘
+              │               │               │
+              ▼               ▼               ▼
+        Proxy stubs     Proxy stubs     Real impl
+        (hooks→undef)   (hooks→undef)   (full feature)
+        (comps→null)    (comps→null)
 ```
+
+### Lazy Loading: One Dynamic Import
+
+**The core principle: ONE dynamic import per feature.**
+
+When you use `createFeatureHandle`, it sets up:
+
+```typescript
+load: () => import('./feature') // This is THE lazy load
+```
+
+**Inside `feature.ts`, use direct imports with a flat structure:**
+
+```typescript
+// feature.ts - This entire file IS the lazy-loaded chunk
+import MyComponent from './components/MyComponent'
+import AnotherComponent from './components/AnotherComponent'
+import { useMyHook } from './hooks/useMyHook'
+import { myService } from './services/myService'
+
+export default {
+  // Flat structure - no nested categories
+  MyComponent, // PascalCase → component (stub renders null)
+  AnotherComponent, // PascalCase → component (stub renders null)
+  useMyHook, // useSomething → hook (stub returns {})
+  myService, // camelCase → service (stub is no-op)
+}
+```
+
+**Naming conventions determine stub behavior:**
+
+- `useSomething` → Hook → stub returns `{}` (safe destructuring)
+- `PascalCase` → Component → stub renders `null`
+- `camelCase` → Service/function → stub is no-op `() => {}`
+
+#### ❌ Anti-Pattern: Multiple lazy() Calls Inside feature.ts
+
+```typescript
+// ❌ WRONG: Don't do this!
+import { lazy } from 'react'
+
+export default {
+  // ❌ Unnecessary - feature.ts is already lazy-loaded
+  MyComponent: lazy(() => import('./components/MyComponent')),
+  AnotherComponent: lazy(() => import('./components/AnotherComponent')),
+}
+```
+
+This creates unnecessary complexity:
+
+- Multiple network requests instead of one
+- Each component becomes a separate chunk
+- Adds Suspense boundaries everywhere
+- Makes debugging harder
+
+#### Rare Exception: Giant Internal Dependencies
+
+The ONLY time to use `lazy()` inside `feature.ts` is when you have a giant internal dependency (e.g., a chart library, PDF renderer) that's only needed on one specific page within the feature:
+
+```typescript
+// feature.ts - Rare exception for giant sub-dependency
+import RegularComponent from './components/RegularComponent'
+import { useMyHook } from './hooks/useMyHook'
+import { withSuspense } from '@/features/__core__'
+import { lazy } from 'react'
+
+export default {
+  RegularComponent, // ✅ Direct - loads with feature
+  useMyHook, // ✅ Direct - loads with feature
+
+  // Exception: 500KB chart component only used on analytics page
+  HeavyChartComponent: withSuspense(lazy(() => import('./components/HeavyChartComponent'))),
+}
+```
+
+**When in doubt, use direct imports.** If you're not sure whether something qualifies as a "giant internal dependency," it probably doesn't.
 
 ### Benefits of This Pattern
 
@@ -134,18 +245,23 @@ function SimpleComponent() {
 import { WalletConnectFeature } from '@/features/walletconnect'
 import { useLoadFeature } from '@/features/__core__'
 
-const walletConnect = useLoadFeature(WalletConnectFeature)
+const wc = useLoadFeature(WalletConnectFeature)
+
+// Always callable - no optional chaining
+const uri = wc.useWcUri()
+return <wc.WalletConnectWidget />
 ```
 
 Benefits:
 
+- **No optional chaining**: Proxy stubs eliminate `?.` complexity
+- **React hooks compliant**: Hooks always called unconditionally
 - **Type-safe**: Full TypeScript inference from the handle
-- **Simple API**: Returns `undefined` (loading), `null` (disabled), or the feature object
-- **Loading states**: Can distinguish between loading and disabled for better UX
+- **Simple API**: Always returns an object, use `$isReady`/`$isLoading`/`$isDisabled` for state
+- **Flat structure**: No nested `.components.` or `.hooks.` - just `feature.MyComponent`
 - **IDE-friendly**: Cmd+click on `WalletConnectFeature` jumps to the handle definition
 - **Tree-shakeable**: Unused features won't be bundled
 - **No boilerplate**: No context providers, no string lookups
-- **Better UX**: Show skeletons/spinners during loading instead of blank screens
 - **Testable**: Just mock the feature module with Jest
 
 ## Feature Contract
@@ -154,62 +270,38 @@ Every feature MUST export a contract type that defines its public API.
 
 ### Contract Interface
 
+Feature contracts use a **flat structure** - no nested `components`, `hooks`, or `services` categories. Naming conventions distinguish types:
+
 ```typescript
 // src/features/__core__/types.ts
 
 /**
- * Base contract that all features extend.
- * The useIsEnabled hook is STATIC (bundled) - just a FEATURES enum lookup.
- * Components/hooks/services are LAZY (code-split).
+ * Base feature implementation type.
+ * Uses flat structure with naming conventions:
+ * - useSomething → hook (stub returns {})
+ * - PascalCase → component (stub renders null)
+ * - camelCase → service/function (stub is no-op)
  */
-export interface BaseFeatureContract {
-  /** Unique feature identifier (used for registry lookup) */
-  readonly name: string
+export type FeatureImplementation = Record<string, unknown>
 
-  /**
-   * Feature flag check - STATIC, always bundled.
-   * Implementation is just: () => useHasFeature(FEATURES.MY_FEATURE)
-   * @returns true/false/undefined (loading)
-   */
-  useIsEnabled: () => boolean | undefined
+/**
+ * Meta properties added by useLoadFeature ($ prefix)
+ */
+export interface FeatureMeta {
+  /** True while feature code is loading */
+  $isLoading: boolean
+  /** True if feature flag is disabled */
+  $isDisabled: boolean
+  /** True when feature is loaded and enabled */
+  $isReady: boolean
+  /** Error if loading failed */
+  $error: Error | null
 }
 
 /**
- * Contract for features that expose components
+ * Result type from useLoadFeature - always an object, never null
  */
-export interface ComponentContract {
-  components?: Record<string, React.ComponentType<any>>
-}
-
-/**
- * Contract for features that expose hooks
- */
-export interface HooksContract {
-  hooks?: Record<string, (...args: any[]) => any>
-}
-
-/**
- * Contract for features that expose services
- */
-export interface ServicesContract {
-  services?: Record<string, unknown>
-}
-
-/**
- * Contract for features that expose Redux selectors
- */
-export interface SelectorsContract {
-  selectors?: Record<string, (state: RootState) => unknown>
-}
-
-/**
- * Full feature contract combining all capabilities
- */
-export type FeatureContract = BaseFeatureContract &
-  Partial<ComponentContract> &
-  Partial<HooksContract> &
-  Partial<ServicesContract> &
-  Partial<SelectorsContract>
+export type FeatureResult<T> = T & FeatureMeta
 ```
 
 ### Type Inference
@@ -248,21 +340,21 @@ For navigating to implementation details from contracts, use `typeof` imports. T
 ```typescript
 // contract.ts
 import type MyComponent from './components/MyComponent'
+import type AnotherComponent from './components/AnotherComponent'
+import type { useMyHook } from './hooks/useMyHook'
 import type { myService } from './services/myService'
-import type { myStore } from './store/myStore'
 
+// Flat structure - no nested categories
 export interface MyFeatureContract {
-  components: {
-    // ✅ CORRECT: Cmd+click on 'typeof MyComponent' jumps to implementation
-    MyComponent: typeof MyComponent
-  }
-  services: {
-    // ✅ CORRECT: Cmd+click on 'typeof myService' jumps to implementation
-    myService: typeof myService
+  // Components (PascalCase)
+  MyComponent: typeof MyComponent
+  AnotherComponent: typeof AnotherComponent
 
-    // ✅ CORRECT: For stores, always use typeof
-    myStore: typeof myStore
-  }
+  // Hooks (useSomething)
+  useMyHook: typeof useMyHook
+
+  // Services (camelCase)
+  myService: typeof myService
 }
 ```
 
@@ -278,13 +370,19 @@ export interface MyFeatureContract {
 ```typescript
 // ❌ WRONG: Generic ComponentType loses IDE navigation
 import type { ComponentType } from 'react'
-components: {
+export interface BadContract {
   MyComponent: ComponentType // Can't jump to definition
 }
 
 // ❌ WRONG: Manual type annotation requires maintenance
-components: {
+export interface BadContract {
   MyComponent: React.FC<{ prop: string }> // Must update manually when props change
+}
+
+// ❌ WRONG: Nested structure (old pattern)
+export interface OldContract {
+  components: { MyComponent: typeof MyComponent } // Don't nest!
+  hooks: { useMyHook: typeof useMyHook } // Don't nest!
 }
 ```
 
@@ -294,21 +392,13 @@ components: {
 
 ```typescript
 // src/features/bridge/contract.ts
-import type { FeatureImplementation } from '@/features/__core__'
 import type Bridge from './components/Bridge'
 import type BridgeWidget from './components/BridgeWidget'
 
-export interface BridgeImplementation extends FeatureImplementation {
-  components: {
-    // Use typeof for IDE navigation (Cmd+click jumps to implementation)
-    Bridge: typeof Bridge
-    BridgeWidget: typeof BridgeWidget
-  }
-}
-
-export interface BridgeContract extends BridgeImplementation {
-  readonly name: 'bridge'
-  useIsEnabled: () => boolean | undefined
+// Flat structure - no nested categories
+export interface BridgeContract {
+  Bridge: typeof Bridge
+  BridgeWidget: typeof BridgeWidget
 }
 ```
 
@@ -316,62 +406,47 @@ export interface BridgeContract extends BridgeImplementation {
 
 ```typescript
 // src/features/multichain/contract.ts
-import type { BaseFeatureContract, ComponentContract, HooksContract } from '@/features/__core__/types'
 import type CreateSafeOnNewChain from './components/CreateSafeOnNewChain'
 import type NetworkLogosList from './components/NetworkLogosList'
 import type { useIsMultichainSafe } from './hooks/useIsMultichainSafe'
 import type { useSafeCreationData } from './hooks/useSafeCreationData'
 
-export interface MultichainContract extends BaseFeatureContract, ComponentContract, HooksContract {
-  readonly name: 'multichain'
-  useIsEnabled: () => boolean | undefined // Static flag check
-  components: {
-    // Use typeof for IDE navigation
-    CreateSafeOnNewChain: typeof CreateSafeOnNewChain
-    NetworkLogosList: typeof NetworkLogosList
-  }
-  hooks: {
-    // Use typeof for hooks too
-    useIsMultichainSafe: typeof useIsMultichainSafe
-    useSafeCreationData: typeof useSafeCreationData
-  }
+// Flat structure - naming conventions distinguish types
+export interface MultichainContract {
+  // Components (PascalCase) - stub renders null
+  CreateSafeOnNewChain: typeof CreateSafeOnNewChain
+  NetworkLogosList: typeof NetworkLogosList
+
+  // Hooks (useSomething) - stub returns {}
+  useIsMultichainSafe: typeof useIsMultichainSafe
+  useSafeCreationData: typeof useSafeCreationData
 }
 ```
 
-**Full Feature Contract (with services and selectors):**
+**Full Feature Contract (with services):**
 
 ```typescript
 // src/features/walletconnect/contract.ts
-import type { FeatureContract } from '@/features/__core__/types'
 import type WalletConnectWidget from './components/WalletConnectWidget'
 import type WcSessionManager from './components/WcSessionManager'
 import type { useWcUri } from './hooks/useWcUri'
 import type { useWalletConnectSearchParamUri } from './hooks/useWalletConnectSearchParamUri'
 import type WalletConnectWallet from './services/WalletConnectWallet'
 import type { wcPopupStore } from './store/wcPopupStore'
-import type { wcSessionStore } from './store/wcSessionStore'
 
-export interface WalletConnectContract extends FeatureContract {
-  readonly name: 'walletconnect'
-  useIsEnabled: () => boolean | undefined // Static flag check
-  components: {
-    // Use typeof for components - enables IDE navigation
-    WalletConnectWidget: typeof WalletConnectWidget
-    WcSessionManager: typeof WcSessionManager
-  }
-  hooks: {
-    // Use typeof for hooks
-    useWcUri: typeof useWcUri
-    useWalletConnectSearchParamUri: typeof useWalletConnectSearchParamUri
-  }
-  services: {
-    // Use typeof for services
-    walletConnectInstance: WalletConnectWallet
+// Flat structure - all exports at top level
+export interface WalletConnectContract {
+  // Components (PascalCase)
+  WalletConnectWidget: typeof WalletConnectWidget
+  WcSessionManager: typeof WcSessionManager
 
-    // Use typeof for stores
-    wcPopupStore: typeof wcPopupStore
-    wcSessionStore: typeof wcSessionStore
-  }
+  // Hooks (useSomething)
+  useWcUri: typeof useWcUri
+  useWalletConnectSearchParamUri: typeof useWalletConnectSearchParamUri
+
+  // Services (camelCase)
+  walletConnectInstance: WalletConnectWallet
+  wcPopupStore: typeof wcPopupStore
 }
 ```
 
@@ -385,21 +460,55 @@ The `useLoadFeature()` hook provides:
 
 - Feature flag checking via `handle.useIsEnabled()`
 - Lazy loading of the full implementation
+- **Proxy-based stubs** when loading or disabled (always returns an object)
 - Module-level caching with `useSyncExternalStore` for reactivity
 
 ```typescript
 // src/features/__core__/useLoadFeature.ts
 import { useEffect, useSyncExternalStore } from 'react'
-import type { FeatureHandle, FeatureImplementation, FeatureContract } from './types'
+import type { FeatureHandle, FeatureImplementation, FeatureMeta } from './types'
 
 // Module-level cache shared across all components
-const cache = new Map<string, FeatureContract>()
+const cache = new Map<string, unknown>()
 const loading = new Set<string>()
 const subscribers = new Set<() => void>()
 
-export function useLoadFeature<T extends FeatureImplementation>(
-  handle: FeatureHandle<T>,
-): (T & { name: string; useIsEnabled: () => boolean | undefined }) | null {
+/**
+ * Creates a Proxy that returns stubs based on naming conventions:
+ * - useSomething → returns {} (hook stub, safe for destructuring)
+ * - PascalCase → returns () => null (component stub)
+ * - camelCase → returns () => {} (service stub)
+ */
+function createFeatureProxy<T>(meta: FeatureMeta, impl?: T): T & FeatureMeta {
+  return new Proxy({} as T & FeatureMeta, {
+    get(_, prop: string) {
+      // Meta properties ($ prefix)
+      if (prop === '$isLoading') return meta.$isLoading
+      if (prop === '$isDisabled') return meta.$isDisabled
+      if (prop === '$isReady') return meta.$isReady
+      if (prop === '$error') return meta.$error
+
+      // If ready, return actual implementation
+      if (meta.$isReady && impl && prop in impl) {
+        return (impl as Record<string, unknown>)[prop]
+      }
+
+      // Otherwise return stub based on naming convention
+      if (prop.startsWith('use')) {
+        // Hook stub - return function that returns {} (safe destructuring)
+        return () => ({})
+      }
+      if (prop[0] === prop[0].toUpperCase() && prop[0] !== '$') {
+        // Component stub - return component that renders null
+        return () => null
+      }
+      // Service stub - return no-op function
+      return () => {}
+    },
+  })
+}
+
+export function useLoadFeature<T extends FeatureImplementation>(handle: FeatureHandle<T>): T & FeatureMeta {
   const isEnabled = handle.useIsEnabled()
 
   const cached = useSyncExternalStore(
@@ -413,14 +522,22 @@ export function useLoadFeature<T extends FeatureImplementation>(
 
     loading.add(handle.name)
     handle.load().then((module) => {
-      cache.set(handle.name, { name: handle.name, useIsEnabled: handle.useIsEnabled, ...module.default })
+      cache.set(handle.name, module.default)
       loading.delete(handle.name)
       notifySubscribers()
     })
   }, [isEnabled, cached, handle])
 
-  if (isEnabled !== true || !cached) return null
-  return cached
+  // Build meta state
+  const meta: FeatureMeta = {
+    $isLoading: isEnabled === true && !cached && loading.has(handle.name),
+    $isDisabled: isEnabled === false,
+    $isReady: isEnabled === true && !!cached,
+    $error: null,
+  }
+
+  // Always return proxy - never null
+  return createFeatureProxy(meta, cached as T | undefined)
 }
 ```
 
@@ -462,13 +579,21 @@ import { WalletConnectFeature } from '@/features/walletconnect'
 import { useLoadFeature } from '@/features/__core__'
 
 function Header() {
-  // Type is automatically inferred from WalletConnectFeature
-  const walletConnect = useLoadFeature(WalletConnectFeature)
+  const wc = useLoadFeature(WalletConnectFeature)
 
-  if (!walletConnect) return null
+  // No null check needed - always returns an object
+  // Component renders null when not ready (via Proxy stub)
+  return <wc.WalletConnectWidget />
+}
 
-  // Feature is enabled - render component directly
-  return <walletConnect.components.WalletConnectWidget />
+// With explicit loading/disabled handling:
+function HeaderWithStates() {
+  const wc = useLoadFeature(WalletConnectFeature)
+
+  if (wc.$isLoading) return <Skeleton />
+  if (wc.$isDisabled) return null
+
+  return <wc.WalletConnectWidget />
 }
 ```
 
@@ -511,25 +636,19 @@ You can further reduce boilerplate by using TypeScript's `typeof` operator to in
 
 ### The Pattern
 
-**Traditional approach (manual contract):**
+**Traditional approach (4 files):**
 
 ```typescript
-// contract.ts (~50 lines)
-import type { FeatureContract } from '@/features/__core__'
+// contract.ts
 import type MyComponent from './components/MyComponent'
 import type { useMyHook } from './hooks/useMyHook'
 
-export interface MyFeatureContract extends FeatureContract {
-  readonly name: 'my-feature'
-  components: {
-    MyComponent: typeof MyComponent
-  }
-  hooks: {
-    useMyHook: typeof useMyHook
-  }
+export interface MyFeatureContract {
+  MyComponent: typeof MyComponent
+  useMyHook: typeof useMyHook
 }
 
-// handle.ts (~15 lines)
+// handle.ts
 export const MyFeatureHandle: FeatureHandle<MyFeatureContract> = {
   name: 'my-feature',
   useIsEnabled: () => useHasFeature(FEATURES.MY_FEATURE),
@@ -537,40 +656,35 @@ export const MyFeatureHandle: FeatureHandle<MyFeatureContract> = {
 }
 
 // feature.ts
-export default {
-  components: { MyComponent },
-  hooks: { useMyHook },
-} satisfies MyFeatureContract
+import MyComponent from './components/MyComponent'
+import { useMyHook } from './hooks/useMyHook'
+
+export default { MyComponent, useMyHook } satisfies MyFeatureContract
 
 // index.ts
 export { MyFeatureHandle } from './handle'
 export type { MyFeatureContract } from './contract'
 ```
 
-**Simplified approach (factory + manual contract):**
+**Simplified approach (3 files - use factory):**
 
 ```typescript
-// contract.ts (~50 lines) - KEEP THIS
-import type { FeatureContract } from '@/features/__core__'
+// contract.ts - KEEP THIS
 import type MyComponent from './components/MyComponent'
 import type { useMyHook } from './hooks/useMyHook'
 
-export interface MyFeatureContract extends FeatureContract {
-  readonly name: 'my-feature'
-  components: { MyComponent: typeof MyComponent }
-  hooks: { useMyHook: typeof useMyHook }
+export interface MyFeatureContract {
+  MyComponent: typeof MyComponent
+  useMyHook: typeof useMyHook
 }
 
-// feature.ts (~20 lines)
+// feature.ts
 import MyComponent from './components/MyComponent'
 import { useMyHook } from './hooks/useMyHook'
 
-export default {
-  components: { MyComponent },
-  hooks: { useMyHook },
-} satisfies MyFeatureContract
+export default { MyComponent, useMyHook } satisfies MyFeatureContract
 
-// index.ts (~8 lines) - Use factory, no handle.ts needed!
+// index.ts - Use factory, no handle.ts needed!
 import { createFeatureHandle } from '@/features/__core__'
 import type { MyFeatureContract } from './contract'
 
@@ -601,12 +715,11 @@ export const MyFeature = createFeatureHandle<typeof featureImpl>('my-feature')
 **✅ SAFE: Use manual contract types instead:**
 
 ```typescript
-// contract.ts - Manual but safe
-import type { FeatureContract } from '@/features/__core__'
+// contract.ts - Manual but safe (flat structure)
 import type MyComponent from './components/MyComponent'
 
-export interface MyFeatureContract extends FeatureContract {
-  components: { MyComponent: typeof MyComponent }
+export interface MyFeatureContract {
+  MyComponent: typeof MyComponent
 }
 
 // index.ts - Uses contract type
@@ -629,14 +742,16 @@ Full type inference and autocomplete still work:
 ```typescript
 const feature = useLoadFeature(MyFeature)
 //    ^? {
-//      components: { MyComponent: ComponentType<...> },
-//      hooks: { useMyHook: () => ... }
-//    } | null | undefined
+//      MyComponent: ComponentType<...>,
+//      useMyHook: () => ...,
+//      $isLoading: boolean,
+//      $isDisabled: boolean,
+//      $isReady: boolean,
+//    }
 
-if (!feature) return null
-
-feature.components.MyComponent // ✅ Full autocomplete
-feature.hooks.useMyHook() // ✅ Type-safe
+// No null check needed - always an object
+feature.MyComponent // ✅ Full autocomplete (stub when not ready)
+feature.useMyHook() // ✅ Type-safe (returns {} when not ready)
 ```
 
 ### Benefits
@@ -679,38 +794,34 @@ feature.hooks.useMyHook() // ✅ Type-safe
 
 ```typescript
 // src/features/multichain/contract.ts
-import type { FeatureContract } from '@/features/__core__'
+// Flat structure - no nested categories
 import type CreateSafeOnNewChain from './components/CreateSafeOnNewChain'
 import type NetworkLogosList from './components/NetworkLogosList'
 import type { useIsMultichainSafe } from './hooks/useIsMultichainSafe'
 import type { useSafeCreationData } from './hooks/useSafeCreationData'
 
-export interface MultichainContract extends FeatureContract {
-  readonly name: 'multichain'
-  components: {
-    CreateSafeOnNewChain: typeof CreateSafeOnNewChain
-    NetworkLogosList: typeof NetworkLogosList
-  }
-  hooks: {
-    useIsMultichainSafe: typeof useIsMultichainSafe
-    useSafeCreationData: typeof useSafeCreationData
-  }
+export interface MultichainContract {
+  // Components (PascalCase)
+  CreateSafeOnNewChain: typeof CreateSafeOnNewChain
+  NetworkLogosList: typeof NetworkLogosList
+
+  // Hooks (useSomething)
+  useIsMultichainSafe: typeof useIsMultichainSafe
+  useSafeCreationData: typeof useSafeCreationData
 }
 
 // src/features/multichain/feature.ts
-import { lazy } from 'react'
+// Direct imports with flat structure
+import CreateSafeOnNewChain from './components/CreateSafeOnNewChain'
+import NetworkLogosList from './components/NetworkLogosList'
 import { useIsMultichainSafe } from './hooks/useIsMultichainSafe'
 import { useSafeCreationData } from './hooks/useSafeCreationData'
 
 export default {
-  components: {
-    CreateSafeOnNewChain: lazy(() => import('./components/CreateSafeOnNewChain')),
-    NetworkLogosList: lazy(() => import('./components/NetworkLogosList')),
-  },
-  hooks: {
-    useIsMultichainSafe,
-    useSafeCreationData,
-  },
+  CreateSafeOnNewChain,
+  NetworkLogosList,
+  useIsMultichainSafe,
+  useSafeCreationData,
 }
 
 // src/features/multichain/index.ts
@@ -721,18 +832,20 @@ export const MultichainFeature = createFeatureHandle<MultichainContract>('multic
 export type { MultichainContract } from './contract'
 export type * from './types'
 
-// Consumers can now use the feature with full type safety
+// Consumers - no null checks, no nested access
 import { MultichainFeature } from '@/features/multichain'
 import { useLoadFeature } from '@/features/__core__'
 
 function MyComponent() {
   const mc = useLoadFeature(MultichainFeature)
-  if (!mc) return null
+
+  // No null check - hooks return {}, components render null when not ready
+  const isMultichain = mc.useIsMultichainSafe()
 
   return (
     <div>
-      <mc.components.CreateSafeOnNewChain />
-      <mc.components.NetworkLogosList networks={mc.hooks.useIsMultichainSafe()} />
+      <mc.CreateSafeOnNewChain />
+      <mc.NetworkLogosList networks={isMultichain} />
     </div>
   )
 }
@@ -841,16 +954,16 @@ import { WalletConnectFeature } from '@/features/walletconnect'
 import { useLoadFeature } from '@/features/__core__'
 
 function MyComponent() {
-  // Get feature (null if disabled or still loading)
-  const walletConnect = useLoadFeature(WalletConnectFeature)
+  const wc = useLoadFeature(WalletConnectFeature)
 
-  if (!walletConnect) return null
+  // No null check needed - flat structure, always callable
+  const uri = wc.useWcUri()
 
-  // Use its services
-  const handleConnect = () => walletConnect.services.walletConnectInstance.connect(uri)
+  // Services work even when not ready (no-op stubs)
+  const handleConnect = () => wc.walletConnectInstance.connect(uri)
 
-  // Render its components
-  return <walletConnect.components.WalletConnectWidget />
+  // Components render null when not ready
+  return <wc.WalletConnectWidget />
 }
 ```
 
@@ -858,10 +971,11 @@ function MyComponent() {
 
 | Need                               | Pattern            | Example                                           |
 | ---------------------------------- | ------------------ | ------------------------------------------------- |
-| Get feature if enabled             | `useLoadFeature()` | `const wc = useLoadFeature(WalletConnectFeature)` |
-| Render another feature's component | Feature handle     | `<wc.components.Widget />`                        |
-| Use another feature's hook         | Feature handle     | `wc.hooks.useY()`                                 |
-| Call another feature's service     | Feature handle     | `wc.services.doY()`                               |
+| Get feature                        | `useLoadFeature()` | `const wc = useLoadFeature(WalletConnectFeature)` |
+| Check if ready                     | Meta property      | `if (wc.$isReady) ...`                            |
+| Render another feature's component | Feature handle     | `<wc.Widget />`                                   |
+| Use another feature's hook         | Feature handle     | `wc.useY()`                                       |
+| Call another feature's service     | Feature handle     | `wc.doY()`                                        |
 | Read shared state                  | Redux selector     | `useSelector(selectSafeInfo)`                     |
 | Write shared state                 | Redux action       | `dispatch(setSafeInfo(data))`                     |
 | Share types                        | Direct import      | `import type { X } from '@/features/y/types'`     |
@@ -876,16 +990,16 @@ Testing is straightforward - just mock the feature module.
 // src/features/safe-shield/components/__tests__/SafeShieldScanner.test.tsx
 import { render, screen, waitFor } from '@testing-library/react'
 
-// Mock the feature module
+// Mock the feature module with flat structure
 jest.mock('@/features/walletconnect', () => ({
   WalletConnectFeature: {
     name: 'walletconnect',
     useIsEnabled: () => true,
     load: () => Promise.resolve({
       default: {
-        components: {
-          WalletConnectWidget: () => <div data-testid="widget">Mock Widget</div>,
-        },
+        // Flat structure - no nested categories
+        WalletConnectWidget: () => <div data-testid="widget">Mock Widget</div>,
+        useWcUri: () => 'wc://mock-uri',
       },
     }),
   },
@@ -915,6 +1029,7 @@ jest.mock('@/features/walletconnect', () => ({
 
 it('renders nothing when feature is disabled', () => {
   render(<MyComponent />)
+  // Component stub renders null, so widget won't appear
   expect(screen.queryByTestId('widget')).not.toBeInTheDocument()
 })
 ```
@@ -923,6 +1038,7 @@ it('renders nothing when feature is disabled', () => {
 
 - **No context providers needed**: Each component manages its own state
 - **Easy mocking**: Just mock the feature module with Jest
+- **Proxy stubs**: Components render null, hooks return {} when not ready
 - **Async handling**: Use `waitFor()` to wait for lazy loading
 
 ## ESLint Enforcement
@@ -1014,7 +1130,7 @@ function SafeShieldScanner() {
 }
 ```
 
-**After (feature handle - lazy loading):**
+**After (feature handle - flat structure, proxy stubs):**
 
 ```typescript
 // src/features/safe-shield/components/SafeShieldScanner.tsx
@@ -1022,15 +1138,24 @@ import { HypernativeFeature } from '@/features/hypernative'
 import { useLoadFeature } from '@/features/__core__'
 
 function SafeShieldScanner() {
-  const hypernative = useLoadFeature(HypernativeFeature)
+  const hn = useLoadFeature(HypernativeFeature)
 
-  // Show loading state
-  if (hypernative === undefined) return <Skeleton />
+  // No null checks needed - flat structure, always callable
+  // Hook returns {} when not ready, component renders null
+  const scanner = hn.useHypernativeScanner()
 
-  // Hide if disabled
-  if (hypernative === null) return null
+  return <hn.Banner data={scanner?.data} />
+}
 
-  return <hypernative.components.Banner />
+// With explicit loading/disabled states:
+function SafeShieldScannerWithStates() {
+  const hn = useLoadFeature(HypernativeFeature)
+
+  if (hn.$isLoading) return <Skeleton />
+  if (hn.$isDisabled) return null
+
+  const scanner = hn.useHypernativeScanner()
+  return <hn.Banner data={scanner.data} />
 }
 ```
 
@@ -1038,11 +1163,12 @@ function SafeShieldScanner() {
 
 ### For New Features
 
-- [ ] Determined feature tier (Minimal/Standard/Full)
-- [ ] Created `contract.ts` with typed contract interface
-- [ ] **Used `typeof` pattern in contract for all components, hooks, services, and stores (for IDE navigation)**
-- [ ] Created `handle.ts` with static `useIsEnabled` + lazy `load()` function
-- [ ] Created `index.ts` exporting `{FeatureName}Feature` from handle
+- [ ] Created `contract.ts` with **flat structure** (no nested `components`/`hooks`/`services`)
+- [ ] **Used `typeof` pattern in contract for IDE navigation**
+- [ ] **Used naming conventions**: `useSomething` (hooks), `PascalCase` (components), `camelCase` (services)
+- [ ] Created `index.ts` with `createFeatureHandle()` factory
+- [ ] **`feature.ts` uses direct imports** (NOT `lazy()`) - see "Lazy Loading: One Dynamic Import"
+- [ ] **`feature.ts` exports flat object** (no nested categories)
 - [ ] Organized implementation in `components/`, `hooks/`, `services/`, `store/`
 - [ ] Created `types.ts` for public types (if needed)
 - [ ] No direct imports of other features' internal folders
@@ -1050,23 +1176,24 @@ function SafeShieldScanner() {
 
 ### For Existing Features (Migration)
 
-- [ ] Created `contract.ts`
-- [ ] **Used `typeof` pattern in contract for all components, hooks, services, and stores (for IDE navigation)**
-- [ ] Created `handle.ts`
+- [ ] Created `contract.ts` with **flat structure**
+- [ ] **Used `typeof` pattern in contract for IDE navigation**
 - [ ] Created `index.ts` with `{FeatureName}Feature` export
+- [ ] **`feature.ts` uses direct imports and flat structure**
 - [ ] Organized internals in `components/`, `hooks/`, `services/`, `store/`
-- [ ] Updated all external consumers to use `useLoadFeature()`
-- [ ] Removed direct exports of internal files from `index.ts`
+- [ ] Updated consumers to use flat access (e.g., `feature.MyComponent` not `feature.components.MyComponent`)
+- [ ] Removed null checks where proxy stubs suffice
 - [ ] Verified no ESLint warnings
 - [ ] Tests pass
 
 ### For Feature Consumers
 
 - [ ] Using `useLoadFeature()` hook with feature handle
-- [ ] Handling return values: `undefined` (loading), `null` (disabled), or feature object (loaded)
-- [ ] Optionally showing loading UI for better UX (instead of blank screen)
+- [ ] **No optional chaining** - feature always returns an object (proxy stubs)
+- [ ] Using **flat access**: `feature.MyComponent`, `feature.useMyHook()` (no nested `.components.`)
+- [ ] Using meta properties (`$isLoading`, `$isDisabled`, `$isReady`) for explicit state handling
 - [ ] Type-safe (types inferred from handle)
-- [ ] No direct imports from feature internal folders (components/, hooks/, etc.)
+- [ ] No direct imports from feature internal folders
 
 ## FAQ
 
@@ -1091,31 +1218,36 @@ The handle is imported at app startup, but it's tiny (~100 bytes). The actual fe
 
 ### Q: What does `useLoadFeature()` return?
 
+**Always returns an object** - never `null` or `undefined`. The object includes:
+
+1. **Feature exports** (flat structure) - actual implementation when ready, proxy stubs otherwise
+2. **Meta properties** (`$isLoading`, `$isDisabled`, `$isReady`, `$error`)
+
 ```typescript
 import { WalletConnectFeature } from '@/features/walletconnect'
 import { useLoadFeature } from '@/features/__core__'
 
-const feature = useLoadFeature(WalletConnectFeature)
-// Returns:
-// - undefined if feature flag or code is loading
-// - null if feature flag is disabled
-// - the full feature contract if enabled and loaded
+const wc = useLoadFeature(WalletConnectFeature)
+
+// Always callable - no null checks needed
+const uri = wc.useWcUri()  // Returns undefined if not ready
+return <wc.Widget />        // Renders null if not ready
 ```
 
-You can handle loading states explicitly:
+For explicit state handling, use meta properties:
 
 ```typescript
-if (feature === undefined) return <Skeleton />  // Loading
-if (feature === null) return null  // Disabled
-return <feature.components.Widget />  // Loaded
+if (wc.$isLoading) return <Skeleton />
+if (wc.$isDisabled) return null
+return <wc.Widget />
 ```
 
-Or use a simple null check to treat loading same as disabled:
-
-```typescript
-if (!feature) return null  // Not available (loading or disabled)
-return <feature.components.Widget />  // Loaded
-```
+| Meta Property | Type      | Description                          |
+| ------------- | --------- | ------------------------------------ |
+| `$isLoading`  | `boolean` | `true` while feature code is loading |
+| `$isDisabled` | `boolean` | `true` if feature flag is off        |
+| `$isReady`    | `boolean` | `true` when loaded and enabled       |
+| `$error`      | `Error?`  | Error if loading failed              |
 
 ### Q: How do I share types between features?
 
@@ -1131,27 +1263,43 @@ Test files inside a feature can import from other files within the same feature 
 
 ### Q: How does lazy loading work?
 
-Components in the feature implementation should use `withSuspense` to wrap lazy components:
+The `feature.ts` file is lazy-loaded via `handle.load()` (which is set up by `createFeatureHandle`). Use **direct imports** with a **flat structure** inside `feature.ts`:
 
 ```typescript
-// feature.ts
-import { lazy } from 'react'
-import { withSuspense } from '@/features/__core__'
+// feature.ts - This entire file is lazy-loaded via handle.load()
+import MyComponent from './components/MyComponent'
+import { useMyHook } from './hooks/useMyHook'
 
+// Flat structure - no nested categories
 export default {
-  components: {
-    // withSuspense wraps the lazy component with Suspense internally
-    Widget: withSuspense(lazy(() => import('./components/Widget'))),
-  },
+  MyComponent, // PascalCase → component (stub renders null)
+  useMyHook, // useSomething → hook (stub returns {})
 }
 ```
 
-This means consumers can render components directly without wrapping in `<Suspense>`:
+**Do NOT use `lazy()` inside `feature.ts`** - the file is already lazy-loaded. Adding more `lazy()` calls creates unnecessary chunks and complexity. See the "Lazy Loading: One Dynamic Import" section above.
+
+The rare exception is when you have a giant internal dependency (500KB+ chart library, PDF renderer) that's only used on one specific page within the feature:
+
+```typescript
+// Rare exception for giant sub-dependency
+import RegularComponent from './components/RegularComponent'
+import { withSuspense } from '@/features/__core__'
+import { lazy } from 'react'
+
+export default {
+  RegularComponent, // ✅ Direct - loads with feature
+  // Exception: 500KB chart only used on one page
+  HeavyChart: withSuspense(lazy(() => import('./components/HeavyChart'))),
+}
+```
+
+Consumers use flat access - no null checks needed:
 
 ```typescript
 const feature = useLoadFeature(MyFeature)
-if (!feature) return null
-return <feature.components.Widget /> // No Suspense wrapper needed
+// Proxy stubs: components render null, hooks return {} when not ready
+return <feature.Widget />
 ```
 
 ## Reference Implementations

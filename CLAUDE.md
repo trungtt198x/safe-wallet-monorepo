@@ -48,6 +48,8 @@ Use `@AGENTS.md` in your prompts to include the full guidelines, which cover:
 - Common pitfalls and debugging tips
 
 ## Active Technologies
+- TypeScript 5.x (Next.js 14.x) + shadcn/ui, @radix-ui/*, tailwindcss, Storybook 8.x, Figma MCP (003-design-system-integration)
+- N/A (design tokens stored as CSS variables and config files) (003-design-system-integration)
 
 - TypeScript 5.x (Next.js 14.x) + Next.js (dynamic imports), ESLint (import restrictions), Redux Toolkit (state management) (001-feature-architecture)
 - N/A (architecture pattern, no new data storage) (001-feature-architecture)

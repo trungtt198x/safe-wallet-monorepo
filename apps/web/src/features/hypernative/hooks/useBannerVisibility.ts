@@ -3,7 +3,7 @@ import useIsSafeOwner from '@/hooks/useIsSafeOwner'
 import { useVisibleBalances } from '@/hooks/useVisibleBalances'
 import { BannerType, useBannerStorage } from './useBannerStorage'
 import { useIsHypernativeGuard } from './useIsHypernativeGuard'
-import { useIsHypernativeFeature } from './useIsHypernativeFeature'
+import { useIsHypernativeEnabled } from './useIsHypernativeEnabled'
 import { useIsOutreachSafe } from '@/features/targetedFeatures/hooks/useIsOutreachSafe'
 import { HYPERNATIVE_OUTREACH_ID, HYPERNATIVE_ALLOWLIST_OUTREACH_ID } from '../constants'
 import { IS_PRODUCTION } from '@/config/constants'
@@ -50,7 +50,7 @@ const hasSufficientBalance = (fiatTotal: string): boolean => {
  * If any condition fails, showBanner will be false.
  */
 export const useBannerVisibility = (bannerType: BannerType): BannerVisibilityResult => {
-  const isEnabled = useIsHypernativeFeature()
+  const isEnabled = useIsHypernativeEnabled()
 
   const shouldShowBanner = useBannerStorage(bannerType)
   const isSafeOwner = useIsSafeOwner()

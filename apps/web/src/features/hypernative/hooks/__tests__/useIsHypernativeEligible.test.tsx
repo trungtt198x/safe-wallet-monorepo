@@ -1,7 +1,7 @@
 import { renderHook } from '@/tests/test-utils'
 import { useIsOutreachSafe } from '@/features/targetedFeatures/hooks/useIsOutreachSafe'
-import { useIsHypernativeGuard } from '@/features/hypernative/hooks/useIsHypernativeGuard'
-import { HYPERNATIVE_ALLOWLIST_OUTREACH_ID } from '@/features/hypernative/constants'
+import { useIsHypernativeGuard } from '../useIsHypernativeGuard'
+import { HYPERNATIVE_ALLOWLIST_OUTREACH_ID } from '../../constants'
 import { useIsHypernativeEligible } from '../useIsHypernativeEligible'
 
 jest.mock('@/features/targetedFeatures/hooks/useIsOutreachSafe')

@@ -6,7 +6,7 @@ import * as useWalletHook from '@/hooks/wallets/useWallet'
 import * as useIsSafeOwnerHook from '@/hooks/useIsSafeOwner'
 import * as useVisibleBalancesHook from '@/hooks/useVisibleBalances'
 import * as useIsHypernativeGuardHook from '../useIsHypernativeGuard'
-import * as useIsHypernativeFeatureHook from '../useIsHypernativeFeature'
+import * as useIsHypernativeEnabledHook from '../useIsHypernativeEnabled'
 import * as useIsOutreachSafeHook from '@/features/targetedFeatures/hooks/useIsOutreachSafe'
 import { HYPERNATIVE_OUTREACH_ID, HYPERNATIVE_ALLOWLIST_OUTREACH_ID } from '../../constants'
 import { connectedWalletBuilder } from '@/tests/builders/wallet'
@@ -210,7 +210,7 @@ describe('useBannerVisibility', () => {
 
   describe('when all conditions are met', () => {
     it('should return showBanner: true, loading: false', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
       jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
       jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
       jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -303,7 +303,7 @@ describe('useBannerVisibility', () => {
 
   describe('BannerType handling', () => {
     it('should work with BannerType.Promo', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
       jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
       jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
       jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -324,7 +324,7 @@ describe('useBannerVisibility', () => {
     })
 
     it('should work with BannerType.Pending', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
       jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
       jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
       jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -347,7 +347,7 @@ describe('useBannerVisibility', () => {
 
   describe('edge cases', () => {
     it('should handle balance exactly above MIN_BALANCE_USD', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
       jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
       jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
       jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -370,7 +370,7 @@ describe('useBannerVisibility', () => {
     })
 
     it('should handle very large balance values', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
       jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
       jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
       jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -484,7 +484,7 @@ describe('useBannerVisibility', () => {
     })
 
     it('should return false when all conditions fail except one', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
       jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
       jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
       jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -511,7 +511,7 @@ describe('useBannerVisibility', () => {
   describe('helper function behavior', () => {
     it('should correctly evaluate all conditions together', () => {
       // Test that the helper function correctly combines all conditions
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
       jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
       jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
       jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -556,7 +556,7 @@ describe('useBannerVisibility', () => {
   describe('BannerType.TxReportButton', () => {
     describe('when banner conditions are met', () => {
       it('should show button when all banner conditions pass and no guard', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -581,7 +581,7 @@ describe('useBannerVisibility', () => {
 
     describe('when guard is installed', () => {
       it('should show button when guard is installed AND isEnabled AND isSafeOwner', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -604,7 +604,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should show button when guard is installed and banner conditions are also met', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -627,7 +627,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show button when guard is installed but feature is disabled', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(false)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -650,7 +650,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show button when guard is installed but user is not an owner', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(false)
@@ -675,7 +675,7 @@ describe('useBannerVisibility', () => {
 
     describe('when neither banner conditions nor guard are present', () => {
       it('should not show button when user is not an owner and no guard', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(false)
@@ -698,7 +698,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should not show button when balance is insufficient and no guard', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -721,7 +721,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should not show button when feature is disabled and no guard', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(false)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -794,7 +794,7 @@ describe('useBannerVisibility', () => {
   describe('targeted Safe functionality', () => {
     describe('when Safe is in targeted list', () => {
       it('should show banner for Promo type when Safe is targeted, even with insufficient balance', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -818,7 +818,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should show banner when Safe is targeted and has 0 balance (no assets)', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -847,7 +847,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should show banner for NoBalanceCheck type when Safe is targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -871,7 +871,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should show banner for Settings type when Safe is targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -895,7 +895,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show banner if user is not a Safe owner, even when Safe is targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(false) // Not an owner
@@ -919,7 +919,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show banner if HypernativeGuard is installed, even when Safe is targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -943,7 +943,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show banner if feature is disabled, even when Safe is targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(false)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -967,7 +967,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show banner if banner storage returns false, even when Safe is targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(false) // Banner dismissed/completed
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -993,7 +993,7 @@ describe('useBannerVisibility', () => {
 
     describe('when Safe is NOT in targeted list', () => {
       it('should NOT show banner when Safe is not targeted and balance is insufficient', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1017,7 +1017,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should show banner when Safe is not targeted but balance is sufficient', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1043,7 +1043,7 @@ describe('useBannerVisibility', () => {
 
     describe('targeting API error handling', () => {
       it('should NOT show banner when targeting API returns error, even if Safe would be targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1068,7 +1068,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show banner when targeting API times out, even if Safe would be targeted', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1095,7 +1095,7 @@ describe('useBannerVisibility', () => {
 
     describe('campaign-specific targeting', () => {
       it('should use correct outreach ID (3) for Hypernative campaign', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1119,7 +1119,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show banner for previous campaigns (different outreachId)', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1146,7 +1146,7 @@ describe('useBannerVisibility', () => {
 
     describe('TxReportButton with targeted Safe', () => {
       it('should show button when Safe is targeted, even with insufficient balance and no guard', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1170,7 +1170,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should show button when Safe is targeted and guard is also installed', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1194,7 +1194,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should show button when Safe is allowlisted even if promo targeting fails', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
@@ -1231,7 +1231,7 @@ describe('useBannerVisibility', () => {
       })
 
       it('should NOT show button when Safe is not targeted, balance is insufficient, and no guard', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
         jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
         jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)

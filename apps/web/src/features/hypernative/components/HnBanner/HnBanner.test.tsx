@@ -3,7 +3,7 @@ import { HnBanner } from './HnBanner'
 import { HnBannerForQueue } from './HnBannerForQueue'
 import { HnBannerForHistory } from './HnBannerForHistory'
 import { BannerType } from '../../hooks/useBannerStorage'
-import * as useIsHypernativeFeatureHook from '../../hooks/useIsHypernativeFeature'
+import * as useIsHypernativeEnabledHook from '../../hooks/useIsHypernativeEnabled'
 import * as useBannerVisibilityHook from '../../hooks/useBannerVisibility'
 
 // Mock HnSignupFlow to avoid rendering the actual modal in tests
@@ -50,7 +50,7 @@ describe('HnBanner', () => {
 
     describe('when feature is not enabled', () => {
       it('should not render banner', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(false)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: false,
@@ -65,7 +65,7 @@ describe('HnBanner', () => {
 
     describe('when feature is enabled but banner should not show', () => {
       it('should not render banner when showBanner is false', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: false,
           loading: false,
@@ -78,7 +78,7 @@ describe('HnBanner', () => {
       })
 
       it('should not render banner when loading is true', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: true,
@@ -93,7 +93,7 @@ describe('HnBanner', () => {
 
     describe('when feature is enabled and banner should show', () => {
       it('should render banner with Queue label when all conditions are met', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: false,
@@ -107,7 +107,7 @@ describe('HnBanner', () => {
       })
 
       it('should render dismiss button', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: false,
@@ -128,7 +128,7 @@ describe('HnBanner', () => {
 
     describe('when feature is not enabled', () => {
       it('should not render banner', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(false)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: false,
@@ -143,7 +143,7 @@ describe('HnBanner', () => {
 
     describe('when feature is enabled but banner should not show', () => {
       it('should not render banner when showBanner is false', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: false,
           loading: false,
@@ -156,7 +156,7 @@ describe('HnBanner', () => {
       })
 
       it('should not render banner when loading is true', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: true,
@@ -171,7 +171,7 @@ describe('HnBanner', () => {
 
     describe('when feature is enabled and banner should show', () => {
       it('should render banner with History label when all conditions are met', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: false,
@@ -185,7 +185,7 @@ describe('HnBanner', () => {
       })
 
       it('should render dismiss button', () => {
-        jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+        jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
           showBanner: true,
           loading: false,

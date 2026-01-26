@@ -1,5 +1,5 @@
 import type { ComponentType, ReactElement } from 'react'
-import { useIsHypernativeFeature } from '../../hooks/useIsHypernativeFeature'
+import { useIsHypernativeEnabled } from '../../hooks/useIsHypernativeEnabled'
 
 /**
  * Higher-order component that checks if Hypernative features are enabled.
@@ -10,7 +10,7 @@ import { useIsHypernativeFeature } from '../../hooks/useIsHypernativeFeature'
  */
 export function withHnFeature<P extends object>(WrappedComponent: ComponentType<P>) {
   return function WithHnFeatureComponent(props: P): ReactElement | null {
-    const isEnabled = useIsHypernativeFeature()
+    const isEnabled = useIsHypernativeEnabled()
 
     if (!isEnabled) {
       return null

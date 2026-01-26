@@ -1,6 +1,6 @@
 export { useIsHypernativeGuard } from './useIsHypernativeGuard'
 export type { HypernativeGuardCheckResult } from './useIsHypernativeGuard'
-export { useIsHypernativeFeature as useIsHypernativeFeatureEnabled } from './useIsHypernativeFeature'
+export { useIsHypernativeEnabled } from './useIsHypernativeEnabled'
 export { useIsHypernativeQueueScanFeature } from './useIsHypernativeQueueScanFeature'
 export { useBannerStorage } from './useBannerStorage'
 export { BannerType } from './useBannerStorage'

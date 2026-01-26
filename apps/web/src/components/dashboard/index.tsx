@@ -25,10 +25,13 @@ import AddFundsToGetStarted from '@/components/dashboard/AddFundsBanner'
 import useIsPositionsFeatureEnabled from '@/features/positions/hooks/useIsPositionsFeatureEnabled'
 import useNoFeeCampaignEligibility from '@/features/no-fee-campaign/hooks/useNoFeeCampaignEligibility'
 import useIsNoFeeCampaignEnabled from '@/features/no-fee-campaign/hooks/useIsNoFeeCampaignEnabled'
-import { useBannerVisibility } from '@/features/hypernative/hooks'
-import { BannerType } from '@/features/hypernative/hooks/useBannerStorage'
-import { HnBannerForCarousel, hnBannerID } from '@/features/hypernative/components/HnBanner'
-import HnPendingBanner from '@/features/hypernative/components/HnPendingBanner'
+import {
+  useBannerVisibility,
+  BannerType,
+  HnBannerForCarousel,
+  hnBannerID,
+  HnPendingBanner,
+} from '@/features/hypernative'
 import { EurcvBoostBanner, eurcvBoostBannerID } from '@/components/dashboard/NewsCarousel/banners/EurcvBoostBanner'
 
 const RecoveryHeader = dynamic(() => import('@/features/recovery/components/RecoveryHeader'))

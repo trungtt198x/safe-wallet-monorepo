@@ -3,8 +3,7 @@ import dynamic from 'next/dynamic'
 import { useIsRecoverySupported } from '@/features/recovery/hooks/useIsRecoverySupported'
 import SecuritySettings from '../SecuritySettings'
 import { useRouter } from 'next/router'
-import { HnBannerForSettings } from '@/features/hypernative/components/HnBanner'
-import { HnActivatedBannerForSettings } from '@/features/hypernative/components/HnActivatedSettingsBanner'
+import { HnBannerForSettings, HnActivatedBannerForSettings } from '@/features/hypernative'
 import { HYPERNATIVE_SOURCE } from '@/services/analytics'
 
 const RecoverySettings = dynamic(() => import('@/features/recovery/components/RecoverySettings'))

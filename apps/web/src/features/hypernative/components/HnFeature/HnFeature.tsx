@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { useIsHypernativeFeature } from '../../hooks/useIsHypernativeFeature'
+import { useIsHypernativeEnabled } from '../../hooks/useIsHypernativeEnabled'
 import { useBannerVisibility } from '../../hooks/useBannerVisibility'
 import type { BannerType } from '../../hooks/useBannerStorage'
 
@@ -28,7 +28,7 @@ const HnConditional = ({ children, bannerType }: HnFeatureProps): ReactElement |
  * Only renders children if both conditions are met.
  */
 export const HnFeature = ({ children, bannerType }: HnFeatureProps): ReactElement | null => {
-  const isEnabled = useIsHypernativeFeature()
+  const isEnabled = useIsHypernativeEnabled()
 
   if (!isEnabled) {
     return null

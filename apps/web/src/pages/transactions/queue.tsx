@@ -9,13 +9,15 @@ import { BatchExecuteHoverProvider } from '@/components/transactions/BatchExecut
 import { usePendingTxsQueue, useShowUnsignedQueue } from '@/hooks/usePendingTxs'
 import RecoveryList from '@/features/recovery/components/RecoveryList'
 import { BRAND_NAME } from '@/config/constants'
-import { HnLoginCard } from '@/features/hypernative/components/HnLoginCard'
-import { useIsHypernativeEligible } from '@/features/hypernative/hooks/useIsHypernativeEligible'
-import { useIsHypernativeQueueScanFeature } from '@/features/hypernative/hooks/useIsHypernativeQueueScanFeature'
-import { useBannerVisibility } from '@/features/hypernative/hooks'
-import { BannerType } from '@/features/hypernative/hooks/useBannerStorage'
-import { HnBannerForQueue } from '@/features/hypernative/components/HnBanner'
-import { QueueAssessmentProvider } from '@/features/hypernative/components/QueueAssessmentProvider'
+import {
+  HnLoginCard,
+  useIsHypernativeEligible,
+  useIsHypernativeQueueScanFeature,
+  useBannerVisibility,
+  BannerType,
+  HnBannerForQueue,
+  QueueAssessmentProvider,
+} from '@/features/hypernative'
 import { useState, useCallback, useMemo } from 'react'
 import type { QueuedItemPage } from '@safe-global/store/gateway/AUTO_GENERATED/transactions'
 

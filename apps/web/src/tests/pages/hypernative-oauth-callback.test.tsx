@@ -9,7 +9,7 @@ jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }))
 
-// Mock PKCE utilities
+// Mock PKCE utilities - must mock the internal path since OAuthCallbackHandler uses relative imports
 jest.mock('@/features/hypernative/hooks/useHypernativeOAuth', () => {
   const actual = jest.requireActual('@/features/hypernative/hooks/useHypernativeOAuth')
   return {
@@ -110,10 +110,11 @@ describe('HypernativeOAuthCallback', () => {
     jest.useRealTimers()
   })
 
-  it('should show loading state initially', () => {
+  it('should show loading state initially', async () => {
     render(<HypernativeOAuthCallback />)
 
-    expect(screen.getByText('Authentication in progress')).toBeInTheDocument()
+    // Wait for the dynamic component to load
+    expect(await screen.findByText('Authentication in progress')).toBeInTheDocument()
     expect(screen.getByText(/Hypernative authentication is in progress/i)).toBeInTheDocument()
     expect(screen.getByText(/close this window/i)).toBeInTheDocument()
     expect(screen.getByRole('progressbar')).toBeInTheDocument()

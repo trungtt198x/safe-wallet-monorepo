@@ -1,7 +1,7 @@
 import { render, screen } from '@/tests/test-utils'
 import SecurityLogin from '../SecurityLogin'
 import * as useIsRecoverySupportedHook from '@/features/recovery/hooks/useIsRecoverySupported'
-import * as useIsHypernativeFeatureHook from '@/features/hypernative/hooks/useIsHypernativeFeature'
+import * as useIsHypernativeEnabledHook from '@/features/hypernative/hooks/useIsHypernativeEnabled'
 import * as useIsHypernativeGuardHook from '@/features/hypernative/hooks/useIsHypernativeGuard'
 import * as useIsSafeOwnerHook from '@/hooks/useIsSafeOwner'
 import * as useBannerStorageHook from '@/features/hypernative/hooks/useBannerStorage'
@@ -10,8 +10,8 @@ import * as useIsOutreachSafeHook from '@/features/targetedFeatures/hooks/useIsO
 import * as useWalletHook from '@/hooks/wallets/useWallet'
 import { connectedWalletBuilder } from '@/tests/builders/wallet'
 
-// Mock the base banner components to check if they render
-// We mock the base components so the HOCs can run and control visibility
+// Mock the pure banner components so the HOCs can still control visibility
+// The HOCs (withHnFeature, withHnBannerConditions) wrap these components and decide when to render
 jest.mock('@/features/hypernative/components/HnBanner/HnBanner', () => ({
   HnBanner: () => <div data-testid="hn-banner-for-settings">HnBannerForSettings</div>,
 }))
@@ -36,7 +36,7 @@ describe('SecurityLogin', () => {
 
     // Default mocks - feature enabled, wallet connected, owner, sufficient balance, not targeted
     jest.spyOn(useIsRecoverySupportedHook, 'useIsRecoverySupported').mockReturnValue(false)
-    jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(true)
+    jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(true)
     jest.spyOn(useWalletHook, 'default').mockReturnValue(mockWallet)
     jest.spyOn(useIsSafeOwnerHook, 'default').mockReturnValue(true)
     jest.spyOn(useBannerStorageHook, 'useBannerStorage').mockReturnValue(true)
@@ -56,10 +56,11 @@ describe('SecurityLogin', () => {
       })
     })
 
-    it('should show HnActivatedBannerForSettings when guard is active and user is owner', () => {
+    it('should show HnActivatedBannerForSettings when guard is active and user is owner', async () => {
       render(<SecurityLogin />)
 
-      expect(screen.getByTestId('hn-activated-banner-for-settings')).toBeInTheDocument()
+      // Wait for dynamic components to load
+      expect(await screen.findByTestId('hn-activated-banner-for-settings')).toBeInTheDocument()
       expect(screen.queryByTestId('hn-banner-for-settings')).not.toBeInTheDocument()
     })
 
@@ -73,7 +74,7 @@ describe('SecurityLogin', () => {
     })
 
     it('should NOT show HnActivatedBannerForSettings when guard is active but feature is disabled', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(false)
 
       render(<SecurityLogin />)
 
@@ -128,7 +129,7 @@ describe('SecurityLogin', () => {
     })
 
     it('should NOT show HnBannerForSettings when feature is disabled', () => {
-      jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
+      jest.spyOn(useIsHypernativeEnabledHook, 'useIsHypernativeEnabled').mockReturnValue(false)
 
       render(<SecurityLogin />)
 

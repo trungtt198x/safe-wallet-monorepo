@@ -7,7 +7,7 @@ import { useTxBuilderApp } from '@/hooks/safe-apps/useTxBuilderApp'
 import { ProgressBar } from '@/components/common/ProgressBar'
 import ChainIndicator from '@/components/common/ChainIndicator'
 import NewTxIcon from '@/public/images/transactions/new-tx.svg'
-import HnMiniTxBanner from '@/features/hypernative/components/HnMiniTxBanner'
+import { HnMiniTxBanner } from '@/features/hypernative'
 
 import css from './styles.module.css'
 

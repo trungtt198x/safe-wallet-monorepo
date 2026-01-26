@@ -4,7 +4,7 @@ import ExternalLink from '@/components/common/ExternalLink'
 import { hnSecurityReportBtnConfig } from './config'
 import type { ReactElement } from 'react'
 import { HYPERNATIVE_EVENTS, trackEvent } from '@/services/analytics'
-import { buildSecurityReportUrl } from '@/features/hypernative/utils/buildSecurityReportUrl'
+import { buildSecurityReportUrl } from '../../utils/buildSecurityReportUrl'
 
 import css from './styles.module.css'
 

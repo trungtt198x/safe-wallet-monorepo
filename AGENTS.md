@@ -142,6 +142,32 @@ function ParentComponent() {
 }
 ```
 
+**feature.ts Pattern (IMPORTANT):**
+
+Use **direct imports** inside `feature.ts` - do NOT use `lazy()`:
+
+```typescript
+// feature.ts - This file is already lazy-loaded via createFeatureHandle
+import MyComponent from './components/MyComponent'
+import { useMyHook } from './hooks/useMyHook'
+
+export default {
+  components: { MyComponent }, // ✅ Direct import
+  hooks: { useMyHook },
+}
+```
+
+```typescript
+// ❌ WRONG - Don't use lazy() inside feature.ts
+export default {
+  components: {
+    MyComponent: lazy(() => import('./components/MyComponent')), // ❌
+  },
+}
+```
+
+The lazy loading is handled by `createFeatureHandle` - one dynamic import for the entire feature. Using `lazy()` inside `feature.ts` creates unnecessary chunks and complexity.
+
 See `apps/web/docs/feature-architecture-v2.md` for the complete guide including the two-tier handle pattern and bundle leak pitfalls.
 
 ## Workflow
@@ -324,6 +350,7 @@ Avoid these common mistakes when contributing:
 6. **Not handling chain-specific logic** – Always consider multi-chain scenarios
 7. **Skipping Storybook stories** – New components should have stories for documentation
 8. **Incomplete error handling** – Always handle loading, error, and empty states in UI components
+9. **Using lazy() inside feature.ts** – The `feature.ts` file is already lazy-loaded via `createFeatureHandle`. Do NOT add `lazy()` calls for individual components - use direct imports. This is a common mistake that creates unnecessary complexity and multiple network requests.
 
 ## Debugging Tips
 

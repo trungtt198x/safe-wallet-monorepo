@@ -128,6 +128,79 @@ function SimpleComponent() {
             return null  <Skeleton/>  <wc.components.Widget />
 ```
 
+### Lazy Loading: One Dynamic Import
+
+**The core principle: ONE dynamic import per feature.**
+
+When you use `createFeatureHandle`, it sets up:
+
+```typescript
+load: () => import('./feature') // This is THE lazy load
+```
+
+**Inside `feature.ts`, use direct imports - NOT `lazy()`:**
+
+```typescript
+// feature.ts - This entire file IS the lazy-loaded chunk
+import MyComponent from './components/MyComponent'
+import AnotherComponent from './components/AnotherComponent'
+import { useMyHook } from './hooks/useMyHook'
+
+export default {
+  components: {
+    MyComponent, // ✅ Direct import - loads with feature
+    AnotherComponent, // ✅ Direct import - loads with feature
+  },
+  hooks: {
+    useMyHook,
+  },
+}
+```
+
+#### ❌ Anti-Pattern: Multiple lazy() Calls Inside feature.ts
+
+```typescript
+// ❌ WRONG: Don't do this!
+import { lazy } from 'react'
+
+export default {
+  components: {
+    // ❌ Unnecessary - feature.ts is already lazy-loaded
+    MyComponent: lazy(() => import('./components/MyComponent')),
+    AnotherComponent: lazy(() => import('./components/AnotherComponent')),
+  },
+}
+```
+
+This creates unnecessary complexity:
+
+- Multiple network requests instead of one
+- Each component becomes a separate chunk
+- Adds Suspense boundaries everywhere
+- Makes debugging harder
+
+#### Rare Exception: Giant Internal Dependencies
+
+The ONLY time to use `lazy()` inside `feature.ts` is when you have a giant internal dependency (e.g., a chart library, PDF renderer) that's only needed on one specific page within the feature:
+
+```typescript
+// feature.ts - Rare exception for giant sub-dependency
+import RegularComponent from './components/RegularComponent'
+import { withSuspense } from '@/features/__core__'
+import { lazy } from 'react'
+
+export default {
+  components: {
+    RegularComponent, // ✅ Direct - loads with feature
+
+    // Exception: 500KB chart component only used on analytics page
+    HeavyChartComponent: withSuspense(lazy(() => import('./components/HeavyChartComponent'))),
+  },
+}
+```
+
+**When in doubt, use direct imports.** If you're not sure whether something qualifies as a "giant internal dependency," it probably doesn't.
+
 ### Benefits of This Pattern
 
 ```typescript
@@ -632,14 +705,16 @@ feature.hooks.useMyHook() // ✅ Type-safe
 
 ```typescript
 // src/features/multichain/feature.ts
-import { lazy } from 'react'
+// ✅ CORRECT: Direct imports - this file is already lazy-loaded via createFeatureHandle
+import CreateSafeOnNewChain from './components/CreateSafeOnNewChain'
+import NetworkLogosList from './components/NetworkLogosList'
 import { useIsMultichainSafe } from './hooks/useIsMultichainSafe'
 import { useSafeCreationData } from './hooks/useSafeCreationData'
 
 export default {
   components: {
-    CreateSafeOnNewChain: lazy(() => import('./components/CreateSafeOnNewChain')),
-    NetworkLogosList: lazy(() => import('./components/NetworkLogosList')),
+    CreateSafeOnNewChain,  // Direct - loaded with feature chunk
+    NetworkLogosList,       // Direct - loaded with feature chunk
   },
   hooks: {
     useIsMultichainSafe,
@@ -978,6 +1053,7 @@ function SafeShieldScanner() {
 - [ ] **Used `typeof` pattern in contract for all components, hooks, services, and stores (for IDE navigation)**
 - [ ] Created `handle.ts` with static `useIsEnabled` + lazy `load()` function
 - [ ] Created `index.ts` exporting `{FeatureName}Feature` from handle
+- [ ] **`feature.ts` uses direct imports for components (NOT `lazy()`) - see "Lazy Loading: One Dynamic Import"**
 - [ ] Organized implementation in `components/`, `hooks/`, `services/`, `store/`
 - [ ] Created `types.ts` for public types (if needed)
 - [ ] No direct imports of other features' internal folders
@@ -989,6 +1065,7 @@ function SafeShieldScanner() {
 - [ ] **Used `typeof` pattern in contract for all components, hooks, services, and stores (for IDE navigation)**
 - [ ] Created `handle.ts`
 - [ ] Created `index.ts` with `{FeatureName}Feature` export
+- [ ] **`feature.ts` uses direct imports for components (NOT `lazy()`) - see "Lazy Loading: One Dynamic Import"**
 - [ ] Organized internals in `components/`, `hooks/`, `services/`, `store/`
 - [ ] Updated all external consumers to use `useLoadFeature()`
 - [ ] Removed direct exports of internal files from `index.ts`
@@ -1066,27 +1143,44 @@ Test files inside a feature can import from other files within the same feature 
 
 ### Q: How does lazy loading work?
 
-Components in the feature implementation should use `withSuspense` to wrap lazy components:
+The `feature.ts` file is lazy-loaded via `handle.load()` (which is set up by `createFeatureHandle`). Use **direct imports** inside `feature.ts`:
 
 ```typescript
-// feature.ts
-import { lazy } from 'react'
+// feature.ts - This entire file is lazy-loaded via handle.load()
+import MyComponent from './components/MyComponent'
+import { useMyHook } from './hooks/useMyHook'
+
+export default {
+  components: { MyComponent }, // ✅ Direct import
+  hooks: { useMyHook },
+}
+```
+
+**Do NOT use `lazy()` inside `feature.ts`** - the file is already lazy-loaded. Adding more `lazy()` calls creates unnecessary chunks and complexity. See the "Lazy Loading: One Dynamic Import" section above.
+
+The rare exception is when you have a giant internal dependency (500KB+ chart library, PDF renderer) that's only used on one specific page within the feature:
+
+```typescript
+// Rare exception for giant sub-dependency
+import RegularComponent from './components/RegularComponent'
 import { withSuspense } from '@/features/__core__'
+import { lazy } from 'react'
 
 export default {
   components: {
-    // withSuspense wraps the lazy component with Suspense internally
-    Widget: withSuspense(lazy(() => import('./components/Widget'))),
+    RegularComponent, // ✅ Direct - loads with feature
+    // Exception: 500KB chart only used on one page
+    HeavyChart: withSuspense(lazy(() => import('./components/HeavyChart'))),
   },
 }
 ```
 
-This means consumers can render components directly without wrapping in `<Suspense>`:
+Consumers render components directly:
 
 ```typescript
 const feature = useLoadFeature(MyFeature)
 if (!feature) return null
-return <feature.components.Widget /> // No Suspense wrapper needed
+return <feature.components.Widget />
 ```
 
 ## Reference Implementations

@@ -1,0 +1,11 @@
+{
+  "extends": "../../config/tsconfig/confs/base.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@safe-global/design-system/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

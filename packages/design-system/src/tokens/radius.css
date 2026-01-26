@@ -1,0 +1,11 @@
+/**
+ * Design System Radius Tokens
+ * Generated: 2026-01-26T16:17:13.499Z
+ * Source: Figma DS · Foundations
+ * DO NOT EDIT MANUALLY - run `yarn design-system:sync` to regenerate
+ */
+
+:root {
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}

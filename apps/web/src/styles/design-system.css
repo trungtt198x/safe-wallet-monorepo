@@ -1,0 +1,93 @@
+/**
+ * Design System CSS Variables
+ * 
+ * This file imports design tokens synced from Figma and provides
+ * the CSS variables consumed by shadcn/ui components.
+ * 
+ * DO NOT edit the token values directly - run `yarn design-system:sync`
+ * to regenerate from Figma.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Colors - Light Mode (from Figma Foundations) */
+    --background: 0 0% 96%;
+    --foreground: 137 4% 9%;
+    --card: 0 0% 98%;
+    --card-foreground: 140 4% 21%;
+    --popover: 0 0% 98%;
+    --popover-foreground: 140 4% 21%;
+    --primary: 0 0% 18%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 137 4% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 137 4% 65%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 137 4% 9%;
+    --destructive: 354 100% 69%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 96%;
+    --input: 0 0% 96%;
+    --ring: 137 4% 9%;
+    --chart-1: 152 76% 35%;
+    --chart-2: 354 100% 69%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 199 89% 48%;
+    --chart-5: 280 65% 60%;
+    
+    /* Radius */
+    --radius: 1rem;
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-s: 1rem;
+    --spacing-xl: 2rem;
+    
+    /* Typography */
+    --font-family: 'DM Sans', sans-serif;
+  }
+
+  .dark {
+    /* Colors - Dark Mode (from Figma Foundations) */
+    --background: 137 4% 7%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 137 4% 9%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 100%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 354 100% 69%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 100%;
+    --chart-1: 152 76% 35%;
+    --chart-2: 354 100% 69%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 199 89% 48%;
+    --chart-5: 280 65% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family);
+  }
+}

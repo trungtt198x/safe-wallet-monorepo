@@ -1,0 +1,14 @@
+/**
+ * Design System Spacing Tokens
+ * Generated: 2026-01-26T16:17:13.499Z
+ * Source: Figma DS · Foundations
+ * DO NOT EDIT MANUALLY - run `yarn design-system:sync` to regenerate
+ */
+
+:root {
+  --spacing-1: 4px;
+  --spacing-xs: 8px;
+  --spacing-3: 12px;
+  --spacing-s: 16px;
+  --spacing-xl: 32px;
+}

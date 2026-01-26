@@ -6,6 +6,7 @@ import { withThemeFromJSXProvider } from '@storybook/addon-themes'
 import createSafeTheme from '../src/components/theme/safeTheme'
 
 import '../src/styles/globals.css'
+import '../src/styles/design-system.css'
 
 const BACKGROUND_COLORS: Record<string, string> = { light: '#ffffff', dark: '#121312' }
 

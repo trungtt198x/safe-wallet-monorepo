@@ -14,7 +14,8 @@
     "eslint": "yarn workspaces foreach --all -pt run eslint",
     "prettier": "prettier --check . --config ./.prettierrc --ignore-path ./.prettierignore",
     "prettier:fix": "prettier --write . --config ./.prettierrc --ignore-path ./.prettierignore",
-    "postinstall": "husky"
+    "postinstall": "husky",
+    "design-system:sync": "yarn workspace @safe-global/design-system sync-tokens"
   },
   "resolutions": {
     "@ledgerhq/context-module/ethers": "6.14.3",

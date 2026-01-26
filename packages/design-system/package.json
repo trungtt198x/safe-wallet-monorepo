@@ -1,0 +1,21 @@
+{
+  "name": "@safe-global/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Design system tokens and utilities for Safe{Wallet}",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "sync-tokens": "tsx src/cli/sync-tokens.ts",
+    "sync-tokens:dry": "tsx src/cli/sync-tokens.ts --dry-run",
+    "sync-tokens:verbose": "tsx src/cli/sync-tokens.ts --verbose",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "~5.9.2"
+  }
+}

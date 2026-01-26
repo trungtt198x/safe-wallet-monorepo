@@ -1,0 +1,74 @@
+# Design System Approach - Decision Guide
+
+After implementing the Dashboard Overview demo with both patterns, here's a summary to help the team decide.
+
+## Quick Comparison
+
+| Aspect | Direct Pattern | Wrapped Pattern |
+|--------|----------------|-----------------|
+| **Imports** | `@/components/ui/*` | `@/features/design-system` |
+| **Learning curve** | Low (shadcn docs) | Medium (custom docs) |
+| **Flexibility** | High | Medium |
+| **Consistency** | Manual | Enforced |
+| **Loading states** | DIY | Built-in |
+| **Safe semantics** | No | Yes |
+| **Maintenance** | Low | Medium |
+
+## Direct Pattern
+
+```tsx
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+
+<Button variant="default">Send</Button>
+```
+
+**Best for:**
+- Rapid prototyping
+- One-off designs
+- Maximum flexibility
+- Following shadcn community patterns
+
+## Wrapped Pattern
+
+```tsx
+import { Button, Card } from '@/features/design-system'
+// or
+import { Wrapped } from '@/features/design-system'
+
+<Wrapped.Button loading={isSending}>Send</Wrapped.Button>
+```
+
+**Best for:**
+- Production features
+- Team consistency
+- Safe-specific behavior (loading, error states)
+- Easier onboarding
+
+## Recommendation
+
+**Hybrid approach:**
+
+1. **Use Direct** for:
+   - Experiments in `stories/experiments/`
+   - Prototyping new features
+   - Components with unique requirements
+
+2. **Use Wrapped** for:
+   - Production features
+   - Components that need loading/error states
+   - Team members who want consistency
+
+3. **Both work together:**
+   - Wrapped components use shadcn internally
+   - Switch between patterns as needed
+   - No lock-in either way
+
+## Next Steps
+
+1. **Review the demos** in this Storybook section
+2. **Discuss** which pattern feels right for the team
+3. **Start a feature** with the chosen pattern
+4. **Iterate** based on real-world usage
+
+The beauty of this setup is that you can change your mind later without rewriting everything.

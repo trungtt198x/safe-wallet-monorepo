@@ -1,0 +1,22 @@
+/**
+ * Design System Color Tokens
+ * Generated: 2026-01-26T16:17:13.498Z
+ * Source: Figma DS · Foundations
+ * DO NOT EDIT MANUALLY - run `yarn design-system:sync` to regenerate
+ */
+
+:root {
+  --background: 0 0% 96%;
+  --foreground: 120 3% 7%;
+  --card: 0 0% 98%;
+  --card-foreground: 120 3% 21%;
+  --muted-foreground: 120 4% 65%;
+  --border: 0 0% 96%;
+  --border-surface: 0 0% 100%;
+  --text-muted: 140 6% 80%;
+  --state-positive: 152 100% 35%;
+  --bg-state-positive: 145 49% 93%;
+  --state-negative: 353 100% 69%;
+  --bg-state-negative: 352 100% 95%;
+  --primary: 0 0% 18%;
+}

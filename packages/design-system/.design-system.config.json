@@ -1,0 +1,19 @@
+{
+  "$schema": "./config.schema.json",
+  "figma": {
+    "fileKey": "SX3PdSxgY0D7vfGx2ytRWU",
+    "nodeId": "95:2000",
+    "collectionName": "Foundations",
+    "url": "https://www.figma.com/design/SX3PdSxgY0D7vfGx2ytRWU/DS-·-Foundations?node-id=95-2000"
+  },
+  "output": {
+    "directory": "./src/tokens",
+    "formats": ["css", "json"]
+  },
+  "transform": {
+    "colorPrefix": "",
+    "spacingPrefix": "spacing-",
+    "typographyPrefix": "font-",
+    "radiusPrefix": "radius-"
+  }
+}

@@ -1,0 +1,66 @@
+# Code-First Design Experiments
+
+This folder is for **prototyping and experimenting** with new component designs directly in code. The goal is to enable rapid iteration without waiting for Figma handoffs.
+
+## Workflow
+
+1. **Create a new story** in this folder (e.g., `MyPrototype.stories.tsx`)
+2. **Build the component** using design system atoms and molecules
+3. **Iterate in real-time** - Storybook hot-reloads in under 2 seconds
+4. **Share with design** - Deploy PR staging to get feedback
+5. **Refine** - Adjust based on feedback, all in code
+6. **Promote** - Once approved, move to proper component location
+
+## Benefits
+
+- **Instant feedback**: See changes immediately in Storybook
+- **Real constraints**: Work with actual CSS, tokens, and responsive behavior
+- **Shareable**: Anyone can view the PR staging URL
+- **Versionable**: All experiments are tracked in git
+
+## Example: Creating a Prototype
+
+```tsx
+// experiments/NewFeatureCard.stories.tsx
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+
+const NewFeatureCard = () => (
+  <Card className="w-[400px]">
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        New Feature
+        <Badge variant="secondary">Beta</Badge>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p>Try out this new feature!</p>
+      <Button className="mt-4">Enable</Button>
+    </CardContent>
+  </Card>
+)
+
+export default {
+  title: 'Design System/Experiments/NewFeatureCard',
+  component: NewFeatureCard,
+}
+
+export const Default = {}
+```
+
+## Tips
+
+- **Use existing tokens**: Stick to CSS variables from the design system
+- **Keep it simple**: Start with the minimal viable prototype
+- **Document decisions**: Add comments explaining design choices
+- **Clean up**: Delete experiments that were rejected or promoted
+
+## Graduating Components
+
+When an experiment is approved:
+
+1. Move to `components/atoms/wrapped/` or `components/molecules/wrapped/`
+2. Add proper TypeScript types
+3. Create comprehensive Storybook stories
+4. Delete the experiment

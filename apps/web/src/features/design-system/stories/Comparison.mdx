@@ -1,0 +1,98 @@
+# Direct vs Wrapper Components
+
+The Safe Design System provides two approaches for using shadcn/ui components. This document compares both patterns to help you choose the right approach for your use case.
+
+## Option A: Direct Usage
+
+Import shadcn components directly from `@/components/ui/*`.
+
+```tsx
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+const MyComponent = () => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Transaction</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <Button variant="destructive">Cancel</Button>
+      <Button>Confirm</Button>
+    </CardContent>
+  </Card>
+)
+```
+
+### Pros
+- Full access to all shadcn props and variants
+- Follows community patterns and documentation
+- No additional abstraction layer
+- Easy to copy examples from shadcn docs
+
+### Cons
+- No enforced consistency across the app
+- Raw Tailwind classes everywhere
+- Harder to add Safe-specific behavior globally
+
+---
+
+## Option B: Wrapper Components
+
+Import wrapped components from `@/features/design-system`.
+
+```tsx
+import { Wrapped } from '@/features/design-system'
+const { Button, Card, CardContent, CardHeader, CardTitle } = Wrapped
+
+const MyComponent = () => (
+  <Card interactive>
+    <CardHeader>
+      <CardTitle>Transaction</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <Button loading>Processing...</Button>
+      <Button>Confirm</Button>
+    </CardContent>
+  </Card>
+)
+```
+
+### Pros
+- Safe-specific defaults and variants (`loading`, `interactive`, etc.)
+- Enforced consistency across the app
+- Easier to add new behavior globally
+- Simpler props for common use cases
+
+### Cons
+- Extra abstraction layer to maintain
+- May lag behind shadcn updates
+- Need to expose new props manually
+
+---
+
+## Comparison Table
+
+| Feature | Direct | Wrapper |
+|---------|--------|---------|
+| Full shadcn API | ✅ | Partial |
+| Loading state | Manual | Built-in |
+| Error state | Manual | Built-in |
+| Interactive card | Manual | Built-in |
+| Semantic badges | No | Yes (`success`, `warning`) |
+| Community patterns | ✅ | Custom |
+| Maintenance | Low | Medium |
+| Consistency | Manual | Enforced |
+
+---
+
+## Recommendation
+
+**For new features**: Start with wrapper components for consistency. They provide Safe-specific defaults and make it easy to maintain a consistent look.
+
+**For rapid prototyping**: Use direct imports for maximum flexibility and speed.
+
+**For migration**: Existing MUI components can be gradually replaced with either approach.
+
+See the Storybook sidebar for examples of both patterns:
+- `Design System/Atoms/Direct/*`
+- `Design System/Atoms/Wrapped/*`

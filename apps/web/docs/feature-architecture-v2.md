@@ -77,7 +77,7 @@ function MyPage() {
   const wc = useLoadFeature(WalletConnectFeature)
 
   // No null checks needed! Always returns an object.
-  // Hooks return undefined when not ready, components render null.
+  // Hooks return {} when not ready (safe destructuring), components render null.
   const uri = wc.useWcUri()
 
   return <wc.WalletConnectWidget />
@@ -98,11 +98,13 @@ function MyPageWithStates() {
 
 `useLoadFeature()` **always returns an object** - never `null` or `undefined`. When the feature is loading or disabled, it returns a Proxy that provides automatic stubs based on naming conventions:
 
-| Naming Pattern              | Type      | Stub Behavior             |
-| --------------------------- | --------- | ------------------------- |
-| `useSomething`              | Hook      | Returns `undefined`       |
-| `PascalCase` (not `use...`) | Component | Renders `null`            |
-| `camelCase` (not `use...`)  | Service   | No-op function `() => {}` |
+| Naming Pattern              | Type      | Stub Behavior               |
+| --------------------------- | --------- | --------------------------- |
+| `useSomething`              | Hook      | Returns `{}` (empty object) |
+| `PascalCase` (not `use...`) | Component | Renders `null`              |
+| `camelCase` (not `use...`)  | Service   | No-op function `() => {}`   |
+
+**Why `{}` for hooks?** Allows safe destructuring: `const { data } = feature.useMyHook()` won't throw when not ready (individual values will be `undefined`).
 
 **Meta properties** (prefixed with `$`) provide state information:
 
@@ -129,7 +131,7 @@ return <feature.components.Banner />
 
 // ✅ NEW: Always callable, no optional chaining
 const feature = useLoadFeature(MyFeature)
-const show = feature.useShowBanner()  // Always called, returns undefined if not ready
+const show = feature.useShowBanner()  // Always called, returns {} if not ready
 return <feature.Banner />              // Always renders, returns null if not ready
 ```
 
@@ -184,14 +186,14 @@ export default {
   // Flat structure - no nested categories
   MyComponent, // PascalCase → component (stub renders null)
   AnotherComponent, // PascalCase → component (stub renders null)
-  useMyHook, // useSomething → hook (stub returns undefined)
+  useMyHook, // useSomething → hook (stub returns {})
   myService, // camelCase → service (stub is no-op)
 }
 ```
 
 **Naming conventions determine stub behavior:**
 
-- `useSomething` → Hook → stub returns `undefined`
+- `useSomething` → Hook → stub returns `{}` (safe destructuring)
 - `PascalCase` → Component → stub renders `null`
 - `camelCase` → Service/function → stub is no-op `() => {}`
 
@@ -276,7 +278,7 @@ Feature contracts use a **flat structure** - no nested `components`, `hooks`, or
 /**
  * Base feature implementation type.
  * Uses flat structure with naming conventions:
- * - useSomething → hook (stub returns undefined)
+ * - useSomething → hook (stub returns {})
  * - PascalCase → component (stub renders null)
  * - camelCase → service/function (stub is no-op)
  */
@@ -415,7 +417,7 @@ export interface MultichainContract {
   CreateSafeOnNewChain: typeof CreateSafeOnNewChain
   NetworkLogosList: typeof NetworkLogosList
 
-  // Hooks (useSomething) - stub returns undefined
+  // Hooks (useSomething) - stub returns {}
   useIsMultichainSafe: typeof useIsMultichainSafe
   useSafeCreationData: typeof useSafeCreationData
 }
@@ -473,7 +475,7 @@ const subscribers = new Set<() => void>()
 
 /**
  * Creates a Proxy that returns stubs based on naming conventions:
- * - useSomething → returns undefined (hook stub)
+ * - useSomething → returns {} (hook stub, safe for destructuring)
  * - PascalCase → returns () => null (component stub)
  * - camelCase → returns () => {} (service stub)
  */
@@ -493,8 +495,8 @@ function createFeatureProxy<T>(meta: FeatureMeta, impl?: T): T & FeatureMeta {
 
       // Otherwise return stub based on naming convention
       if (prop.startsWith('use')) {
-        // Hook stub - return function that returns undefined
-        return () => undefined
+        // Hook stub - return function that returns {} (safe destructuring)
+        return () => ({})
       }
       if (prop[0] === prop[0].toUpperCase() && prop[0] !== '$') {
         // Component stub - return component that renders null
@@ -749,7 +751,7 @@ const feature = useLoadFeature(MyFeature)
 
 // No null check needed - always an object
 feature.MyComponent // ✅ Full autocomplete (stub when not ready)
-feature.useMyHook() // ✅ Type-safe (returns undefined when not ready)
+feature.useMyHook() // ✅ Type-safe (returns {} when not ready)
 ```
 
 ### Benefits
@@ -837,7 +839,7 @@ import { useLoadFeature } from '@/features/__core__'
 function MyComponent() {
   const mc = useLoadFeature(MultichainFeature)
 
-  // No null check - hooks return undefined, components render null when not ready
+  // No null check - hooks return {}, components render null when not ready
   const isMultichain = mc.useIsMultichainSafe()
 
   return (
@@ -1036,7 +1038,7 @@ it('renders nothing when feature is disabled', () => {
 
 - **No context providers needed**: Each component manages its own state
 - **Easy mocking**: Just mock the feature module with Jest
-- **Proxy stubs**: Components render null, hooks return undefined when not ready
+- **Proxy stubs**: Components render null, hooks return {} when not ready
 - **Async handling**: Use `waitFor()` to wait for lazy loading
 
 ## ESLint Enforcement
@@ -1139,7 +1141,7 @@ function SafeShieldScanner() {
   const hn = useLoadFeature(HypernativeFeature)
 
   // No null checks needed - flat structure, always callable
-  // Hook returns undefined when not ready, component renders null
+  // Hook returns {} when not ready, component renders null
   const scanner = hn.useHypernativeScanner()
 
   return <hn.Banner data={scanner?.data} />
@@ -1271,7 +1273,7 @@ import { useMyHook } from './hooks/useMyHook'
 // Flat structure - no nested categories
 export default {
   MyComponent, // PascalCase → component (stub renders null)
-  useMyHook, // useSomething → hook (stub returns undefined)
+  useMyHook, // useSomething → hook (stub returns {})
 }
 ```
 
@@ -1296,7 +1298,7 @@ Consumers use flat access - no null checks needed:
 
 ```typescript
 const feature = useLoadFeature(MyFeature)
-// Proxy stubs render null / return undefined when not ready
+// Proxy stubs: components render null, hooks return {} when not ready
 return <feature.Widget />
 ```
 

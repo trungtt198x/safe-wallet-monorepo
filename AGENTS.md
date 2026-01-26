@@ -168,7 +168,7 @@ import { myService } from './services/myService'
 // ✅ CORRECT: Flat structure, naming conventions determine stub behavior
 export default {
   MyComponent, // PascalCase → component (stub renders null)
-  useMyHook, // useSomething → hook (stub returns undefined)
+  useMyHook, // useSomething → hook (stub returns {})
   myService, // camelCase → service (stub is no-op)
 }
 ```

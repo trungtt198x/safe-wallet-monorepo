@@ -1,0 +1,245 @@
+---
+description: Workflow for implementing Figma designs using shadcn/ui components with minimal custom styling
+globs: 
+alwaysApply: false
+---
+
+# Figma to shadcn/ui Implementation Workflow
+
+This rule guides AI to implement Figma designs using only shadcn/ui components with minimal custom styling.
+
+## When This Rule Applies
+
+Trigger this workflow when the user provides a Figma URL and asks to implement the design. Common patterns:
+- "Implement this design from Figma: [URL]"
+- "Build this Figma screen: [URL]"
+- "Convert this Figma to code: [URL]"
+
+## Workflow Steps
+
+### Step 1: Extract Figma URL Parameters
+
+Parse the Figma URL to extract `fileKey` and `nodeId`:
+- URL format: `https://figma.com/design/:fileKey/:fileName?node-id=:nodeId`
+- Convert `node-id` from `123-456` to `123:456` format for API calls
+
+### Step 2: Get Design Context from Figma
+
+Use the Figma MCP to fetch the design:
+
+```
+Tool: get_design_context (server: user-Figma Online)
+Parameters:
+  - fileKey: extracted from URL
+  - nodeId: extracted from URL (use colon format: "123:456")
+  - clientLanguages: "typescript"
+  - clientFrameworks: "react,nextjs"
+```
+
+Also fetch a screenshot for visual reference:
+
+```
+Tool: get_screenshot (server: user-Figma Online)
+Parameters:
+  - fileKey: extracted from URL
+  - nodeId: extracted from URL
+```
+
+### Step 3: Analyze Design Components
+
+From the Figma output, identify all UI elements:
+- Buttons, inputs, forms
+- Cards, dialogs, modals
+- Navigation, tabs, menus
+- Data display (tables, lists)
+- Layout patterns (grids, stacks)
+
+### Step 4: Map to shadcn/ui Components
+
+Search for matching shadcn components:
+
+```
+Tool: search_items_in_registries (server: user-shadcn/ui)
+Parameters:
+  - registries: ["@shadcn"]
+  - query: "<component type>"
+```
+
+Or list all available components:
+
+```
+Tool: list_items_in_registries (server: user-shadcn/ui)
+Parameters:
+  - registries: ["@shadcn"]
+```
+
+### Step 5: View Component Details
+
+For each required component, get implementation details:
+
+```
+Tool: view_items_in_registries (server: user-shadcn/ui)
+Parameters:
+  - items: ["@shadcn/button", "@shadcn/card", ...]
+```
+
+And usage examples:
+
+```
+Tool: get_item_examples_from_registries (server: user-shadcn/ui)
+Parameters:
+  - items: ["@shadcn/button", "@shadcn/card", ...]
+```
+
+### Step 6: Install Missing Components
+
+Check which components exist in `apps/web/src/components/ui/` and install any missing ones:
+
+```
+Tool: get_add_command_for_items (server: user-shadcn/ui)
+Parameters:
+  - items: ["@shadcn/button", "@shadcn/card", ...]
+```
+
+Run the generated command in the `apps/web` directory:
+```bash
+cd apps/web && npx shadcn@latest add <components>
+```
+
+**IMPORTANT: Fix Import Paths**
+
+After installing new components, fix the `cn` utility import path in the newly created files:
+
+```bash
+# shadcn generates this (incorrect for this project):
+import { cn } from "@/utils/utils"
+
+# Replace with:
+import { cn } from '@/utils/cn'
+```
+
+Run this replacement in all newly installed component files before proceeding.
+
+### Step 7: Build the Component
+
+Create the React component following these principles:
+
+#### Component Structure
+```tsx
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+// ... other shadcn imports
+
+type MyScreenProps = {
+  // typed props
+}
+
+export const MyScreen = ({ ...props }: MyScreenProps) => {
+  return (
+    // Implementation using shadcn components
+  )
+}
+```
+
+#### Styling Guidelines
+
+**DO:**
+- Use shadcn component variants (e.g., `variant="outline"`, `size="sm"`)
+- Use Tailwind for layout only: `flex`, `grid`, `gap-*`, `p-*`, `m-*`, `w-*`, `h-*`
+- Use Tailwind for responsive breakpoints: `sm:`, `md:`, `lg:`
+- Use CSS variables from the theme for colors when needed
+
+**DON'T:**
+- Add custom colors with Tailwind classes (e.g., `bg-blue-500`)
+- Override shadcn component styles with Tailwind
+- Create custom CSS files for the component
+- Use inline styles
+- Hardcode pixel values for colors, shadows, borders
+
+#### Layout Patterns
+
+For common layouts, use these Tailwind patterns:
+
+```tsx
+// Vertical stack with gap
+<div className="flex flex-col gap-4">
+
+// Horizontal layout
+<div className="flex items-center gap-2">
+
+// Grid layout
+<div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+
+// Container with padding
+<div className="p-4 md:p-6">
+
+// Full width with max constraint
+<div className="w-full max-w-md mx-auto">
+```
+
+### Step 8: Create Storybook Story
+
+Create a story file alongside the component:
+
+```tsx
+import type { Meta, StoryObj } from '@storybook/react'
+import { MyScreen } from './MyScreen'
+
+const meta = {
+  title: 'Screens/MyScreen',
+  component: MyScreen,
+  tags: ['autodocs'],
+} satisfies Meta<typeof MyScreen>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {
+  args: {},
+}
+```
+
+## Common shadcn Component Mappings
+
+| Figma Element | shadcn Component |
+|---------------|------------------|
+| Primary Button | `<Button>` |
+| Secondary Button | `<Button variant="secondary">` |
+| Ghost/Text Button | `<Button variant="ghost">` |
+| Text Input | `<Input>` |
+| Select/Dropdown | `<Select>` |
+| Checkbox | `<Checkbox>` |
+| Radio | `<RadioGroup>` |
+| Toggle/Switch | `<Switch>` |
+| Card/Container | `<Card>` |
+| Dialog/Modal | `<Dialog>` |
+| Tabs | `<Tabs>` |
+| Table | `<Table>` |
+| Tooltip | `<Tooltip>` |
+| Badge/Tag | `<Badge>` |
+| Avatar | `<Avatar>` |
+| Separator/Divider | `<Separator>` |
+| Skeleton/Loading | `<Skeleton>` |
+| Alert/Banner | `<Alert>` |
+| Accordion | `<Accordion>` |
+| Navigation Menu | `<NavigationMenu>` |
+| Breadcrumb | `<Breadcrumb>` |
+| Pagination | `<Pagination>` |
+
+## Project-Specific Notes
+
+This project uses:
+- **Style**: `base-vega`
+- **Icon Library**: `lucide` - import icons from `lucide-react`
+- **Components Path**: `apps/web/src/components/ui/`
+- **Utility Path**: `apps/web/src/utils/cn.ts` (for `cn()` helper)
+
+## Validation Checklist
+
+Before completing:
+- [ ] All UI elements use shadcn components (no custom primitives)
+- [ ] Custom Tailwind classes are limited to layout/spacing
+- [ ] No hardcoded colors - uses theme variables or component variants
+- [ ] Component is typed with TypeScript interfaces
+- [ ] Storybook story is created
+- [ ] Component follows project naming conventions

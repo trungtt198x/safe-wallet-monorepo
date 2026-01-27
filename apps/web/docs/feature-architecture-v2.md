@@ -98,13 +98,15 @@ function MyPageWithStates() {
 
 `useLoadFeature()` **always returns an object** - never `null` or `undefined`. When the feature is loading or disabled, it returns a Proxy that provides automatic stubs based on naming conventions:
 
-| Naming Pattern              | Type      | Stub Behavior               |
-| --------------------------- | --------- | --------------------------- |
-| `useSomething`              | Hook      | Returns `{}` (empty object) |
-| `PascalCase` (not `use...`) | Component | Renders `null`              |
-| `camelCase` (not `use...`)  | Service   | No-op function `() => {}`   |
+| Naming Pattern              | Type      | Stub Behavior                                           |
+| --------------------------- | --------- | ------------------------------------------------------- |
+| `useSomething`              | Hook      | Returns `{}` (empty object)                             |
+| `PascalCase` (not `use...`) | Component | Renders `null`                                          |
+| `camelCase` (not `use...`)  | Service   | `undefined` (throws if called without `$isReady` check) |
 
 **Why `{}` for hooks?** Allows safe destructuring: `const { data } = feature.useMyHook()` won't throw when not ready (individual values will be `undefined`).
+
+**Why `undefined` for services?** Calling an undefined function throws `TypeError: X is not a function`. This helps catch developer mistakes when they forget to check `$isReady` before calling a service. Components and hooks can safely "do nothing" when not ready, but services typically have side effects that shouldn't silently fail.
 
 **Meta properties** (prefixed with `$`) provide state information:
 
@@ -195,7 +197,7 @@ export default {
 
 - `useSomething` → Hook → stub returns `{}` (safe destructuring)
 - `PascalCase` → Component → stub renders `null`
-- `camelCase` → Service/function → stub is no-op `() => {}`
+- `camelCase` → Service/function → stub is `undefined` (throws if called without `$isReady` check)
 
 #### ❌ Anti-Pattern: Multiple lazy() Calls Inside feature.ts
 
@@ -280,7 +282,7 @@ Feature contracts use a **flat structure** - no nested `components`, `hooks`, or
  * Uses flat structure with naming conventions:
  * - useSomething → hook (stub returns {})
  * - PascalCase → component (stub renders null)
- * - camelCase → service/function (stub is no-op)
+ * - camelCase → service/function (stub is undefined)
  */
 export type FeatureImplementation = Record<string, unknown>
 
@@ -502,8 +504,8 @@ function createFeatureProxy<T>(meta: FeatureMeta, impl?: T): T & FeatureMeta {
         // Component stub - return component that renders null
         return () => null
       }
-      // Service stub - return no-op function
-      return () => {}
+      // Service stub - undefined (throws if called without $isReady check)
+      return undefined
     },
   })
 }
@@ -959,8 +961,12 @@ function MyComponent() {
   // No null check needed - flat structure, always callable
   const uri = wc.useWcUri()
 
-  // Services work even when not ready (no-op stubs)
-  const handleConnect = () => wc.walletConnectInstance.connect(uri)
+  // Services require $isReady check (undefined stubs throw if called)
+  const handleConnect = () => {
+    if (wc.$isReady) {
+      wc.walletConnectInstance.connect(uri)
+    }
+  }
 
   // Components render null when not ready
   return <wc.WalletConnectWidget />
@@ -975,7 +981,7 @@ function MyComponent() {
 | Check if ready                     | Meta property      | `if (wc.$isReady) ...`                            |
 | Render another feature's component | Feature handle     | `<wc.Widget />`                                   |
 | Use another feature's hook         | Feature handle     | `wc.useY()`                                       |
-| Call another feature's service     | Feature handle     | `wc.doY()`                                        |
+| Call another feature's service     | Feature handle     | `if (wc.$isReady) wc.doY()`                       |
 | Read shared state                  | Redux selector     | `useSelector(selectSafeInfo)`                     |
 | Write shared state                 | Redux action       | `dispatch(setSafeInfo(data))`                     |
 | Share types                        | Direct import      | `import type { X } from '@/features/y/types'`     |

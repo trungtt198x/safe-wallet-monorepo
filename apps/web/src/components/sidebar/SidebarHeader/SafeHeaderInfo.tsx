@@ -11,8 +11,9 @@ import useSafeAddress from '@/hooks/useSafeAddress'
 import { useAddressResolver } from '@/hooks/useAddressResolver'
 import { useVisibleBalances } from '@/hooks/useVisibleBalances'
 import { InfoTooltip } from '@/features/stake/components/InfoTooltip'
-import { HypernativeFeature } from '@/features/hypernative'
-import { useLoadFeature } from '@/features/__core__'
+// Note: Hooks must be imported directly (not via useLoadFeature) to ensure
+// they're called unconditionally on every render (React hooks rules)
+import { useIsHypernativeGuard } from '@/features/hypernative/hooks'
 
 import css from './styles.module.css'
 
@@ -22,8 +23,7 @@ const SafeHeaderInfo = (): ReactElement => {
   const { safe } = useSafeInfo()
   const { threshold, owners } = safe
   const { ens } = useAddressResolver(safeAddress)
-  const hn = useLoadFeature(HypernativeFeature)
-  const { isHypernativeGuard } = hn.useIsHypernativeGuard()
+  const { isHypernativeGuard } = useIsHypernativeGuard()
 
   return (
     <div data-testid="safe-header-info" className={css.safe}>

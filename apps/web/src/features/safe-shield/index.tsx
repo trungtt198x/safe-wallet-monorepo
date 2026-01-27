@@ -2,14 +2,14 @@ import { useEffect, type ReactElement } from 'react'
 import { SafeShieldDisplay } from './components/SafeShieldDisplay'
 import { useSafeShield } from './SafeShieldContext'
 import { SAFE_SHIELD_EVENTS, trackEvent } from '@/services/analytics'
-import { HypernativeFeature } from '@/features/hypernative'
-import { useLoadFeature } from '@/features/__core__'
+// Note: Hooks must be imported directly (not via useLoadFeature) to ensure
+// they're called unconditionally on every render (React hooks rules)
+import { useHypernativeOAuth, useIsHypernativeEligible } from '@/features/hypernative/hooks'
 
 const SafeShieldWidget = (): ReactElement => {
   const { recipient, contract, threat, safeTx } = useSafeShield()
-  const hn = useLoadFeature(HypernativeFeature)
-  const hypernativeAuth = hn.useHypernativeOAuth()
-  const { isHypernativeEligible, isHypernativeGuard, loading: eligibilityLoading } = hn.useIsHypernativeEligible()
+  const hypernativeAuth = useHypernativeOAuth()
+  const { isHypernativeEligible, isHypernativeGuard, loading: eligibilityLoading } = useIsHypernativeEligible()
   const showHnInfo = !eligibilityLoading && isHypernativeEligible
   const showHnActiveStatus = !eligibilityLoading && isHypernativeGuard
 

@@ -14,14 +14,17 @@ import { BRAND_NAME } from '@/config/constants'
 import CsvTxExportButton from '@/components/transactions/CsvTxExportButton'
 import { useHasFeature } from '@/hooks/useChains'
 import { FEATURES } from '@safe-global/utils/utils/chains'
-import { HypernativeFeature, BannerType } from '@/features/hypernative'
+import { HypernativeFeature } from '@/features/hypernative'
+// Note: Hooks must be imported directly (not via useLoadFeature) to ensure
+// they're called unconditionally on every render (React hooks rules)
+import { useBannerVisibility, BannerType } from '@/features/hypernative/hooks'
 import { useLoadFeature } from '@/features/__core__'
 
 const History: NextPage = () => {
   const [filter] = useTxFilter()
   const isCsvExportEnabled = useHasFeature(FEATURES.CSV_TX_EXPORT)
   const hn = useLoadFeature(HypernativeFeature)
-  const { showBanner: showHnBanner, loading: hnLoading } = hn.useBannerVisibility(BannerType.Promo)
+  const { showBanner: showHnBanner, loading: hnLoading } = useBannerVisibility(BannerType.Promo)
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)

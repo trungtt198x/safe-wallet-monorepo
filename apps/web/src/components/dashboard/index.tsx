@@ -25,8 +25,11 @@ import AddFundsToGetStarted from '@/components/dashboard/AddFundsBanner'
 import useIsPositionsFeatureEnabled from '@/features/positions/hooks/useIsPositionsFeatureEnabled'
 import useNoFeeCampaignEligibility from '@/features/no-fee-campaign/hooks/useNoFeeCampaignEligibility'
 import useIsNoFeeCampaignEnabled from '@/features/no-fee-campaign/hooks/useIsNoFeeCampaignEnabled'
-import { HypernativeFeature, BannerType } from '@/features/hypernative'
+import { HypernativeFeature } from '@/features/hypernative'
 import { useLoadFeature } from '@/features/__core__'
+// Note: Hooks must be imported directly (not via useLoadFeature) to ensure
+// they're called unconditionally on every render (React hooks rules)
+import { useBannerVisibility, BannerType } from '@/features/hypernative/hooks'
 import { EurcvBoostBanner, eurcvBoostBannerID } from '@/components/dashboard/NewsCarousel/banners/EurcvBoostBanner'
 
 const RecoveryHeader = dynamic(() => import('@/features/recovery/components/RecoveryHeader'))
@@ -49,7 +52,7 @@ const Dashboard = (): ReactElement => {
   const { isEligible } = useNoFeeCampaignEligibility()
   const isNoFeeCampaignEnabled = useIsNoFeeCampaignEnabled()
   const hn = useLoadFeature(HypernativeFeature)
-  const { showBanner: showHnBanner, loading: hnLoading } = hn.useBannerVisibility(BannerType.Promo)
+  const { showBanner: showHnBanner, loading: hnLoading } = useBannerVisibility(BannerType.Promo)
   const isEurcvBoostEnabled = useHasFeature(FEATURES.EURCV_BOOST)
 
   const banners = [

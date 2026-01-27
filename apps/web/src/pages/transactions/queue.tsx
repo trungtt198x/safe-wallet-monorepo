@@ -9,17 +9,25 @@ import { BatchExecuteHoverProvider } from '@/components/transactions/BatchExecut
 import { usePendingTxsQueue, useShowUnsignedQueue } from '@/hooks/usePendingTxs'
 import RecoveryList from '@/features/recovery/components/RecoveryList'
 import { BRAND_NAME } from '@/config/constants'
-import { HypernativeFeature, BannerType } from '@/features/hypernative'
+import { HypernativeFeature } from '@/features/hypernative'
 import { useLoadFeature } from '@/features/__core__'
+// Note: Hooks must be imported directly (not via useLoadFeature) to ensure
+// they're called unconditionally on every render (React hooks rules)
+import {
+  useBannerVisibility,
+  useIsHypernativeEligible,
+  useIsHypernativeQueueScanFeature,
+  BannerType,
+} from '@/features/hypernative/hooks'
 import { useState, useCallback, useMemo } from 'react'
 import type { QueuedItemPage } from '@safe-global/store/gateway/AUTO_GENERATED/transactions'
 
 const Queue: NextPage = () => {
   const showPending = useShowUnsignedQueue()
   const hn = useLoadFeature(HypernativeFeature)
-  const { showBanner: showHnBanner, loading: hnLoading } = hn.useBannerVisibility(BannerType.Promo)
-  const { isHypernativeEligible, loading: eligibilityLoading } = hn.useIsHypernativeEligible()
-  const isHypernativeQueueScanEnabled = hn.useIsHypernativeQueueScanFeature()
+  const { showBanner: showHnBanner, loading: hnLoading } = useBannerVisibility(BannerType.Promo)
+  const { isHypernativeEligible, loading: eligibilityLoading } = useIsHypernativeEligible()
+  const isHypernativeQueueScanEnabled = useIsHypernativeQueueScanFeature()
 
   const showHnLoginCard = !eligibilityLoading && isHypernativeEligible && isHypernativeQueueScanEnabled
 

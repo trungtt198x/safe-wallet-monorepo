@@ -46,6 +46,9 @@ import DecodedData from './TxData/DecodedData'
 import { QueuedTxSimulation } from '../QueuedTxSimulation'
 import { HypernativeFeature } from '@/features/hypernative'
 import { useLoadFeature } from '@/features/__core__'
+// Note: Hooks must be imported directly (not via useLoadFeature) to ensure
+// they're called unconditionally on every render (React hooks rules)
+import { useQueueAssessment, useHypernativeOAuth, useShowHypernativeAssessment } from '@/features/hypernative/hooks'
 
 export const NOT_AVAILABLE = 'n/a'
 
@@ -108,9 +111,9 @@ const TxDetailsBlock = ({ txSummary, txDetails }: TxDetailsProps): ReactElement 
   const { safe } = useSafeInfo()
   const chainId = safe.chainId
   const hn = useLoadFeature(HypernativeFeature)
-  const assessment = hn.useQueueAssessment(safeTxHash)
-  const { isAuthenticated } = hn.useHypernativeOAuth()
-  const showAssessmentBanner = hn.useShowHypernativeAssessment({
+  const assessment = useQueueAssessment(safeTxHash)
+  const { isAuthenticated } = useHypernativeOAuth()
+  const showAssessmentBanner = useShowHypernativeAssessment({
     isQueue,
     safeTxHash,
   })

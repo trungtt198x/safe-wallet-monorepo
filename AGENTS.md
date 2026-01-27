@@ -140,7 +140,8 @@ function ParentComponent() {
 
   // No null check needed - always returns an object
   // Components render null when not ready (proxy stub)
-  // Hooks return undefined when not ready (proxy stub)
+  // Hooks return {} when not ready (safe destructuring)
+  // Services are undefined when not ready (check $isReady before calling)
   return <feature.MyComponent />
 }
 
@@ -169,7 +170,7 @@ import { myService } from './services/myService'
 export default {
   MyComponent, // PascalCase → component (stub renders null)
   useMyHook, // useSomething → hook (stub returns {})
-  myService, // camelCase → service (stub is no-op)
+  myService, // camelCase → service (stub is undefined - check $isReady before calling)
 }
 ```
 

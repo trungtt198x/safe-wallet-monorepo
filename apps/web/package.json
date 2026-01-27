@@ -73,6 +73,7 @@
     "@safe-global/store": "workspace:^",
     "@safe-global/theme": "workspace:^",
     "@sentry/react": "^7.91.0",
+    "@tailwindcss/postcss": "^4.1.18",
     "@walletconnect/core": "^2.21.10",
     "@walletconnect/utils": "^2.21.10",
     "@web3-onboard/coinbase": "^2.4.2",
@@ -93,6 +94,7 @@
     "mixpanel-browser": "^2.66.0",
     "next": "patch:next@15.5.8#../../.yarn/patches/next-npm-15.5.8-7d525d02b9.patch",
     "papaparse": "^5.3.2",
+    "postcss": "^8.5.6",
     "qrcode.react": "^3.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -101,6 +103,7 @@
     "react-papaparse": "^4.0.2",
     "react-redux": "^9.1.2",
     "semver": "^7.7.1",
+    "tailwindcss": "^4.1.18",
     "zodiac-roles-deployments": "^2.3.4"
   },
   "devDependencies": {

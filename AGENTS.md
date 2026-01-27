@@ -170,7 +170,7 @@ import { myService } from './services/myService'
 export default {
   MyComponent, // PascalCase → component (stub renders null)
   useMyHook, // useSomething → hook (stub returns {})
-  myService, // camelCase → service (stub is undefined - check $isReady before calling)
+  myService, // camelCase → service (undefined when not ready - check $isReady before calling)
 }
 ```
 

@@ -98,15 +98,15 @@ function MyPageWithStates() {
 
 `useLoadFeature()` **always returns an object** - never `null` or `undefined`. When the feature is loading or disabled, it returns a Proxy that provides automatic stubs based on naming conventions:
 
-| Naming Pattern              | Type      | Stub Behavior                                           |
-| --------------------------- | --------- | ------------------------------------------------------- |
-| `useSomething`              | Hook      | Returns `{}` (empty object)                             |
-| `PascalCase` (not `use...`) | Component | Renders `null`                                          |
-| `camelCase` (not `use...`)  | Service   | `undefined` (throws if called without `$isReady` check) |
+| Naming Pattern              | Type      | Stub Behavior                     |
+| --------------------------- | --------- | --------------------------------- |
+| `useSomething`              | Hook      | Returns `{}` (empty object)       |
+| `PascalCase` (not `use...`) | Component | Renders `null`                    |
+| `camelCase` (not `use...`)  | Service   | Property is `undefined` (no stub) |
 
 **Why `{}` for hooks?** Allows safe destructuring: `const { data } = feature.useMyHook()` won't throw when not ready (individual values will be `undefined`).
 
-**Why `undefined` for services?** Calling an undefined function throws `TypeError: X is not a function`. This helps catch developer mistakes when they forget to check `$isReady` before calling a service. Components and hooks can safely "do nothing" when not ready, but services typically have side effects that shouldn't silently fail.
+**Why `undefined` for services?** The service property is `undefined` when not ready (no stub function). Attempting to call it throws `TypeError: X is not a function`. This catches developer mistakes when they forget to check `$isReady` before calling a service. Components and hooks can safely "do nothing" when not ready, but services typically have side effects that shouldn't silently fail.
 
 **Meta properties** (prefixed with `$`) provide state information:
 
@@ -197,7 +197,7 @@ export default {
 
 - `useSomething` → Hook → stub returns `{}` (safe destructuring)
 - `PascalCase` → Component → stub renders `null`
-- `camelCase` → Service/function → stub is `undefined` (throws if called without `$isReady` check)
+- `camelCase` → Service/function → `undefined` (no stub - check `$isReady` before calling)
 
 #### ❌ Anti-Pattern: Multiple lazy() Calls Inside feature.ts
 
@@ -282,7 +282,7 @@ Feature contracts use a **flat structure** - no nested `components`, `hooks`, or
  * Uses flat structure with naming conventions:
  * - useSomething → hook (stub returns {})
  * - PascalCase → component (stub renders null)
- * - camelCase → service/function (stub is undefined)
+ * - camelCase → service/function (undefined, no stub)
  */
 export type FeatureImplementation = Record<string, unknown>
 
@@ -504,7 +504,7 @@ function createFeatureProxy<T>(meta: FeatureMeta, impl?: T): T & FeatureMeta {
         // Component stub - return component that renders null
         return () => null
       }
-      // Service stub - undefined (throws if called without $isReady check)
+      // Service - no stub, property is undefined (check $isReady before calling)
       return undefined
     },
   })
@@ -961,7 +961,7 @@ function MyComponent() {
   // No null check needed - flat structure, always callable
   const uri = wc.useWcUri()
 
-  // Services require $isReady check (undefined stubs throw if called)
+  // Services are undefined when not ready - check $isReady before calling
   const handleConnect = () => {
     if (wc.$isReady) {
       wc.walletConnectInstance.connect(uri)

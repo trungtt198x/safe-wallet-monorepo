@@ -9,21 +9,17 @@ import { BatchExecuteHoverProvider } from '@/components/transactions/BatchExecut
 import { usePendingTxsQueue, useShowUnsignedQueue } from '@/hooks/usePendingTxs'
 import RecoveryList from '@/features/recovery/components/RecoveryList'
 import { BRAND_NAME } from '@/config/constants'
-import { HnLoginCard } from '@/features/hypernative/components/HnLoginCard'
-import { useIsHypernativeEligible } from '@/features/hypernative/hooks/useIsHypernativeEligible'
-import { useIsHypernativeQueueScanFeature } from '@/features/hypernative/hooks/useIsHypernativeQueueScanFeature'
-import { useBannerVisibility } from '@/features/hypernative/hooks'
-import { BannerType } from '@/features/hypernative/hooks/useBannerStorage'
-import { HnBannerForQueue } from '@/features/hypernative/components/HnBanner'
-import { QueueAssessmentProvider } from '@/features/hypernative/components/QueueAssessmentProvider'
+import { HypernativeFeature, BannerType } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 import { useState, useCallback, useMemo } from 'react'
 import type { QueuedItemPage } from '@safe-global/store/gateway/AUTO_GENERATED/transactions'
 
 const Queue: NextPage = () => {
   const showPending = useShowUnsignedQueue()
-  const { showBanner: showHnBanner, loading: hnLoading } = useBannerVisibility(BannerType.Promo)
-  const { isHypernativeEligible, loading: eligibilityLoading } = useIsHypernativeEligible()
-  const isHypernativeQueueScanEnabled = useIsHypernativeQueueScanFeature()
+  const hn = useLoadFeature(HypernativeFeature)
+  const { showBanner: showHnBanner, loading: hnLoading } = hn.useBannerVisibility(BannerType.Promo)
+  const { isHypernativeEligible, loading: eligibilityLoading } = hn.useIsHypernativeEligible()
+  const isHypernativeQueueScanEnabled = hn.useIsHypernativeQueueScanFeature()
 
   const showHnLoginCard = !eligibilityLoading && isHypernativeEligible && isHypernativeQueueScanEnabled
 
@@ -51,7 +47,7 @@ const Queue: NextPage = () => {
 
       <BatchExecuteHoverProvider>
         <TxHeader>
-          {showHnLoginCard && <HnLoginCard />}
+          {showHnLoginCard && <hn.HnLoginCard />}
           <BatchExecuteButton />
         </TxHeader>
 
@@ -64,13 +60,13 @@ const Queue: NextPage = () => {
             )}
             {showHnBanner && !hnLoading && (
               <Box mb={3}>
-                <HnBannerForQueue />
+                <hn.HnBannerForQueue />
               </Box>
             )}
 
             <RecoveryList />
 
-            <QueueAssessmentProvider pages={allPages}>
+            <hn.QueueAssessmentProvider pages={allPages}>
               {/* Pending unsigned transactions */}
               {showPending && (
                 <PaginatedTxns useTxns={usePendingTxsQueue} onPagesChange={handlePendingQueuePagesChange} />
@@ -78,7 +74,7 @@ const Queue: NextPage = () => {
 
               {/* The main queue of signed transactions */}
               <PaginatedTxns useTxns={useTxQueue} onPagesChange={handleMainQueuePagesChange} />
-            </QueueAssessmentProvider>
+            </hn.QueueAssessmentProvider>
           </Box>
         </main>
       </BatchExecuteHoverProvider>

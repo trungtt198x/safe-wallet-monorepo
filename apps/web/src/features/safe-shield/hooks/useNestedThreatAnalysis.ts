@@ -7,7 +7,8 @@ import { useContext, useMemo } from 'react'
 import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
 import useSafeInfo from '@/hooks/useSafeInfo'
 import type { SafeTransaction } from '@safe-global/types-kit'
-import { useIsHypernativeEligible } from '@/features/hypernative/hooks/useIsHypernativeEligible'
+import { HypernativeFeature } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 import type { AsyncResult } from '@safe-global/utils/hooks/useAsync'
 import { useNestedTransaction } from '../components/useNestedTransaction'
 import { useCurrentChain } from '@/hooks/useChains'
@@ -30,7 +31,8 @@ export function useNestedThreatAnalysis(
   const signer = useSigner()
   const { safeTx, safeMessage, txOrigin } = useContext(SafeTxContext)
   const walletAddress = signer?.address ?? ''
-  const { isHypernativeEligible, loading: eligibilityLoading } = useIsHypernativeEligible()
+  const hn = useLoadFeature(HypernativeFeature)
+  const { isHypernativeEligible, loading: eligibilityLoading } = hn.useIsHypernativeEligible()
 
   const chain = useCurrentChain()
   const txToAnalyze = overrideSafeTx || safeTx || safeMessage

@@ -2,7 +2,8 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { useNestedThreatAnalysis } from '../useNestedThreatAnalysis'
 import { Severity, StatusGroup, ThreatStatus } from '@safe-global/utils/features/safe-shield/types'
 import type { SafeTransaction } from '@safe-global/types-kit'
-import type { HypernativeEligibility } from '@/features/hypernative/hooks/useIsHypernativeEligible'
+import type { HypernativeEligibility } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 
 jest.mock('@safe-global/utils/features/safe-shield/hooks', () => ({
   useThreatAnalysis: jest.fn(),
@@ -39,6 +40,13 @@ jest.mock('@/components/tx-flow/SafeTxProvider', () => ({
   },
 }))
 
+jest.mock('@/features/__core__', () => ({
+  ...jest.requireActual('@/features/__core__'),
+  useLoadFeature: jest.fn(),
+}))
+
+const mockUseLoadFeature = useLoadFeature as jest.MockedFunction<typeof useLoadFeature>
+
 const buildEligibility = (overrides: Partial<HypernativeEligibility> = {}): HypernativeEligibility => ({
   isHypernativeEligible: false,
   isHypernativeGuard: false,
@@ -49,9 +57,16 @@ const buildEligibility = (overrides: Partial<HypernativeEligibility> = {}): Hype
 
 const mockUseIsHypernativeEligible = jest.fn(() => buildEligibility())
 
-jest.mock('@/features/hypernative/hooks/useIsHypernativeEligible', () => ({
-  useIsHypernativeEligible: () => mockUseIsHypernativeEligible(),
-}))
+const createMockHnFeature = () =>
+  ({
+    useIsHypernativeEligible: mockUseIsHypernativeEligible,
+    $isReady: true,
+    $isLoading: false,
+    $isDisabled: false,
+    $error: null,
+    name: 'hypernative',
+    useIsEnabled: () => true,
+  }) as unknown as ReturnType<typeof useLoadFeature>
 
 const mockUseThreatAnalysisUtils = jest.requireMock('@safe-global/utils/features/safe-shield/hooks').useThreatAnalysis
 const mockUseThreatAnalysisHypernative = jest.requireMock(
@@ -105,6 +120,7 @@ const buildThreatResult = (severity: Severity) => [
 describe('useNestedThreatAnalysis', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUseLoadFeature.mockReturnValue(createMockHnFeature())
     mockUseIsHypernativeEligible.mockReturnValue(buildEligibility({ isHypernativeEligible: false }))
     mockUseThreatAnalysisHypernative.mockReturnValue([undefined, undefined, false])
   })

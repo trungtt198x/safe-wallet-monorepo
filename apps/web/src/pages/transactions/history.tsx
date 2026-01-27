@@ -14,14 +14,14 @@ import { BRAND_NAME } from '@/config/constants'
 import CsvTxExportButton from '@/components/transactions/CsvTxExportButton'
 import { useHasFeature } from '@/hooks/useChains'
 import { FEATURES } from '@safe-global/utils/utils/chains'
-import { useBannerVisibility } from '@/features/hypernative/hooks'
-import { BannerType } from '@/features/hypernative/hooks/useBannerStorage'
-import { HnBannerForHistory } from '@/features/hypernative/components/HnBanner'
+import { HypernativeFeature, BannerType } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 
 const History: NextPage = () => {
   const [filter] = useTxFilter()
   const isCsvExportEnabled = useHasFeature(FEATURES.CSV_TX_EXPORT)
-  const { showBanner: showHnBanner, loading: hnLoading } = useBannerVisibility(BannerType.Promo)
+  const hn = useLoadFeature(HypernativeFeature)
+  const { showBanner: showHnBanner, loading: hnLoading } = hn.useBannerVisibility(BannerType.Promo)
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)
@@ -99,7 +99,7 @@ const History: NextPage = () => {
           )}
           {showHnBanner && !hnLoading && (
             <Box mb={3}>
-              <HnBannerForHistory />
+              <hn.HnBannerForHistory />
             </Box>
           )}
 

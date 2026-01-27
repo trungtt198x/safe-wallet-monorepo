@@ -19,7 +19,8 @@ import {
   Severity,
 } from '@safe-global/utils/features/safe-shield/types'
 import { getPrimaryResult, SEVERITY_PRIORITY } from '@safe-global/utils/features/safe-shield/utils'
-import { useAuthToken } from '@/features/hypernative/hooks'
+import { HypernativeFeature } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 
 type SafeShieldContextType = {
   setRecipientAddresses: Dispatch<SetStateAction<string[] | undefined>>
@@ -42,7 +43,8 @@ export const SafeShieldProvider = ({ children }: { children: ReactNode }) => {
 
   const recipientOnlyAnalysis = useRecipientAnalysis(recipientAddresses)
   const counterpartyAnalysis = useCounterpartyAnalysis(safeTx)
-  const [{ token: hypernativeAuthToken }] = useAuthToken()
+  const hn = useLoadFeature(HypernativeFeature)
+  const [{ token: hypernativeAuthToken }] = hn.useAuthToken()
   const threat = useThreatAnalysis(safeTx, hypernativeAuthToken) ?? [undefined, undefined, false]
   const [threatAnalysisResult] = threat
 

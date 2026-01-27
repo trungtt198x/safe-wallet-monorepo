@@ -1,7 +1,8 @@
 import { type ReactElement, useMemo, useState, useEffect, useRef } from 'react'
 import { Box, Typography, Stack, IconButton, Collapse } from '@mui/material'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import HypernativeLogo from '@/features/hypernative/components/HypernativeLogo'
+import { HypernativeFeature } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 import {
   ContractStatus,
   type GroupedAnalysisResults,
@@ -39,6 +40,7 @@ export const AnalysisGroupCard = ({
 }: AnalysisGroupCardProps): ReactElement | null => {
   const [isOpen, setIsOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const hn = useLoadFeature(HypernativeFeature)
 
   const visibleResults = useMemo(() => mapVisibleAnalysisResults(data), [data])
   const primaryResult = useMemo(() => getPrimaryAnalysisResult(data), [data])
@@ -146,7 +148,7 @@ export const AnalysisGroupCard = ({
                 <Typography variant="caption" color="text.secondary">
                   by
                 </Typography>
-                <HypernativeLogo
+                <hn.HypernativeLogo
                   sx={{
                     width: 78,
                     height: 15,

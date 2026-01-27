@@ -25,8 +25,8 @@ import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlin
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
 import css from './styles.module.css'
 import { getExplorerLink } from '@safe-global/utils/utils/gateway'
-import { HnDashboardBannerWithNoBalanceCheck } from '@/features/hypernative/components/HnDashboardBanner'
-import { BannerType, useBannerVisibility } from '@/features/hypernative/hooks'
+import { HypernativeFeature, BannerType } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 
 const calculateProgress = (items: boolean[]) => {
   const totalNumberOfItems = items.length
@@ -363,7 +363,8 @@ const FirstSteps = () => {
 
   // Check if banner should show (for conditional rendering of AccountReadyWidget)
   // Use NoBalanceCheck for undeployed safes as the banner should be shown for all non-active safes as well
-  const { showBanner: showHnDashboardBanner } = useBannerVisibility(BannerType.NoBalanceCheck)
+  const hn = useLoadFeature(HypernativeFeature)
+  const { showBanner: showHnDashboardBanner } = hn.useBannerVisibility(BannerType.NoBalanceCheck)
 
   const isMultiSig = safe.threshold > 1
   const isReplayedSafe = undeployedSafe && isReplayedSafeProps(undeployedSafe?.props)
@@ -475,7 +476,7 @@ const FirstSteps = () => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            {showHnDashboardBanner ? <HnDashboardBannerWithNoBalanceCheck /> : <AccountReadyWidget />}
+            {showHnDashboardBanner ? <hn.HnDashboardBannerWithNoBalanceCheck /> : <AccountReadyWidget />}
           </Grid>
         </Grid>
       </WidgetBody>

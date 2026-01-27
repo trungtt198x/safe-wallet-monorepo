@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { render, screen } from '@/tests/test-utils'
 import SafeShieldWidget from '../index'
 import type { AsyncResult } from '@safe-global/utils/hooks/useAsync'
@@ -7,19 +8,19 @@ import type {
   ThreatAnalysisResults,
 } from '@safe-global/utils/features/safe-shield/types'
 import { useSafeShield } from '../SafeShieldContext'
-import { useHypernativeOAuth } from '@/features/hypernative/hooks/useHypernativeOAuth'
-import { useIsHypernativeEligible } from '@/features/hypernative/hooks/useIsHypernativeEligible'
+import { useLoadFeature } from '@/features/__core__'
 import { useCheckSimulation } from '../hooks/useCheckSimulation'
-import type { HypernativeEligibility } from '@/features/hypernative/hooks/useIsHypernativeEligible'
+import type { HypernativeEligibility } from '@/features/hypernative'
 
 jest.mock('../SafeShieldContext')
-jest.mock('@/features/hypernative/hooks/useHypernativeOAuth')
-jest.mock('@/features/hypernative/hooks/useIsHypernativeEligible')
+jest.mock('@/features/__core__', () => ({
+  ...jest.requireActual('@/features/__core__'),
+  useLoadFeature: jest.fn(),
+}))
 jest.mock('../hooks/useCheckSimulation')
 
 const mockUseSafeShield = useSafeShield as jest.MockedFunction<typeof useSafeShield>
-const mockUseHypernativeOAuth = useHypernativeOAuth as jest.MockedFunction<typeof useHypernativeOAuth>
-const mockUseIsHypernativeEligible = useIsHypernativeEligible as jest.MockedFunction<typeof useIsHypernativeEligible>
+const mockUseLoadFeature = useLoadFeature as jest.MockedFunction<typeof useLoadFeature>
 const mockUseCheckSimulation = useCheckSimulation as jest.MockedFunction<typeof useCheckSimulation>
 
 const emptyRecipient: AsyncResult<RecipientAnalysisResults> = [{}, undefined, false]
@@ -33,6 +34,25 @@ const makeEligibility = (overrides: Partial<HypernativeEligibility> = {}): Hyper
   loading: false,
   ...overrides,
 })
+
+const mockUseHypernativeOAuth = jest.fn()
+const mockUseIsHypernativeEligible = jest.fn()
+
+// Mock component that renders children
+const MockHypernativeTooltip = ({ children }: { children: ReactNode }) => <>{children}</>
+
+const createMockHnFeature = () =>
+  ({
+    useHypernativeOAuth: mockUseHypernativeOAuth,
+    useIsHypernativeEligible: mockUseIsHypernativeEligible,
+    HypernativeTooltip: MockHypernativeTooltip,
+    $isReady: true,
+    $isLoading: false,
+    $isDisabled: false,
+    $error: null,
+    name: 'hypernative',
+    useIsEnabled: () => true,
+  }) as unknown as ReturnType<typeof useLoadFeature>
 
 describe('SafeShieldWidget', () => {
   beforeEach(() => {
@@ -55,6 +75,7 @@ describe('SafeShieldWidget', () => {
     })
     mockUseIsHypernativeEligible.mockReturnValue(makeEligibility())
     mockUseCheckSimulation.mockReturnValue({ hasSimulationError: false })
+    mockUseLoadFeature.mockReturnValue(createMockHnFeature())
   })
 
   it('does not show Hypernative info when Safe is ineligible', () => {

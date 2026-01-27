@@ -1,66 +1,120 @@
 'use client'
 
+import { useMemo } from 'react'
 import useAsync from '@safe-global/utils/hooks/useAsync'
 import { logError, Errors } from '@/services/exceptions'
 import type { FeatureHandle, FeatureImplementation } from './types'
 
 /**
+ * Meta properties added to feature objects.
+ * Prefixed with $ to avoid conflicts with feature exports.
+ */
+interface FeatureMeta {
+  /** True while feature code is loading */
+  $isLoading: boolean
+  /** True if feature flag is disabled */
+  $isDisabled: boolean
+  /** True when feature is loaded and ready to use */
+  $isReady: boolean
+  /** Error if loading failed */
+  $error: Error | undefined
+}
+
+/**
+ * Creates a proxy that provides automatic stubs based on naming conventions.
+ * - useSomething → hook returning {}
+ * - PascalCase → component returning null
+ * - camelCase → undefined (will throw if called, helping catch missing $isReady checks)
+ */
+function createStubProxy<T extends FeatureImplementation>(meta: FeatureMeta): T & FeatureMeta {
+  const stubCache = new Map<string | symbol, unknown>()
+
+  return new Proxy({} as T & FeatureMeta, {
+    get(_, prop) {
+      // Return meta properties directly
+      if (prop === '$isLoading') return meta.$isLoading
+      if (prop === '$isDisabled') return meta.$isDisabled
+      if (prop === '$isReady') return meta.$isReady
+      if (prop === '$error') return meta.$error
+
+      // Return cached stub if exists
+      if (stubCache.has(prop)) {
+        return stubCache.get(prop)
+      }
+
+      // Create stub based on naming convention
+      const name = String(prop)
+      let stub: unknown
+
+      if (name.startsWith('use')) {
+        // Hook stub - returns empty object for safe destructuring
+        stub = () => ({})
+      } else if (name[0] === name[0].toUpperCase()) {
+        // Component stub - renders null
+        stub = () => null
+      } else {
+        // Service stub - undefined (will throw if called, catching missing $isReady checks)
+        stub = undefined
+      }
+
+      stubCache.set(prop, stub)
+      return stub
+    },
+  })
+}
+
+/**
  * Hook to load a feature lazily based on its handle.
  *
- * This hook combines:
- * 1. Feature flag check (via handle.useIsEnabled)
- * 2. Lazy loading of the full implementation (cached by bundler)
- *
- * Uses `useAsync` internally for proper cleanup (prevents memory leaks on unmount)
- * and error handling.
+ * ALWAYS returns an object - never null or undefined. When the feature is
+ * loading or disabled, returns a Proxy with automatic stubs based on naming:
+ * - useSomething → hook returning {} (safe destructuring)
+ * - PascalCase → component returning null
+ * - camelCase → undefined (will throw if called without checking $isReady)
  *
  * @param handle - The feature handle with name, useIsEnabled, and load function.
- *   **Important:** The handle should be a module-level constant to avoid unnecessary
- *   re-renders due to reference changes in the dependency array.
- * @returns The loaded feature, `undefined` while loading, or `null` if disabled
+ * @returns Feature object with meta properties ($isLoading, $isDisabled, $isReady, $error)
  *
  * @example
  * ```typescript
- * import { WalletConnectFeature } from '@/features/walletconnect'
- * import { useLoadFeature } from '@/features/__core__'
+ * const { MyComponent, useMyHook } = useLoadFeature(MyFeature)
  *
- * function MyComponent() {
- *   const walletConnect = useLoadFeature(WalletConnectFeature)
- *
- *   // Show loading state while feature flag or code is loading
- *   if (walletConnect === undefined) return <Skeleton />
- *
- *   // Hide if disabled
- *   if (walletConnect === null) return null
- *
- *   // Feature is loaded - safe to use
- *   return <walletConnect.components.WalletConnectWidget />
- * }
+ * // Always safe - no null checks needed
+ * const { data } = useMyHook()  // Returns {} when not ready
+ * return <MyComponent />         // Renders null when not ready
  * ```
  *
  * @example
  * ```typescript
- * // Simple pattern: treat loading same as disabled
- * function MyComponent() {
- *   const walletConnect = useLoadFeature(WalletConnectFeature)
- *   if (!walletConnect) return null
- *   return <walletConnect.components.WalletConnectWidget />
+ * // For services, check $isReady first:
+ * const { myService, $isReady } = useLoadFeature(MyFeature)
+ *
+ * if ($isReady) {
+ *   myService()  // Safe to call
  * }
+ * // myService() without check will throw (undefined is not a function)
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // For explicit loading/disabled states:
+ * const feature = useLoadFeature(MyFeature)
+ *
+ * if (feature.$isLoading) return <Skeleton />
+ * if (feature.$isDisabled) return null
+ *
+ * return <feature.MyComponent />
  * ```
  */
 export function useLoadFeature<T extends FeatureImplementation>(
   handle: FeatureHandle<T>,
-): (T & { name: string; useIsEnabled: () => boolean | undefined }) | null | undefined {
+): T & { name: string; useIsEnabled: () => boolean | undefined } & FeatureMeta {
   type LoadedFeature = T & { name: string; useIsEnabled: () => boolean | undefined }
 
   // Check feature flag (must be called unconditionally as it's a hook)
   const isEnabled = handle.useIsEnabled()
 
-  // Load feature when enabled using useAsync for:
-  // - Cleanup via isCurrent flag (prevents memory leaks on unmount)
-  // - Error handling
-  // - Loading state management
-  // Dynamic import is cached by the bundler - multiple calls return the same Promise
+  // Load feature when enabled
   const [feature, error, loading] = useAsync(
     () => {
       if (isEnabled !== true) return
@@ -74,7 +128,7 @@ export function useLoadFeature<T extends FeatureImplementation>(
       )
     },
     [isEnabled, handle],
-    false, // Don't clear data on re-run (keeps feature cached while dependencies stable)
+    false,
   )
 
   // Log errors for debugging
@@ -82,16 +136,31 @@ export function useLoadFeature<T extends FeatureImplementation>(
     logError(Errors._906, error)
   }
 
-  // Feature flag is disabled -> null
-  if (isEnabled === false) {
-    return null
-  }
+  // Compute meta state
+  const $isDisabled = isEnabled === false
+  const $isLoading = isEnabled === undefined || loading
+  const $isReady = isEnabled === true && !loading && !!feature
+  const $error = error
 
-  // Feature flag is loading or code is loading -> undefined
-  if (isEnabled === undefined || loading || !feature) {
-    return undefined
-  }
+  // Return feature with meta, or stub proxy
+  return useMemo(() => {
+    if ($isReady && feature) {
+      // Feature loaded - return real implementation with meta
+      return {
+        ...feature,
+        $isLoading: false,
+        $isDisabled: false,
+        $isReady: true,
+        $error: undefined,
+      } as LoadedFeature & FeatureMeta
+    }
 
-  // Feature is loaded and ready -> feature object
-  return feature
+    // Not ready - return stub proxy
+    return createStubProxy<T>({
+      $isLoading,
+      $isDisabled,
+      $isReady: false,
+      $error,
+    }) as LoadedFeature & FeatureMeta
+  }, [$isReady, $isLoading, $isDisabled, $error, feature])
 }

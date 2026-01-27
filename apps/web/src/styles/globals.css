@@ -23,6 +23,14 @@ body {
   background-color: var(--color-background-paper);
 }
 
+body {
+  position: relative;
+}
+
+.root {
+  isolation: isolate;
+}
+
 main {
   width: 100%;
 }

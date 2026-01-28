@@ -11,9 +11,9 @@ import { useHasPermission } from '@/permissions/hooks/useHasPermission'
 import { Permission } from '@/permissions/config'
 import { useCallback, useContext, useEffect, useMemo } from 'react'
 import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
-import SpendingLimitRow from '../SpendingLimitRow'
-import { useSelector } from 'react-redux'
-import { selectSpendingLimits } from '@/store/spendingLimitsSlice'
+import { useLoadFeature } from '@/features/__core__'
+import { SpendingLimitsFeature, selectSpendingLimits } from '@/features/spending-limits'
+import { useAppSelector } from '@/store'
 import { useVisibleTokens } from '../utils'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
 import Track from '@/components/common/Track'
@@ -33,7 +33,8 @@ type RecipientRowProps = {
 
 const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLimit }: RecipientRowProps) => {
   const balancesItems = useVisibleTokens()
-  const spendingLimits = useSelector(selectSpendingLimits)
+  const spendingLimits = useAppSelector(selectSpendingLimits)
+  const sl = useLoadFeature(SpendingLimitsFeature)
 
   const {
     formState: { errors },
@@ -64,7 +65,7 @@ const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLim
   const spendingLimitBalances = useMemo(
     () =>
       balancesItems.filter(({ tokenInfo }) =>
-        spendingLimits.find((sl) => sameAddress(sl.token.address, tokenInfo.address)),
+        spendingLimits.find((limit) => sameAddress(limit.token.address, tokenInfo.address)),
       ),
     [balancesItems, spendingLimits],
   )
@@ -100,7 +101,7 @@ const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLim
 
           {!disableSpendingLimit && canCreateSpendingLimitTxWithToken && (
             <FormControl fullWidth>
-              <SpendingLimitRow availableAmount={spendingLimitAmount} selectedToken={selectedToken?.tokenInfo} />
+              <sl.SpendingLimitRow availableAmount={spendingLimitAmount} selectedToken={selectedToken?.tokenInfo} />
             </FormControl>
           )}
         </Stack>

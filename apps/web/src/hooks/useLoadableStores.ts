@@ -12,8 +12,9 @@ import useLoadTxQueue from './loadables/useLoadTxQueue'
 import { safeInfoSlice } from '@/store/safeInfoSlice'
 import { txHistorySlice } from '@/store/txHistorySlice'
 import { txQueueSlice } from '@/store/txQueueSlice'
-import { spendingLimitSlice } from '@/store/spendingLimitsSlice'
-import useLoadSpendingLimits from '@/hooks/loadables/useLoadSpendingLimits'
+
+// Note: spendingLimitSlice is now loaded on-demand via the spending-limits feature
+// See @/features/spending-limits/hooks/useSpendingLimits
 
 // Dispatch into the corresponding store when the loadable is loaded
 const useUpdateStore = (slice: Slice, useLoadHook: () => AsyncResult<unknown>): void => {
@@ -36,7 +37,6 @@ const useLoadableStores = () => {
   useUpdateStore(safeInfoSlice, useLoadSafeInfo)
   useUpdateStore(txHistorySlice, useLoadTxHistory)
   useUpdateStore(txQueueSlice, useLoadTxQueue)
-  useUpdateStore(spendingLimitSlice, useLoadSpendingLimits)
 }
 
 export default useLoadableStores

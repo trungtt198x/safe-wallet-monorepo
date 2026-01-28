@@ -1,7 +1,7 @@
 import { useSafeSDK } from '@/hooks/coreSDK/safeCoreSDK'
 import { render } from '@/tests/test-utils'
 import CheckWallet from '.'
-import useIsOnlySpendingLimitBeneficiary from '@/hooks/useIsOnlySpendingLimitBeneficiary'
+import useIsOnlySpendingLimitBeneficiary from '@/features/spending-limits/hooks/useIsOnlySpendingLimitBeneficiary'
 import useIsSafeOwner from '@/hooks/useIsSafeOwner'
 import useIsWrongChain from '@/hooks/useIsWrongChain'
 import useWallet from '@/hooks/wallets/useWallet'

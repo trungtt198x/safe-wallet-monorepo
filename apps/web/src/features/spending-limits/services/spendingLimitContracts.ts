@@ -37,7 +37,6 @@ export const getDeployedSpendingLimitModuleAddress = (
   return deployment?.networkAddresses[chainId]
 }
 
-// SDK request here: https://github.com/safe-global/safe-core-sdk/issues/263
 export const getSpendingLimitContract = (
   chainId: string,
   modules: SafeState['modules'],

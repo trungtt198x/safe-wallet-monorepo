@@ -6,15 +6,32 @@ import { parseUnits, AbiCoder } from 'ethers'
 
 import AddressBookInput from '@/components/common/AddressBookInput'
 import useChainId from '@/hooks/useChainId'
-import { getResetTimeOptions } from '@/components/transactions/TxDetails/TxData/SpendingLimits'
+import { getResetTimeOptions } from '../../constants'
 import { useVisibleBalances } from '@/hooks/useVisibleBalances'
-import type { NewSpendingLimitFlowProps } from '.'
-import TxCard from '../../common/TxCard'
+import TxCard from '@/components/tx-flow/common/TxCard'
 import css from '@/components/tx/ExecuteCheckbox/styles.module.css'
 import TokenAmountInput from '@/components/common/TokenAmountInput'
-import { SpendingLimitFields } from '.'
 import { validateAmount, validateDecimalLength } from '@safe-global/utils/utils/validation'
-import { TxFlowContext, type TxFlowContextType } from '../../TxFlowProvider'
+import { TxFlowContext, type TxFlowContextType } from '@/components/tx-flow/TxFlowProvider'
+
+enum Fields {
+  beneficiary = 'beneficiary',
+  resetTime = 'resetTime',
+}
+
+enum TokenAmountFields {
+  tokenAddress = 'tokenAddress',
+  amount = 'amount',
+}
+
+export const SpendingLimitFields = { ...Fields, ...TokenAmountFields }
+
+export type NewSpendingLimitFlowProps = {
+  [SpendingLimitFields.beneficiary]: string
+  [SpendingLimitFields.tokenAddress]: string
+  [SpendingLimitFields.amount]: string
+  [SpendingLimitFields.resetTime]: string
+}
 
 export const _validateSpendingLimit = (val: string, decimals?: number | null) => {
   // Allowance amount is uint96 https://github.com/safe-global/safe-modules/blob/main/modules/allowances/contracts/AllowanceModule.sol#L52
@@ -26,7 +43,7 @@ export const _validateSpendingLimit = (val: string, decimals?: number | null) =>
   }
 }
 
-export const CreateSpendingLimit = () => {
+const CreateSpendingLimit = () => {
   const chainId = useChainId()
   const { balances } = useVisibleBalances()
   const { onNext, data } = useContext<TxFlowContextType<NewSpendingLimitFlowProps>>(TxFlowContext)
@@ -114,3 +131,5 @@ export const CreateSpendingLimit = () => {
     </TxCard>
   )
 }
+
+export default CreateSpendingLimit

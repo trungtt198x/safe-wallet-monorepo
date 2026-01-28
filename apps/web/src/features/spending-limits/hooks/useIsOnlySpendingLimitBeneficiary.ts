@@ -1,9 +1,9 @@
 import { useIsWalletProposer } from '@/hooks/useProposers'
 import { useAppSelector } from '@/store'
-import { selectSpendingLimits } from '@/store/spendingLimitsSlice'
+import { selectSpendingLimits } from '../store/spendingLimitsSlice'
 import useWallet from '@/hooks/wallets/useWallet'
 import useIsSafeOwner from '@/hooks/useIsSafeOwner'
-import { useHasFeature } from './useChains'
+import { useHasFeature } from '@/hooks/useChains'
 import { FEATURES } from '@safe-global/utils/utils/chains'
 
 export const useIsSpendingLimitBeneficiary = (): boolean => {

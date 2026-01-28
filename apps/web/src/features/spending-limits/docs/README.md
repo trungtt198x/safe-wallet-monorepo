@@ -141,20 +141,33 @@ src/features/spending-limits/
 
 ### On-Demand Loading
 
-Spending limits data is loaded on-demand rather than globally, optimizing performance:
+Spending limits data is loaded on-demand rather than globally, optimizing performance.
+
+**Architecture:**
+
+1. **Lightweight trigger hook** (`useTriggerSpendingLimitsLoad`) - Sets a flag in Redux to request loading
+2. **Global loader component** (`SpendingLimitsLoader`) - Lazy-loaded, watches for the flag, performs actual fetch
+3. **Store selectors** - Components read data from Redux store
+
+This keeps the heavy fetching logic lazy-loaded while allowing lightweight hooks to trigger loading from anywhere.
 
 **Data is loaded when:**
 
 - User visits Settings > Spending Limits
 - User starts a token transfer (to check if spending limit is available)
-- User is identified as a beneficiary-only user
+- User is identified as a beneficiary-only user (via CheckWallet with allowSpendingLimit)
 
-**How to use:**
+**How to trigger loading:**
 
 ```typescript
-import { useSpendingLimits } from '@/features/spending-limits'
+import { useTriggerSpendingLimitsLoad, selectSpendingLimits } from '@/features/spending-limits'
+import { useAppSelector } from '@/store'
 
-const { spendingLimits, loading, error, refetch } = useSpendingLimits()
+// Trigger loading (actual fetch happens in global SpendingLimitsLoader)
+useTriggerSpendingLimitsLoad(true)
+
+// Read data from store
+const spendingLimits = useAppSelector(selectSpendingLimits)
 ```
 
 ### Feature Flag

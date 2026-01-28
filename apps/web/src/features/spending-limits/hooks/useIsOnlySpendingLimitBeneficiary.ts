@@ -1,9 +1,11 @@
 import { useIsWalletProposer } from '@/hooks/useProposers'
+import { useAppSelector } from '@/store'
 import useWallet from '@/hooks/wallets/useWallet'
 import useIsSafeOwner from '@/hooks/useIsSafeOwner'
 import { useHasFeature } from '@/hooks/useChains'
 import { FEATURES } from '@safe-global/utils/utils/chains'
-import { useSpendingLimits } from './useSpendingLimits'
+import { selectSpendingLimits } from '../store/spendingLimitsSlice'
+import { useTriggerSpendingLimitsLoad } from './useTriggerSpendingLimitsLoad'
 
 /**
  * Check if the current wallet is a spending limit beneficiary.
@@ -13,8 +15,12 @@ import { useSpendingLimits } from './useSpendingLimits'
  */
 export const useIsSpendingLimitBeneficiary = (triggerLoading = false): boolean => {
   const isEnabled = useHasFeature(FEATURES.SPENDING_LIMIT)
-  // Only trigger loading when triggerLoading is true
-  const { spendingLimits } = useSpendingLimits(triggerLoading)
+
+  // Trigger loading via lightweight hook (actual fetch happens in SpendingLimitsLoader)
+  useTriggerSpendingLimitsLoad(triggerLoading)
+
+  // Read data from store
+  const spendingLimits = useAppSelector(selectSpendingLimits)
   const wallet = useWallet()
 
   if (!isEnabled || spendingLimits.length === 0) {

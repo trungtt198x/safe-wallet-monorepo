@@ -4,6 +4,7 @@ import CreateSpendingLimit from './components/CreateSpendingLimit'
 import ReviewSpendingLimit from './components/ReviewSpendingLimit'
 import RemoveSpendingLimitReview from './components/RemoveSpendingLimitReview'
 import ReviewSpendingLimitTx from './components/ReviewSpendingLimitTx'
+import SpendingLimitsLoader from './components/SpendingLimitsLoader'
 import { loadSpendingLimits } from './services/spendingLimitLoader'
 import { createNewSpendingLimitTx, dispatchSpendingLimitTxExecution } from './services/spendingLimitExecution'
 
@@ -15,6 +16,7 @@ export default {
   ReviewSpendingLimit,
   RemoveSpendingLimitReview,
   ReviewSpendingLimitTx,
+  SpendingLimitsLoader, // Global loader component - render once in app layout
 
   // Services
   loadSpendingLimits,

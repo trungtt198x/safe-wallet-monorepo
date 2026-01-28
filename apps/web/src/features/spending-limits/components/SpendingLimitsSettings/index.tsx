@@ -9,12 +9,20 @@ import CheckWallet from '@/components/common/CheckWallet'
 import Track from '@/components/common/Track'
 import { TxModalContext } from '@/components/tx-flow'
 import { FEATURES } from '@safe-global/utils/utils/chains'
-import { useSpendingLimits } from '../../hooks/useSpendingLimits'
+import { useAppSelector } from '@/store'
+import { selectSpendingLimits, selectSpendingLimitsLoading } from '../../store/spendingLimitsSlice'
+import { useTriggerSpendingLimitsLoad } from '../../hooks/useTriggerSpendingLimitsLoad'
 
 const SpendingLimitsSettings = () => {
   const { setTxFlow } = useContext(TxModalContext)
-  const { spendingLimits, loading: spendingLimitsLoading } = useSpendingLimits()
   const isEnabled = useHasFeature(FEATURES.SPENDING_LIMIT)
+
+  // Trigger loading (actual fetch happens in global SpendingLimitsLoader)
+  useTriggerSpendingLimitsLoad(true)
+
+  // Read data from store
+  const spendingLimits = useAppSelector(selectSpendingLimits)
+  const spendingLimitsLoading = useAppSelector(selectSpendingLimitsLoading)
 
   return (
     <Paper data-testid="spending-limit-section" sx={{ padding: 4 }}>

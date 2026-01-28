@@ -11,8 +11,9 @@ export type { SpendingLimitsContract } from './contract'
 export type * from './types'
 export { getResetTimeOptions } from './constants'
 
-// Hooks exported directly (always loaded, not lazy)
-export { useSpendingLimits } from './hooks/useSpendingLimits'
+// Lightweight hooks exported directly (always loaded, minimal bundle impact)
+// These hooks only read from Redux store or dispatch actions - no heavy logic
+export { useTriggerSpendingLimitsLoad } from './hooks/useTriggerSpendingLimitsLoad'
 export { default as useSpendingLimit } from './hooks/useSpendingLimit'
 export { default as useSpendingLimitGas } from './hooks/useSpendingLimitGas'
 export {
@@ -21,4 +22,9 @@ export {
 } from './hooks/useIsOnlySpendingLimitBeneficiary'
 
 // Store exports for cross-feature access
-export { spendingLimitSlice, selectSpendingLimits, selectSpendingLimitsLoading } from './store/spendingLimitsSlice'
+export {
+  spendingLimitSlice,
+  selectSpendingLimits,
+  selectSpendingLimitsLoading,
+  selectSpendingLimitsLoaded,
+} from './store/spendingLimitsSlice'

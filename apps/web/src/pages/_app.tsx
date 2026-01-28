@@ -41,6 +41,7 @@ import { useNotificationTracking } from '@/components/settings/PushNotifications
 import Recovery from '@/features/recovery/components/Recovery'
 import WalletProvider from '@/components/common/WalletProvider'
 import { CounterfactualFeature } from '@/features/counterfactual'
+import { SpendingLimitsFeature } from '@/features/spending-limits'
 import { useLoadFeature } from '@/features/__core__'
 
 /**
@@ -51,6 +52,16 @@ import { useLoadFeature } from '@/features/__core__'
 const CounterfactualHooksLoader = () => {
   const { CounterfactualHooks } = useLoadFeature(CounterfactualFeature)
   return <CounterfactualHooks />
+}
+
+/**
+ * Global loader for spending limits data.
+ * Watches for loading triggers and performs the actual fetch.
+ * Lazy-loaded to keep the heavy fetching logic out of the initial bundle.
+ */
+const SpendingLimitsLoaderWrapper = () => {
+  const { SpendingLimitsLoader } = useLoadFeature(SpendingLimitsFeature)
+  return <SpendingLimitsLoader />
 }
 import PkModulePopup from '@/services/private-key-module/PkModulePopup'
 import GeoblockingProvider from '@/components/common/GeoblockingProvider'
@@ -171,6 +182,8 @@ const SafeWalletApp = ({
             <Recovery />
 
             <CounterfactualHooksLoader />
+
+            <SpendingLimitsLoaderWrapper />
 
             <Analytics />
 

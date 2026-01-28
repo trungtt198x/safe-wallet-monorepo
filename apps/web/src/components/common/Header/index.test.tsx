@@ -1,9 +1,9 @@
+import type { ReactNode } from 'react'
 import Header from '@/components/common/Header/index'
 import * as useIsSafeOwner from '@/hooks/useIsSafeOwner'
 import * as useProposers from '@/hooks/useProposers'
 import * as useSafeAddress from '@/hooks/useSafeAddress'
 import * as useSafeTokenEnabled from '@/hooks/useSafeTokenEnabled'
-import * as walletConnect from '@/features/walletconnect'
 import { render } from '@/tests/test-utils'
 import { faker } from '@faker-js/faker'
 import { screen, fireEvent } from '@testing-library/react'
@@ -16,12 +16,17 @@ jest.mock(
     },
 )
 
+// Track whether WalletConnect is enabled for testing
+let isWalletConnectEnabled = false
 jest.mock('@/features/walletconnect', () => ({
   __esModule: true,
-  default: function WalletConnectWidget() {
-    return <div>WalletConnect</div>
+  // Mock the guarded component - it renders children via wrapper when enabled
+  WalletConnectWidget: function MockWalletConnectWidget({ wrapper }: { wrapper?: (children: ReactNode) => ReactNode }) {
+    if (!isWalletConnectEnabled) return null
+    const content = <div>WalletConnect</div>
+    return wrapper ? wrapper(content) : content
   },
-  useIsWalletConnectEnabled: jest.fn(),
+  useIsWalletConnectEnabled: jest.fn(() => isWalletConnectEnabled),
 }))
 
 jest.mock(
@@ -36,13 +41,11 @@ jest.mock('@/hooks/useIsOfficialHost', () => ({
   useIsOfficialHost: () => true,
 }))
 
-const mockUseIsWalletConnectEnabled = walletConnect.useIsWalletConnectEnabled as jest.Mock
-
 describe('Header', () => {
   beforeEach(() => {
     jest.resetAllMocks()
     // Default: WalletConnect disabled
-    mockUseIsWalletConnectEnabled.mockReturnValue(false)
+    isWalletConnectEnabled = false
   })
 
   it('renders the menu button when onMenuToggle is provided', () => {
@@ -108,14 +111,14 @@ describe('Header', () => {
   })
 
   it('renders the WalletConnect component when feature is enabled', () => {
-    mockUseIsWalletConnectEnabled.mockReturnValue(true)
+    isWalletConnectEnabled = true
 
     render(<Header />)
     expect(screen.getByText('WalletConnect')).toBeInTheDocument()
   })
 
   it('does not render the WalletConnect component when feature is disabled', () => {
-    mockUseIsWalletConnectEnabled.mockReturnValue(false)
+    isWalletConnectEnabled = false
 
     render(<Header />)
     expect(screen.queryByText('WalletConnect')).not.toBeInTheDocument()

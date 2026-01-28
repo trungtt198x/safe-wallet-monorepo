@@ -23,7 +23,7 @@ export interface PendingCardProps {
 
 export function PendingCard({ items, filters = ['Label', 'Label'], activeFilter, onFilterChange }: PendingCardProps) {
   return (
-    <Card className="!ring-border/20 !shadow-none flex flex-col gap-4 p-5">
+    <Card className="flex flex-col gap-4 p-5">
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold">Pending</h2>
         <div className="flex items-center gap-2">

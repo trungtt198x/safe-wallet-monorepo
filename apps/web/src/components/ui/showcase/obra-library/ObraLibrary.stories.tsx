@@ -63,9 +63,6 @@ const meta = {
   parameters: {
     layout: 'fullscreen',
   },
-  argTypes: {
-    onFilterChange: { action: 'filter changed' },
-  },
 } satisfies Meta<typeof ObraLibrary>
 
 export default meta
@@ -73,63 +70,8 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    totalAssetValue: '$16,801.50',
+    totalAssetValue: '1234$',
     assets: sampleAssets,
     pendingItems: samplePendingItems,
-    filters: ['Label', 'Label', 'Label'],
-    activeFilter: 'Label',
-  },
-}
-
-export const WithCustomFilters: Story = {
-  args: {
-    totalAssetValue: '$16,801.50',
-    assets: sampleAssets,
-    pendingItems: samplePendingItems,
-    filters: ['All', 'Tokens', 'NFTs'],
-    activeFilter: 'All',
-  },
-}
-
-export const EmptyAssets: Story = {
-  args: {
-    totalAssetValue: '$0.00',
-    assets: [],
-    pendingItems: [],
-    filters: ['Label', 'Label', 'Label'],
-  },
-}
-
-export const LargeAssetValue: Story = {
-  args: {
-    totalAssetValue: '$1,234,567.89',
-    assets: sampleAssets,
-    pendingItems: samplePendingItems,
-    filters: ['Label', 'Label', 'Label'],
-  },
-}
-
-export const MultipleAssets: Story = {
-  args: {
-    totalAssetValue: '$16,801.50',
-    assets: [
-      ...sampleAssets,
-      {
-        id: '5',
-        name: 'BTC',
-        value: '$45,000.00',
-        avatarSrc: 'https://github.com/shadcn.png',
-        avatarFallback: 'B',
-      },
-      {
-        id: '6',
-        name: 'USDC',
-        value: '$10,000.00',
-        avatarSrc: 'https://github.com/shadcn.png',
-        avatarFallback: 'U',
-      },
-    ],
-    pendingItems: samplePendingItems,
-    filters: ['Label', 'Label', 'Label'],
   },
 }

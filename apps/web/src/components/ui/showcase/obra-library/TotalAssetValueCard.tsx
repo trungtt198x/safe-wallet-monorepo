@@ -1,47 +1,35 @@
 'use client'
 
-import * as React from 'react'
+import { SquareDashed } from 'lucide-react'
 import { Card } from '../../card'
 import { Button } from '../../button'
 
 export interface TotalAssetValueCardProps {
   label?: string
   value: string
-  activeFilter?: string
-  filters?: string[]
-  onFilterChange?: (filter: string) => void
 }
 
-export function TotalAssetValueCard({
-  label = 'Total asset value',
-  value,
-  activeFilter,
-  filters = ['Label', 'Label', 'Label'],
-  onFilterChange,
-}: TotalAssetValueCardProps) {
+export function TotalAssetValueCard({ label = 'Total value', value }: TotalAssetValueCardProps) {
   return (
-    <Card className="!ring-border/20 !shadow-none flex flex-col gap-3 p-5">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-sm">{label}</span>
-          <span className="text-4xl font-medium tracking-tight">{value}</span>
-        </div>
+    <Card className="flex flex-col gap-4 p-6">
+      <div className="flex flex-col gap-1">
+        <span className="text-muted-foreground text-sm">{label}</span>
+        <span className="text-2xl font-semibold tracking-tight">{value}</span>
+      </div>
 
-        <div className="flex items-center gap-2">
-          {filters.map((filter, index) => {
-            const isActive = activeFilter === filter || (activeFilter === undefined && index === 0)
-            return (
-              <Button
-                key={index}
-                variant={isActive ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onFilterChange?.(filter)}
-              >
-                {filter}
-              </Button>
-            )
-          })}
-        </div>
+      <div className="flex items-center gap-2">
+        <Button variant="default">
+          <SquareDashed className="size-5" />
+          Label
+        </Button>
+        <Button variant="secondary">
+          <SquareDashed className="size-5" />
+          Label
+        </Button>
+        <Button variant="secondary">
+          <SquareDashed className="size-5" />
+          Label
+        </Button>
       </div>
     </Card>
   )

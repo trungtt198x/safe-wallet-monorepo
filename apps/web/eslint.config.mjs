@@ -7,6 +7,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import js from '@eslint/js'
 import { FlatCompat } from '@eslint/eslintrc'
+import { localRulesPlugin } from './eslint-local-rules.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -34,6 +35,7 @@ export default [
       '@typescript-eslint': typescriptEslint,
       'no-only-tests': noOnlyTests,
       boundaries: boundaries,
+      'local-rules': localRulesPlugin,
     },
 
     settings: {
@@ -146,6 +148,11 @@ export default [
           ],
         },
       ],
+
+      // Feature architecture: Require withFeatureGuard for dynamic imports in barrel files
+      // This ensures all exported components are properly gated by feature flags.
+      // Set to 'warn' during migration phase - will be changed to 'error' after all features are migrated
+      'local-rules/require-feature-guard': 'warn',
     },
   },
   // Override for story files: allow type-only imports from @storybook/react

@@ -15,7 +15,7 @@ A **feature** is a self-contained domain module that:
 
 ```
 src/features/{feature-name}/
-├── index.ts                      # Public API (required)
+├── index.ts                      # Public API (required, use .tsx only if JSX needed)
 ├── types.ts                      # Shared types
 ├── constants.ts                  # Constants
 ├── components/
@@ -32,19 +32,23 @@ src/features/{feature-name}/
 
 ## Public API Design
 
-### The Barrel File (`index.ts`)
+### The Barrel File (`index.ts` or `index.tsx`)
 
 The barrel file defines what external consumers can import. **Only export what is actually needed by code outside the feature.**
 
 ```typescript
 import dynamic from 'next/dynamic'
+import { withFeatureGuard } from '@/utils/withFeatureGuard'
+import { useIsFeatureEnabled } from './hooks/useIsFeatureEnabled'
 
-// Lazy-loaded component (code-split, loaded on demand)
-const FeatureWidget = dynamic(() => import('./components/FeatureWidget'), { ssr: false })
-export default FeatureWidget
+// IMPORTANT: dynamic() must be at module level (Next.js requirement)
+const LazyFeatureWidget = dynamic(() => import('./components/FeatureWidget'), { ssr: false })
 
-// Feature flag hook
-export { useIsFeatureEnabled } from './hooks/useIsFeatureEnabled'
+// Guarded, lazy-loaded component (code-split, feature-gated)
+export const FeatureWidget = withFeatureGuard(LazyFeatureWidget, useIsFeatureEnabled)
+
+// NOTE: useIsFeatureEnabled is NOT exported - it's only used internally by withFeatureGuard.
+// Only export the hook if external code has a legitimate need to check the feature flag.
 
 // Types (zero runtime cost)
 export type { FeatureConfig } from './types'
@@ -126,6 +130,124 @@ Return values:
 - `false` — Feature disabled, render nothing
 - `true` — Feature enabled, render feature
 
+## Guarded Exports
+
+All component exports from feature barrels must use `withFeatureGuard`. This utility combines two concerns:
+
+1. **Feature gating** — Component only renders when the guard hook returns `true`
+2. **Layout composition** — Optional wrapper prop for layout containers
+
+Lazy loading is handled separately via `dynamic()` at module level.
+
+### Basic Usage
+
+```typescript
+// index.tsx
+import dynamic from 'next/dynamic'
+import { withFeatureGuard } from '@/utils/withFeatureGuard'
+import { useIsFeatureEnabled } from './hooks/useIsFeatureEnabled'
+
+// IMPORTANT: dynamic() must be at module level, not inside functions
+// See: https://nextjs.org/docs/pages/guides/lazy-loading
+const LazyFeatureWidget = dynamic(() => import('./components/FeatureWidget'), { ssr: false })
+
+export const FeatureWidget = withFeatureGuard(LazyFeatureWidget, useIsFeatureEnabled)
+```
+
+### Consumer Benefits
+
+Consumers no longer need to manually check feature flags:
+
+```typescript
+// Before - consumer handles feature flag check
+const { isEnabled } = useIsFeatureEnabled()
+
+{isEnabled && (
+  <Box gridArea="feature" className={css.feature}>
+    <FeatureWidget data={data} />
+  </Box>
+)}
+
+// After - single component with composed wrapper
+<FeatureWidget
+  data={data}
+  wrapper={(children) => (
+    <Box gridArea="feature" className={css.feature}>
+      {children}
+    </Box>
+  )}
+/>
+```
+
+### The `wrapper` Prop
+
+The `wrapper` prop allows consumers to provide layout containers that should only render when the feature is enabled:
+
+```typescript
+<FeatureWidget
+  someProp="value"
+  wrapper={(children) => (
+    <Grid item xs={12} className={css.container}>
+      {children}
+    </Grid>
+  )}
+/>
+```
+
+When the feature is disabled, neither the component nor its wrapper renders — keeping the DOM clean.
+
+### Dynamic Import Options
+
+Options like `ssr` and `loading` are passed directly to `dynamic()`:
+
+```typescript
+// index.tsx
+const LazyFeatureWidget = dynamic(
+  () => import('./components/FeatureWidget'),
+  {
+    ssr: false,                    // Disable SSR (recommended for feature-gated components)
+    loading: () => <Skeleton />,   // Show while loading
+  }
+)
+
+export const FeatureWidget = withFeatureGuard(LazyFeatureWidget, useIsFeatureEnabled)
+```
+
+### Why `withFeatureGuard` Instead of Raw `dynamic()`?
+
+Using `withFeatureGuard` instead of raw `dynamic()` provides:
+
+1. **Consistent feature gating** — Can't forget to check the feature flag
+2. **Cleaner consumer API** — No conditional rendering boilerplate
+3. **Enforced by ESLint** — The `local-rules/require-feature-guard` rule warns when `dynamic()` is used without `withFeatureGuard` in barrel files
+
+### When to Export the Feature Flag Hook
+
+**Do NOT export the hook** if it's only used by `withFeatureGuard`:
+
+```typescript
+// index.tsx
+import dynamic from 'next/dynamic'
+import { withFeatureGuard } from '@/utils/withFeatureGuard'
+import { useIsFeatureEnabled } from './hooks/useIsFeatureEnabled'
+
+const LazyFeatureWidget = dynamic(() => import('./components/FeatureWidget'), { ssr: false })
+
+// The hook is used internally - no need to export it
+export const FeatureWidget = withFeatureGuard(LazyFeatureWidget, useIsFeatureEnabled)
+
+// NOTE: useIsFeatureEnabled is NOT exported - consumers use FeatureWidget directly
+```
+
+**DO export the hook** only if external code needs to check the feature flag for other purposes (e.g., conditionally showing related UI, analytics, routing):
+
+```typescript
+// Only export if there's a real external use case
+export { useIsFeatureEnabled } from './hooks/useIsFeatureEnabled'
+```
+
+This keeps the public API minimal and prevents consumers from bypassing the guarded component pattern.
+
 ## Cross-Feature Communication
 
 | Need                     | Solution                         |
@@ -190,6 +312,34 @@ import { ComponentA } from '@/features/my-feature/components'
 ## Automated Enforcement
 
 The architecture is enforced by tooling, not discipline.
+
+### ESLint: Guarded Exports
+
+Requires proper use of `dynamic()` + `withFeatureGuard` in feature barrel files:
+
+```javascript
+// eslint.config.mjs
+'local-rules/require-feature-guard': 'warn'
+```
+
+This rule catches three types of mistakes:
+
+1. **Missing withFeatureGuard** — Using `dynamic()` without wrapping in `withFeatureGuard`
+2. **Non-dynamic component** — Passing a regular import to `withFeatureGuard` (loses code splitting)
+3. **Direct re-exports** — Re-exporting components directly from internal paths (bypasses both)
+
+```typescript
+// ❌ Bad: non-dynamic component passed to withFeatureGuard
+import { Widget } from './components/Widget'
+export const MyWidget = withFeatureGuard(Widget, useGuard) // Warning: loses code splitting
+
+// ❌ Bad: direct re-export bypasses lazy loading
+export { Widget } from './components/Widget' // Warning: bypasses both patterns
+
+// ✅ Good: dynamic() at module level + withFeatureGuard
+const LazyWidget = dynamic(() => import('./components/Widget'), { ssr: false })
+export const MyWidget = withFeatureGuard(LazyWidget, useGuard)
+```
 
 ### ESLint: External Import Boundaries
 
@@ -261,13 +411,21 @@ Developer adds export to barrel
 
 ## Testing
 
-Mock features at the barrel level:
+Mock features at the barrel level. For guarded components, mock the component to handle the wrapper prop:
 
 ```typescript
+import type { ReactNode } from 'react'
+
+// Control the feature state in your tests
+let isFeatureEnabled = false
+
 jest.mock('@/features/my-feature', () => ({
   __esModule: true,
-  default: () => <div>MockedFeature</div>,
-  useIsFeatureEnabled: jest.fn(),
+  FeatureWidget: function MockFeatureWidget({ wrapper }: { wrapper?: (children: ReactNode) => ReactNode }) {
+    if (!isFeatureEnabled) return null
+    const content = <div>MockedFeature</div>
+    return wrapper ? wrapper(content) : content
+  },
 }))
 ```
 
@@ -275,13 +433,16 @@ jest.mock('@/features/my-feature', () => ({
 
 ### New Feature
 
-- [ ] Create `index.ts` with lazy-loaded default export
-- [ ] Create `useIs{Feature}Enabled` hook
+- [ ] Create `index.ts` with `dynamic()` at module level and `withFeatureGuard` for component exports
+- [ ] Create `useIs{Feature}Enabled` hook (used internally by `withFeatureGuard`)
 - [ ] Add feature flag to `FEATURES` enum
-- [ ] Export only items that are used externally
+- [ ] Export only items that are used externally (don't export the hook unless needed)
 
 ### Code Review
 
+- [ ] Dynamic imports are at module level (not inside functions or components)
+- [ ] Component exports use `withFeatureGuard` to wrap dynamic components
+- [ ] Feature flag hook is NOT exported unless external code needs it
 - [ ] Barrel exports only externally-used items
 - [ ] Internal code uses relative imports
 - [ ] No circular dependencies (or documented workaround)

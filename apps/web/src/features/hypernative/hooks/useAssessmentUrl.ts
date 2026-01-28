@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { hnSecurityReportBtnConfig } from '@/features/hypernative/components/HnSecurityReportBtn/config'
-import { buildSecurityReportUrl } from '@/features/hypernative/utils/buildSecurityReportUrl'
+import { hnSecurityReportBtnConfig } from '../components/HnSecurityReportBtn/config'
+import { buildSecurityReportUrl } from '../utils/buildSecurityReportUrl'
 import useSafeInfo from '@/hooks/useSafeInfo'
 
 /**

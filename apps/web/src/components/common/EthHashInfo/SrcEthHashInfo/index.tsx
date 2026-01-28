@@ -13,7 +13,7 @@ import { shortenAddress } from '@safe-global/utils/utils/formatters'
 import ImageFallback from '../../ImageFallback'
 import css from './styles.module.css'
 import { ContactSource } from '@/hooks/useAllAddressBooks'
-import { HypernativeTooltip } from '@/features/hypernative/components/HypernativeTooltip'
+import { HypernativeTooltip } from '@/features/hypernative'
 import SafeShieldIcon from '@/public/images/safe-shield/safe-shield-logo-no-text.svg'
 
 export type EthHashInfoProps = {

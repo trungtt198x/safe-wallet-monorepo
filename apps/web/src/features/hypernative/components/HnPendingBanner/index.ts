@@ -1,5 +1,4 @@
 import type { ComponentType } from 'react'
-import { withHnFeature } from '../withHnFeature'
 import { withHnBannerConditions, type WithHnBannerConditionsProps } from '../withHnBannerConditions'
 import { withHnSignupFlow } from '../withHnSignupFlow'
 import { BannerType } from '../../hooks/useBannerStorage'
@@ -10,9 +9,10 @@ export { HnPendingBanner } from './HnPendingBanner'
 export type { HnPendingBannerProps } from './HnPendingBanner'
 
 // Export the composed HOC as default
-// Apply withHnSignupFlow first (inner), then withHnBannerConditions, then withHnFeature (outer)
+// Apply withHnSignupFlow first (inner), then withHnBannerConditions
+// Note: withHnFeature removed - feature gating is now handled by main barrel file
 const HnPendingBannerWithSignupAndDismissal = withHnSignupFlow(HnPendingBannerWithDismissal)
 const HnPendingBannerWithConditions = withHnBannerConditions(BannerType.Pending)(
   HnPendingBannerWithSignupAndDismissal as ComponentType<WithHnBannerConditionsProps>,
 )
-export default withHnFeature(HnPendingBannerWithConditions)
+export default HnPendingBannerWithConditions

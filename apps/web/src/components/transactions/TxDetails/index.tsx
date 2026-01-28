@@ -44,10 +44,7 @@ import { FEATURES } from '@safe-global/utils/utils/chains'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
 import DecodedData from './TxData/DecodedData'
 import { QueuedTxSimulation } from '../QueuedTxSimulation'
-import { HnQueueAssessmentBanner } from '@/features/hypernative/components/HnQueueAssessmentBanner'
-import { useQueueAssessment } from '@/features/hypernative/hooks/useQueueAssessment'
-import { useShowHypernativeAssessment } from '@/features/hypernative/hooks/useShowHypernativeAssessment'
-import { useHypernativeOAuth } from '@/features/hypernative/hooks/useHypernativeOAuth'
+import { HnQueueAssessmentBannerForTxDetails } from '@/features/hypernative'
 
 export const NOT_AVAILABLE = 'n/a'
 
@@ -105,16 +102,6 @@ const TxDetailsBlock = ({ txSummary, txDetails }: TxDetailsProps): ReactElement 
   // Module address, name and logoUri
   const moduleAddress = isModuleExecutionInfo(txSummary.executionInfo) ? txSummary.executionInfo.address : undefined
   const moduleAddressInfo = moduleAddress ? txDetails.txData?.addressInfoIndex?.[moduleAddress.value] : undefined
-
-  // Hypernative assessment for banner
-  const { safe } = useSafeInfo()
-  const chainId = safe.chainId
-  const assessment = useQueueAssessment(safeTxHash)
-  const { isAuthenticated } = useHypernativeOAuth()
-  const showAssessmentBanner = useShowHypernativeAssessment({
-    isQueue,
-    safeTxHash,
-  })
 
   return (
     <>
@@ -207,13 +194,8 @@ const TxDetailsBlock = ({ txSummary, txDetails }: TxDetailsProps): ReactElement 
             proposer={proposer}
           />
 
-          {showAssessmentBanner && safeTxHash && chainId && (
-            <HnQueueAssessmentBanner
-              safeTxHash={safeTxHash}
-              assessment={assessment}
-              isAuthenticated={isAuthenticated}
-            />
-          )}
+          {/* HnQueueAssessmentBannerForTxDetails handles all visibility logic internally */}
+          <HnQueueAssessmentBannerForTxDetails safeTxHash={safeTxHash} isQueue={isQueue} />
 
           {txDetails.txHash && <TxExplorerLink txHash={txDetails.txHash} />}
 

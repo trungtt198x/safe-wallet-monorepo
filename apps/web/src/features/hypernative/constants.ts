@@ -23,3 +23,9 @@ export const HYPERNATIVE_ALLOWLIST_OUTREACH_ID =
   IS_PRODUCTION || cgwDebugStorage.get()
     ? PROD_HYPERNATIVE_ALLOWLIST_OUTREACH_ID
     : STAGING_HYPERNATIVE_ALLOWLIST_OUTREACH_ID
+
+/**
+ * Unique ID for the Hypernative banner component.
+ * Used for tracking and targeting purposes.
+ */
+export const hnBannerID = 'hnBanner'

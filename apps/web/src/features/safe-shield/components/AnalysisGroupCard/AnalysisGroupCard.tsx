@@ -1,7 +1,7 @@
 import { type ReactElement, useMemo, useState, useEffect, useRef } from 'react'
 import { Box, Typography, Stack, IconButton, Collapse } from '@mui/material'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import HypernativeLogo from '@/features/hypernative/components/HypernativeLogo'
+import { HypernativeLogo } from '@/features/hypernative'
 import {
   ContractStatus,
   type GroupedAnalysisResults,

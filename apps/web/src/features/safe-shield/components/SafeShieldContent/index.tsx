@@ -11,18 +11,14 @@ import { SafeShieldAnalysisEmpty } from './SafeShieldAnalysisEmpty'
 import { AnalysisGroupCard } from '../AnalysisGroupCard'
 import { TenderlySimulation } from '../TenderlySimulation'
 import { HypernativeInfo } from '../HypernativeInfo'
-import { HypernativeCustomChecks } from '@/features/safe-shield/components/HypernativeCustomChecks'
+import { HypernativeCustomChecks } from '../HypernativeCustomChecks'
 import type { AsyncResult } from '@safe-global/utils/hooks/useAsync'
 import isEmpty from 'lodash/isEmpty'
 import type { SafeTransaction } from '@safe-global/types-kit'
-import {
-  analysisVisibilityDelay,
-  calculateAnalysisDelays,
-  useDelayedLoading,
-} from '@/features/safe-shield/hooks/useDelayedLoading'
+import { analysisVisibilityDelay, calculateAnalysisDelays, useDelayedLoading } from '../../hooks/useDelayedLoading'
 import { SAFE_SHIELD_EVENTS } from '@/services/analytics'
-import type { HypernativeAuthStatus } from '@/features/hypernative/hooks/useHypernativeOAuth'
-import { ThreatAnalysis } from '@/features/safe-shield/components/ThreatAnalysis'
+import type { HypernativeAuthStatus } from '@/features/hypernative'
+import { ThreatAnalysis } from '../ThreatAnalysis'
 
 export const SafeShieldContent = ({
   recipient,

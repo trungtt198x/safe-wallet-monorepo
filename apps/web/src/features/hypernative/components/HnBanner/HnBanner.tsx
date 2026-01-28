@@ -3,8 +3,9 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import type { WithHnSignupFlowProps } from '../withHnSignupFlow'
 import type { HYPERNATIVE_SOURCE } from '@/services/analytics/events/hypernative'
 import { HYPERNATIVE_EVENTS, HYPERNATIVE_CATEGORY } from '@/services/analytics/events/hypernative'
+import { hnBannerID } from '../../constants'
 
-export const hnBannerID = 'hnBanner'
+export { hnBannerID }
 
 export interface HnBannerProps extends WithHnSignupFlowProps {
   onDismiss?: () => void

@@ -3,8 +3,7 @@ import { Box, Button, SvgIcon, Stack, Typography } from '@mui/material'
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded'
 import SafeShieldLogo from '@/public/images/safe-shield/safe-shield-logo-no-text.svg'
 import InfoIcon from '@/public/images/notifications/info.svg'
-import { HypernativeTooltip } from '@/features/hypernative/components/HypernativeTooltip'
-import type { HypernativeAuthStatus } from '@/features/hypernative/hooks/useHypernativeOAuth'
+import { HypernativeTooltip, type HypernativeAuthStatus } from '@/features/hypernative'
 
 export const HypernativeInfo = ({
   hypernativeAuth,

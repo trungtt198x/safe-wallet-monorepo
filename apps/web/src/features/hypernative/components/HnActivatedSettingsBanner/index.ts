@@ -1,5 +1,4 @@
 import type { ComponentType } from 'react'
-import { withHnFeature } from '../withHnFeature'
 import { withGuardCheck } from '../HnSecurityReportBtn/withGuardCheck'
 import { withOwnerCheck } from '../HnSecurityReportBtn/withOwnerCheck'
 import { HnActivatedSettingsBanner } from './HnActivatedSettingsBanner'
@@ -9,9 +8,10 @@ export { HnActivatedSettingsBanner } from './HnActivatedSettingsBanner'
 export { hnActivatedSettingsBannerConfig } from './config'
 
 // Export version for Settings page (only shows when guard is active and user is owner)
-// Apply withOwnerCheck first (inner, cheaper check), then withGuardCheck, then withHnFeature (outer)
+// Apply withOwnerCheck first (inner, cheaper check), then withGuardCheck
+// Note: withHnFeature removed - feature gating is now handled by main barrel file
 const HnActivatedSettingsBannerWithOwnerCheck = withOwnerCheck(HnActivatedSettingsBanner)
 const HnActivatedSettingsBannerWithGuardCheck = withGuardCheck(
   HnActivatedSettingsBannerWithOwnerCheck as ComponentType<object>,
 )
-export const HnActivatedBannerForSettings = withHnFeature(HnActivatedSettingsBannerWithGuardCheck)
+export const HnActivatedBannerForSettings = HnActivatedSettingsBannerWithGuardCheck

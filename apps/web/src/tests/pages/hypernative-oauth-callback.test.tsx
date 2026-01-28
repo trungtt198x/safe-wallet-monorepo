@@ -33,8 +33,7 @@ jest.mock('@/features/hypernative/config/oauth', () => {
   }
 })
 
-import { readPkce, clearPkce } from '@/features/hypernative/hooks/useHypernativeOAuth'
-import { getRedirectUri } from '@/features/hypernative/config/oauth'
+import { readPkce, clearPkce, getRedirectUri } from '@/features/hypernative'
 
 describe('HypernativeOAuthCallback', () => {
   const mockRouterPush = jest.fn()

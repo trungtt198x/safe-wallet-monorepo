@@ -9,23 +9,12 @@ import { BatchExecuteHoverProvider } from '@/components/transactions/BatchExecut
 import { usePendingTxsQueue, useShowUnsignedQueue } from '@/hooks/usePendingTxs'
 import RecoveryList from '@/features/recovery/components/RecoveryList'
 import { BRAND_NAME } from '@/config/constants'
-import { HnLoginCard } from '@/features/hypernative/components/HnLoginCard'
-import { useIsHypernativeEligible } from '@/features/hypernative/hooks/useIsHypernativeEligible'
-import { useIsHypernativeQueueScanFeature } from '@/features/hypernative/hooks/useIsHypernativeQueueScanFeature'
-import { useBannerVisibility } from '@/features/hypernative/hooks'
-import { BannerType } from '@/features/hypernative/hooks/useBannerStorage'
-import { HnBannerForQueue } from '@/features/hypernative/components/HnBanner'
-import { QueueAssessmentProvider } from '@/features/hypernative/components/QueueAssessmentProvider'
+import { HnLoginCardForQueue, HnBannerForQueue, QueueAssessmentProvider } from '@/features/hypernative'
 import { useState, useCallback, useMemo } from 'react'
 import type { QueuedItemPage } from '@safe-global/store/gateway/AUTO_GENERATED/transactions'
 
 const Queue: NextPage = () => {
   const showPending = useShowUnsignedQueue()
-  const { showBanner: showHnBanner, loading: hnLoading } = useBannerVisibility(BannerType.Promo)
-  const { isHypernativeEligible, loading: eligibilityLoading } = useIsHypernativeEligible()
-  const isHypernativeQueueScanEnabled = useIsHypernativeQueueScanFeature()
-
-  const showHnLoginCard = !eligibilityLoading && isHypernativeEligible && isHypernativeQueueScanEnabled
 
   // Collect pages from main queue for assessment provider
   const [mainQueuePages, setMainQueuePages] = useState<(QueuedItemPage | undefined)[]>([])
@@ -51,22 +40,18 @@ const Queue: NextPage = () => {
 
       <BatchExecuteHoverProvider>
         <TxHeader>
-          {showHnLoginCard && <HnLoginCard />}
+          {/* HnLoginCardForQueue uses component-specific guard - handles all visibility internally */}
+          <HnLoginCardForQueue />
           <BatchExecuteButton />
         </TxHeader>
 
         <main>
           <Box mb={4}>
-            {hnLoading && (
-              <Box mb={3}>
-                <Skeleton variant="rounded" height={30} />
-              </Box>
-            )}
-            {showHnBanner && !hnLoading && (
-              <Box mb={3}>
-                <HnBannerForQueue />
-              </Box>
-            )}
+            {/* HnBannerForQueue uses component-specific guard - handles all visibility internally */}
+            <HnBannerForQueue
+              wrapper={(children) => <Box mb={3}>{children}</Box>}
+              loadingFallback={<Skeleton variant="rounded" height={30} />}
+            />
 
             <RecoveryList />
 

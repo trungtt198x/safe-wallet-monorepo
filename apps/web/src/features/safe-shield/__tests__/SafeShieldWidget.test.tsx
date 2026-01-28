@@ -7,14 +7,15 @@ import type {
   ThreatAnalysisResults,
 } from '@safe-global/utils/features/safe-shield/types'
 import { useSafeShield } from '../SafeShieldContext'
-import { useHypernativeOAuth } from '@/features/hypernative/hooks/useHypernativeOAuth'
-import { useIsHypernativeEligible } from '@/features/hypernative/hooks/useIsHypernativeEligible'
+import { useHypernativeOAuth, useIsHypernativeEligible, type HypernativeEligibility } from '@/features/hypernative'
 import { useCheckSimulation } from '../hooks/useCheckSimulation'
-import type { HypernativeEligibility } from '@/features/hypernative/hooks/useIsHypernativeEligible'
 
 jest.mock('../SafeShieldContext')
-jest.mock('@/features/hypernative/hooks/useHypernativeOAuth')
-jest.mock('@/features/hypernative/hooks/useIsHypernativeEligible')
+jest.mock('@/features/hypernative', () => ({
+  ...jest.requireActual('@/features/hypernative'),
+  useHypernativeOAuth: jest.fn(),
+  useIsHypernativeEligible: jest.fn(),
+}))
 jest.mock('../hooks/useCheckSimulation')
 
 const mockUseSafeShield = useSafeShield as jest.MockedFunction<typeof useSafeShield>

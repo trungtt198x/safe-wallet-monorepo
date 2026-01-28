@@ -14,14 +14,11 @@ import { BRAND_NAME } from '@/config/constants'
 import CsvTxExportButton from '@/components/transactions/CsvTxExportButton'
 import { useHasFeature } from '@/hooks/useChains'
 import { FEATURES } from '@safe-global/utils/utils/chains'
-import { useBannerVisibility } from '@/features/hypernative/hooks'
-import { BannerType } from '@/features/hypernative/hooks/useBannerStorage'
-import { HnBannerForHistory } from '@/features/hypernative/components/HnBanner'
+import { HnBannerForHistory } from '@/features/hypernative'
 
 const History: NextPage = () => {
   const [filter] = useTxFilter()
   const isCsvExportEnabled = useHasFeature(FEATURES.CSV_TX_EXPORT)
-  const { showBanner: showHnBanner, loading: hnLoading } = useBannerVisibility(BannerType.Promo)
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)
@@ -92,16 +89,11 @@ const History: NextPage = () => {
         </Popover>
 
         <Box mb={4}>
-          {hnLoading && (
-            <Box mb={3}>
-              <Skeleton variant="rounded" height={30} />
-            </Box>
-          )}
-          {showHnBanner && !hnLoading && (
-            <Box mb={3}>
-              <HnBannerForHistory />
-            </Box>
-          )}
+          {/* HnBannerForHistory uses component-specific guard - handles all visibility internally */}
+          <HnBannerForHistory
+            wrapper={(children) => <Box mb={3}>{children}</Box>}
+            loadingFallback={<Skeleton variant="rounded" height={30} />}
+          />
 
           <PaginatedTxns useTxns={useTxHistory} />
         </Box>

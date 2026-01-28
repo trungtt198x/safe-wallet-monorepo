@@ -17,6 +17,19 @@ type GuardedProps = {
    * />
    */
   wrapper?: (children: ReactNode) => ReactNode
+
+  /**
+   * Optional fallback to render during loading state (when guard returns undefined).
+   * If provided, this is wrapped with the wrapper prop (if also provided).
+   * If not provided, nothing is rendered during loading.
+   *
+   * @example
+   * <MyFeatureComponent
+   *   wrapper={(children) => <Box mb={3}>{children}</Box>}
+   *   loadingFallback={<Skeleton variant="rounded" height={30} />}
+   * />
+   */
+  loadingFallback?: ReactNode
 }
 
 /**
@@ -58,10 +71,18 @@ export function withFeatureGuard<P extends object>(
   useGuard: () => boolean | undefined,
 ): ComponentType<P & GuardedProps> {
   function GuardedComponent(props: P & GuardedProps) {
-    const { wrapper, ...componentProps } = props
+    const { wrapper, loadingFallback, ...componentProps } = props
     const shouldRender = useGuard()
 
-    // Loading state or feature disabled - render nothing (and no wrapper)
+    // Loading state (undefined) - show loading fallback if provided
+    if (shouldRender === undefined) {
+      if (loadingFallback) {
+        return wrapper ? <>{wrapper(loadingFallback)}</> : <>{loadingFallback}</>
+      }
+      return null
+    }
+
+    // Feature disabled - render nothing
     if (!shouldRender) {
       return null
     }

@@ -50,9 +50,10 @@ describe('HnBanner', () => {
 
     describe('when feature is not enabled', () => {
       it('should not render banner', () => {
+        // When feature is disabled, useBannerVisibility returns showBanner: false
         jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
-          showBanner: true,
+          showBanner: false, // Feature disabled means showBanner is false
           loading: false,
         })
 
@@ -128,9 +129,10 @@ describe('HnBanner', () => {
 
     describe('when feature is not enabled', () => {
       it('should not render banner', () => {
+        // When feature is disabled, useBannerVisibility returns showBanner: false
         jest.spyOn(useIsHypernativeFeatureHook, 'useIsHypernativeFeature').mockReturnValue(false)
         jest.spyOn(useBannerVisibilityHook, 'useBannerVisibility').mockReturnValue({
-          showBanner: true,
+          showBanner: false, // Feature disabled means showBanner is false
           loading: false,
         })
 

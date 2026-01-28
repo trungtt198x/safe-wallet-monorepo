@@ -248,6 +248,84 @@ export { useIsFeatureEnabled } from './hooks/useIsFeatureEnabled'
 
 This keeps the public API minimal and prevents consumers from bypassing the guarded component pattern.
 
+### Component-Specific Guard Hooks (Advanced Pattern)
+
+When components have **complex visibility requirements** beyond a simple feature flag check, create a dedicated guard hook for each component. This encapsulates ALL visibility logic inside the feature, allowing consumers to simply place the component in the tree.
+
+**Problem**: Consumer has to import hooks and compute visibility externally:
+
+```typescript
+// ❌ BAD: Consumer imports multiple hooks and computes visibility
+import { FeatureWidget, useBannerVisibility, useIsFeatureEligible, BannerType } from '@/features/my-feature'
+
+const { showBanner, loading: bannerLoading } = useBannerVisibility(BannerType.Promo)
+const { isEligible, loading: eligibilityLoading } = useIsFeatureEligible()
+const showWidget = !eligibilityLoading && isEligible
+
+{showWidget && <FeatureWidget />}
+{!bannerLoading && showBanner && <Box><FeatureBanner /></Box>}
+```
+
+**Solution**: Each component gets a dedicated guard hook that encapsulates all visibility logic:
+
+```typescript
+// hooks/useFeatureWidgetVisible.ts
+export const useFeatureWidgetVisible = (): boolean | undefined => {
+  const isEnabled = useIsFeatureEnabled()
+  const { isEligible, loading } = useIsFeatureEligible()
+
+  if (isEnabled === false) return false // Feature disabled
+  if (isEnabled === undefined || loading) return undefined // Loading
+  return isEligible // Final visibility decision
+}
+
+// hooks/useFeatureBannerVisible.ts
+export const useFeatureBannerVisible = (): boolean | undefined => {
+  const isEnabled = useIsFeatureEnabled()
+  const { showBanner, loading } = useBannerVisibility(BannerType.Promo)
+
+  if (isEnabled === false) return false
+  if (isEnabled === undefined || loading) return undefined
+  return showBanner
+}
+```
+
+Then in the barrel:
+
+```typescript
+// index.tsx
+const LazyFeatureWidget = dynamic(() => import('./components/FeatureWidget'), { ssr: false })
+const LazyFeatureBanner = dynamic(() => import('./components/FeatureBanner'), { ssr: false })
+
+// Each component uses its specific visibility guard
+export const FeatureWidget = withFeatureGuard(LazyFeatureWidget, useFeatureWidgetVisible)
+export const FeatureBanner = withFeatureGuard(LazyFeatureBanner, useFeatureBannerVisible)
+```
+
+Consumer becomes simple:
+
+```typescript
+// ✅ GOOD: Consumer just places components in the tree
+import { FeatureWidget, FeatureBanner } from '@/features/my-feature'
+
+<FeatureWidget />
+<FeatureBanner wrapper={(children) => <Box>{children}</Box>} />
+```
+
+**Benefits**:
+
+1. **True encapsulation** — Visibility logic stays inside the feature
+2. **No hook exports needed** — Consumer doesn't need to understand internal visibility rules
+3. **Bundle optimization preserved** — Component only loads when guard returns `true`
+4. **Loading states handled** — `undefined` return means "still loading"
+5. **Testable** — Guard hooks can be unit tested independently
+
+**When to use this pattern**:
+
+- Component visibility depends on multiple conditions (balance, ownership, targeting, guard status, etc.)
+- Different instances of the same component have different visibility rules (e.g., banner in queue vs settings)
+- Consumer currently needs to import multiple hooks to determine visibility
+
 ## Cross-Feature Communication
 
 | Need                     | Solution                         |

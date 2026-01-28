@@ -1,8 +1,37 @@
+/**
+ * Bridge Feature Public API
+ *
+ * This barrel file exports:
+ * - Guarded, lazy-loaded components (via withFeatureGuard)
+ * - Constants (only those used externally)
+ *
+ * @example
+ * ```tsx
+ * import { Bridge } from '@/features/bridge'
+ *
+ * // No need to check feature flags - component handles it automatically
+ * <Bridge />
+ * ```
+ */
 import dynamic from 'next/dynamic'
+import { withFeatureGuard } from '@/utils/withFeatureGuard'
+import { useIsBridgeFeatureEnabled } from './hooks/useIsBridgeFeatureEnabled'
 
-export { useIsBridgeFeatureEnabled, useIsGeoblockedFeatureEnabled } from './hooks'
-export { BRIDGE_WIDGET_URL, LOCAL_STORAGE_CONSENT_KEY } from './constants'
+// =============================================================================
+// Dynamic imports at module level - webpack can analyze these for code splitting
+// =============================================================================
 
-const Bridge = dynamic(() => import('./components/Bridge').then((mod) => ({ default: mod.Bridge })), { ssr: false })
+const LazyBridge = dynamic(() => import('./components/Bridge').then((mod) => ({ default: mod.Bridge })), { ssr: false })
 
-export default Bridge
+// =============================================================================
+// Guarded, lazy-loaded component exports
+// =============================================================================
+
+/** Bridge widget for cross-chain asset transfers */
+export const Bridge = withFeatureGuard(LazyBridge, useIsBridgeFeatureEnabled)
+
+// =============================================================================
+// Constants - only export constants that are used externally
+// =============================================================================
+
+export { BRIDGE_WIDGET_URL } from './constants'

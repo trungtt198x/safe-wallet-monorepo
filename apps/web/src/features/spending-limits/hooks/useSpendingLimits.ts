@@ -73,17 +73,21 @@ export const useSpendingLimits = (enabled = true) => {
     }
   }, [error])
 
-  // Update the store when data changes
+  // Update the store when fetch completes (only when we actually fetched)
   useEffect(() => {
-    dispatch(
-      spendingLimitSlice.actions.set({
-        data,
-        error: data ? undefined : error?.message,
-        loading: dataLoading && !data,
-        loaded: data !== undefined,
-      }),
-    )
-  }, [dispatch, data, error, dataLoading])
+    // Only update store if we have data or an error (meaning fetch was attempted)
+    // Don't update if we're just skipping the fetch
+    if (data !== undefined || error) {
+      dispatch(
+        spendingLimitSlice.actions.set({
+          data: data ?? [],
+          error: error?.message,
+          loading: false,
+          loaded: true,
+        }),
+      )
+    }
+  }, [dispatch, data, error])
 
   const refetch = useCallback(() => {
     // The useAsync hook will refetch when dependencies change

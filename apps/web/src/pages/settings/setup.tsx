@@ -15,7 +15,7 @@ import { NestedSafesList } from '@/components/settings/NestedSafesList'
 
 const Setup: NextPage = () => {
   const { safe, safeLoaded } = useSafeInfo()
-  const sl = useLoadFeature(SpendingLimitsFeature)
+  const { SpendingLimitsSettings } = useLoadFeature(SpendingLimitsFeature)
   const nonce = safe.nonce
   const ownerLength = safe.owners.length
   const threshold = safe.threshold
@@ -81,7 +81,7 @@ const Setup: NextPage = () => {
           <RequiredConfirmation threshold={threshold} owners={ownerLength} />
         </Paper>
 
-        <sl.SpendingLimitsSettings />
+        <SpendingLimitsSettings />
 
         <NestedSafesList />
       </main>

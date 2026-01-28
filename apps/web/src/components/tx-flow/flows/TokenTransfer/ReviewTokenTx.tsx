@@ -7,12 +7,12 @@ import { TxFlowContext, type TxFlowContextType } from '../../TxFlowProvider'
 
 const ReviewTokenTx = (props: PropsWithChildren<{ onSubmit: () => void; txNonce?: number }>): ReactElement => {
   const { data } = useContext(TxFlowContext) as TxFlowContextType<MultiTokenTransferParams>
-  const sl = useLoadFeature(SpendingLimitsFeature)
+  const { ReviewSpendingLimitTx } = useLoadFeature(SpendingLimitsFeature)
   const isSpendingLimitTx = data?.type === TokenTransferType.spendingLimit
 
   return isSpendingLimitTx && data?.recipients.length === 1 ? (
     // TODO: Allow batched spending limit txs
-    <sl.ReviewSpendingLimitTx params={data.recipients[0]} onSubmit={props.onSubmit} />
+    <ReviewSpendingLimitTx params={data.recipients[0]} onSubmit={props.onSubmit} />
   ) : (
     <ReviewTokenTransfer params={data} {...props} />
   )

@@ -165,14 +165,14 @@ This feature is controlled by the `SPENDING_LIMIT` feature flag, configured per-
 import { SpendingLimitsFeature } from '@/features/spending-limits'
 import { useLoadFeature } from '@/features/__core__'
 
-const sl = useLoadFeature(SpendingLimitsFeature)
+const { SpendingLimitsSettings, $isDisabled, $isLoading } = useLoadFeature(SpendingLimitsFeature)
 
 // Check feature status
-if (sl.$isDisabled) return null
-if (sl.$isLoading) return <Skeleton />
+if ($isDisabled) return null
+if ($isLoading) return <Skeleton />
 
-// Use components/services
-<sl.SpendingLimitsSettings />
+// Use components
+<SpendingLimitsSettings />
 ```
 
 ## Testing

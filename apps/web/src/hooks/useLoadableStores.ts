@@ -13,9 +13,6 @@ import { safeInfoSlice } from '@/store/safeInfoSlice'
 import { txHistorySlice } from '@/store/txHistorySlice'
 import { txQueueSlice } from '@/store/txQueueSlice'
 
-// Note: spendingLimitSlice is now loaded on-demand via the spending-limits feature
-// See @/features/spending-limits/hooks/useSpendingLimits
-
 // Dispatch into the corresponding store when the loadable is loaded
 const useUpdateStore = (slice: Slice, useLoadHook: () => AsyncResult<unknown>): void => {
   const dispatch = useAppDispatch()

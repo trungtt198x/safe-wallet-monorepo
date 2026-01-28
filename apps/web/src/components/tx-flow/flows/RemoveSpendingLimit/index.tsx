@@ -8,14 +8,14 @@ import { useLoadFeature } from '@/features/__core__'
 import { SpendingLimitsFeature } from '@/features/spending-limits'
 
 const RemoveSpendingLimitFlow = ({ spendingLimit }: { spendingLimit: SpendingLimitState }) => {
-  const sl = useLoadFeature(SpendingLimitsFeature)
+  const { RemoveSpendingLimitReview } = useLoadFeature(SpendingLimitsFeature)
 
   const ReviewTransactionComponent = useMemo<typeof ReviewTransaction>(
     () =>
       function ReviewRemoveSpendingLimit(props) {
-        return <sl.RemoveSpendingLimitReview params={spendingLimit} {...props} />
+        return <RemoveSpendingLimitReview params={spendingLimit} {...props} />
       },
-    [spendingLimit, sl],
+    [spendingLimit, RemoveSpendingLimitReview],
   )
 
   return (

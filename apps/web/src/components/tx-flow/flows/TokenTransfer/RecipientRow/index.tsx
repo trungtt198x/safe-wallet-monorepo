@@ -34,7 +34,7 @@ type RecipientRowProps = {
 const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLimit }: RecipientRowProps) => {
   const balancesItems = useVisibleTokens()
   const spendingLimits = useAppSelector(selectSpendingLimits)
-  const sl = useLoadFeature(SpendingLimitsFeature)
+  const { SpendingLimitRow } = useLoadFeature(SpendingLimitsFeature)
 
   const {
     formState: { errors },
@@ -101,7 +101,7 @@ const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLim
 
           {!disableSpendingLimit && canCreateSpendingLimitTxWithToken && (
             <FormControl fullWidth>
-              <sl.SpendingLimitRow availableAmount={spendingLimitAmount} selectedToken={selectedToken?.tokenInfo} />
+              <SpendingLimitRow availableAmount={spendingLimitAmount} selectedToken={selectedToken?.tokenInfo} />
             </FormControl>
           )}
         </Stack>

@@ -29,18 +29,18 @@ const defaultValues: NewSpendingLimitFlowProps = {
 }
 
 const NewSpendingLimitFlow = () => {
-  const sl = useLoadFeature(SpendingLimitsFeature)
+  const { CreateSpendingLimit, ReviewSpendingLimit } = useLoadFeature(SpendingLimitsFeature)
 
   return (
     <TxFlow
       icon={SaveAddressIcon}
       subtitle="Spending limit"
-      ReviewTransactionComponent={sl.ReviewSpendingLimit}
+      ReviewTransactionComponent={ReviewSpendingLimit}
       eventCategory={TxFlowType.SETUP_SPENDING_LIMIT}
       initialData={defaultValues}
     >
       <TxFlowStep title="New transaction">
-        <sl.CreateSpendingLimit />
+        <CreateSpendingLimit />
       </TxFlowStep>
     </TxFlow>
   )

@@ -29,7 +29,7 @@ jest.mock('@/hooks/useIsSafeOwner', () => ({
 }))
 
 // mock useIsOnlySpendingLimitBeneficiary
-jest.mock('@/hooks/useIsOnlySpendingLimitBeneficiary', () => ({
+jest.mock('@/features/spending-limits/hooks/useIsOnlySpendingLimitBeneficiary', () => ({
   __esModule: true,
   default: jest.fn(() => false),
 }))

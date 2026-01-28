@@ -234,6 +234,63 @@ This project uses:
 - **Components Path**: `apps/web/src/components/ui/`
 - **Utility Path**: `apps/web/src/utils/cn.ts` (for `cn()` helper)
 
+## Complex Screen Implementation
+
+For full screens (dashboards, pages with multiple sections):
+
+### Component Decomposition Strategy
+
+1. **Identify logical sections** - Each card, panel, or distinct UI region becomes a subcomponent
+2. **Extract reusable patterns** - If a pattern appears 2+ times, extract it
+3. **Create a main orchestrator** - The screen component imports and composes subcomponents
+
+Example structure for a dashboard:
+```
+showcase/
+├── AssetValueCard.tsx        # Reusable card
+├── PendingTransactionsCard.tsx
+├── PortfolioCard.tsx
+├── CreateProjectCard.tsx
+├── WalletSidebar.tsx         # Navigation
+├── WalletDashboard.tsx       # Main screen (orchestrator)
+└── WalletDashboard.stories.tsx
+```
+
+### Data Prop Patterns
+
+For components displaying lists, define clear interfaces:
+
+```tsx
+// Define item types
+interface Transaction {
+  id: string
+  title: string
+  date: string
+  // ...
+}
+
+// Props accept arrays + callbacks
+interface Props {
+  transactions: Transaction[]
+  onViewAll?: () => void
+  onItemClick?: (id: string) => void
+}
+```
+
+### Component Dependencies
+
+Some shadcn components have hidden dependencies:
+- `sidebar` requires `use-mobile` hook, `sheet`, `skeleton`, `tooltip`
+- Always run type-check after installing to catch missing deps
+- Install missing dependencies: `npx shadcn@latest add <dep>`
+
+### Naming Conventions
+
+- `*Card` - Self-contained card components (e.g., `AssetValueCard`)
+- `*Sidebar` / `*Nav` - Navigation components
+- `*Dashboard` / `*Screen` / `*Page` - Full page orchestrators
+- Use `PascalCase` for component names
+
 ## Validation Checklist
 
 Before completing:
@@ -243,3 +300,6 @@ Before completing:
 - [ ] Component is typed with TypeScript interfaces
 - [ ] Storybook story is created
 - [ ] Component follows project naming conventions
+- [ ] For screens: Subcomponents are properly decomposed
+- [ ] For screens: Data interfaces are well-defined
+- [ ] Import paths fixed (`@/utils/cn` not `@/utils/utils`)

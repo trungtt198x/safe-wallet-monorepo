@@ -14,14 +14,7 @@ import {
 } from '../dropdown-menu'
 import { Input } from '../input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../table'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../table'
 import {
   Pagination,
   PaginationContent,
@@ -292,11 +285,7 @@ export function TaskDashboard({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
-                  <Checkbox
-                    checked={allSelected}
-                    indeterminate={someSelected}
-                    onCheckedChange={toggleAll}
-                  />
+                  <Checkbox checked={allSelected} indeterminate={someSelected} onCheckedChange={toggleAll} />
                 </TableHead>
                 <TableHead className="w-28">Task</TableHead>
                 <TableHead>Title</TableHead>
@@ -309,10 +298,7 @@ export function TaskDashboard({
               {tasks.map((task) => (
                 <TableRow key={task.id} data-state={selectedRows.has(task.id) ? 'selected' : undefined}>
                   <TableCell>
-                    <Checkbox
-                      checked={selectedRows.has(task.id)}
-                      onCheckedChange={() => toggleRow(task.id)}
-                    />
+                    <Checkbox checked={selectedRows.has(task.id)} onCheckedChange={() => toggleRow(task.id)} />
                   </TableCell>
                   <TableCell className="font-medium">{task.id}</TableCell>
                   <TableCell>

@@ -5,8 +5,7 @@ import {
   SafeCreationEvent,
   replayCounterfactualSafeDeployment,
 } from '@/features/counterfactual/services'
-import { PayNowPayLater } from '@/features/counterfactual/components'
-import { CF_TX_GROUP_KEY } from '@/features/counterfactual'
+import { PayNowPayLater, CF_TX_GROUP_KEY } from '@/features/counterfactual'
 import { NetworkLogosList, predictAddressBasedOnReplayData } from '@/features/multichain'
 
 import type { StepRenderProps } from '@/components/new-safe/CardStepper/useCardStepper'

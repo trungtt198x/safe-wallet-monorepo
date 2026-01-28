@@ -1,6 +1,6 @@
 import { Box, Chip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import VisibilityIcon from '@mui/icons-material/Visibility'
-import { LoopIcon } from '@/features/counterfactual/components'
+import SpinningIcon from '@/components/common/SpinningIcon'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
 import css from './styles.module.css'
 import QueueActions from '../QueueActions'
@@ -22,7 +22,7 @@ const AccountStatusChip = ({ isActivating }: { isActivating: boolean }) => {
       label={isActivating ? 'Activating account' : 'Not activated'}
       icon={
         isActivating ? (
-          <LoopIcon fontSize="small" className={css.pendingLoopIcon} sx={{ mr: '-4px', ml: '4px' }} />
+          <SpinningIcon fontSize="small" className={css.pendingLoopIcon} sx={{ mr: '-4px', ml: '4px' }} />
         ) : (
           <ErrorOutlineIcon fontSize="small" color="warning" />
         )

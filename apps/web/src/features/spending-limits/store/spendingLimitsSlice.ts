@@ -10,3 +10,4 @@ export const spendingLimitSlice = slice
 
 export const selectSpendingLimits = createSelector(selector, (spendingLimits) => spendingLimits.data)
 export const selectSpendingLimitsLoading = createSelector(selector, (spendingLimits) => spendingLimits.loading)
+export const selectSpendingLimitsLoaded = createSelector(selector, (spendingLimits) => spendingLimits.loaded)

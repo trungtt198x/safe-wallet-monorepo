@@ -38,7 +38,9 @@ const CheckWallet = ({
 }: CheckWalletProps): ReactElement => {
   const wallet = useWallet()
   const isSafeOwner = useIsSafeOwner()
-  const isOnlySpendingLimit = useIsOnlySpendingLimitBeneficiary()
+  // Trigger loading of spending limits when allowSpendingLimit is true
+  // This ensures beneficiary-only users can be identified
+  const isOnlySpendingLimit = useIsOnlySpendingLimitBeneficiary(allowSpendingLimit)
   const connectWallet = useConnectWallet()
   const isWrongChain = useIsWrongChain()
   const sdk = useSafeSDK()

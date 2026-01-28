@@ -8,7 +8,12 @@ import { useWeb3ReadOnly } from '@/hooks/wallets/web3'
 import useBalances from '@/hooks/useBalances'
 import { loadSpendingLimits } from '../services/spendingLimitLoader'
 import { useAppDispatch, useAppSelector } from '@/store'
-import { selectSpendingLimits, selectSpendingLimitsLoading, spendingLimitSlice } from '../store/spendingLimitsSlice'
+import {
+  selectSpendingLimits,
+  selectSpendingLimitsLoading,
+  selectSpendingLimitsLoaded,
+  spendingLimitSlice,
+} from '../store/spendingLimitsSlice'
 
 /**
  * On-demand hook for loading spending limits.
@@ -18,11 +23,15 @@ import { selectSpendingLimits, selectSpendingLimitsLoading, spendingLimitSlice }
  * - Settings > Spending Limits page
  * - Token Transfer flow (when user might use spending limit)
  * - Components that need spending limit data
+ *
+ * @param enabled - If false, returns stored data without triggering a fetch.
+ *                  Useful when you want to check existing data without loading.
  */
-export const useSpendingLimits = () => {
+export const useSpendingLimits = (enabled = true) => {
   const dispatch = useAppDispatch()
   const spendingLimits = useAppSelector(selectSpendingLimits)
-  const loading = useAppSelector(selectSpendingLimitsLoading)
+  const storeLoading = useAppSelector(selectSpendingLimitsLoading)
+  const storeLoaded = useAppSelector(selectSpendingLimitsLoaded)
   const { safeAddress, safe, safeLoaded } = useSafeInfo()
   const chainId = useChainId()
   const provider = useWeb3ReadOnly()
@@ -33,15 +42,28 @@ export const useSpendingLimits = () => {
     [balances?.items],
   )
 
+  // Skip fetch if already loaded or loading (prevents duplicate requests from multiple components)
+  const shouldFetch = enabled && !storeLoaded && !storeLoading
+
   const [data, error, dataLoading] = useAsync<SpendingLimitState[] | undefined>(
     () => {
-      if (!provider || !safeLoaded || !safe.modules || tokenInfoFromBalances.length === 0) return
+      // Skip fetch if not needed or missing required data
+      if (!shouldFetch || !provider || !safeLoaded || !safe.modules || tokenInfoFromBalances.length === 0) return
 
       return loadSpendingLimits(provider, safe.modules, safeAddress, chainId, tokenInfoFromBalances)
     },
     // Need to check length of modules array to prevent new request every time Safe info polls
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [provider, safeLoaded, safe.modules?.length, tokenInfoFromBalances, safeAddress, chainId, safe.txHistoryTag],
+    [
+      shouldFetch,
+      provider,
+      safeLoaded,
+      safe.modules?.length,
+      tokenInfoFromBalances,
+      safeAddress,
+      chainId,
+      safe.txHistoryTag,
+    ],
     false,
   )
 
@@ -71,7 +93,7 @@ export const useSpendingLimits = () => {
 
   return {
     spendingLimits,
-    loading: loading || dataLoading,
+    loading: storeLoading || dataLoading,
     error,
     refetch,
   }

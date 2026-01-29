@@ -264,13 +264,13 @@ body.beamerAnnouncementBarTopActive {
   --color-foreground: var(--foreground);
   --color-background: var(--background);
   /* Synced from Figma: trBVcpjZslO63zxiNUI9io (2026-01-28) */
-  --radius-sm: 0.375rem;  /* 6px */
-  --radius-md: 0.5rem;    /* 8px */
-  --radius-lg: 0.75rem;   /* 12px - Figma: rounded-lg */
-  --radius-xl: 1rem;      /* 16px */
-  --radius-2xl: 2rem;     /* 32px - Figma: rounded-2xl */
-  --radius-3xl: 2rem;     /* 32px - Figma: rounded-3xl */
-  --radius-4xl: 2.5rem;   /* 40px */
+  --radius-sm: 0.375rem; /* 6px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px - Figma: rounded-lg */
+  --radius-xl: 1rem; /* 16px */
+  --radius-2xl: 2rem; /* 32px - Figma: rounded-2xl */
+  --radius-3xl: 2rem; /* 32px - Figma: rounded-3xl */
+  --radius-4xl: 2.5rem; /* 40px */
 }
 
 /*---break---*/

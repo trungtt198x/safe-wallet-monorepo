@@ -16,7 +16,6 @@ import { Input } from '../input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../table'
 
-
 import {
   FilterIcon,
   PlusIcon,

@@ -12,16 +12,16 @@ import TxFlowProvider from '@/components/tx-flow/TxFlowProvider'
 import { SafeShieldProvider } from '@/features/safe-shield/SafeShieldContext'
 import * as useRecipientAnalysis from '@/features/safe-shield/hooks/useRecipientAnalysis'
 import * as useBalances from '@/hooks/useBalances'
-import SpendingLimitRow from '@/features/spending-limits/components/SpendingLimitRow'
-import * as featureCore from '@/features/__core__'
 
-// Mock the useLoadFeature hook to return a ready SpendingLimitsFeature
-jest.spyOn(featureCore, 'useLoadFeature').mockReturnValue({
-  $isReady: true,
-  $isLoading: false,
-  $isDisabled: false,
-  SpendingLimitRow,
-} as unknown as ReturnType<typeof featureCore.useLoadFeature>)
+// Mock the SpendingLimitRowWrapper component with the same "Send as" label as the real component
+jest.mock('@/components/tx-flow/flows/TokenTransfer/SpendingLimitRow', () => ({
+  __esModule: true,
+  default: () => (
+    <div data-testid="spending-limit-row">
+      <label>Send as</label>
+    </div>
+  ),
+}))
 
 describe('CreateTokenTransfer', () => {
   const mockParams = {

@@ -12,12 +12,12 @@ import { Permission } from '@/permissions/config'
 import { useCallback, useContext, useEffect, useMemo } from 'react'
 import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
 import { selectSpendingLimits } from '@/features/spending-limits'
-import type { SpendingLimitsContract } from '@/features/spending-limits'
 import { useAppSelector } from '@/store'
 import { useVisibleTokens } from '../utils'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
 import Track from '@/components/common/Track'
 import { MODALS_EVENTS } from '@/services/analytics'
+import SpendingLimitRow from '../SpendingLimitRow'
 
 const getFieldName = (
   field: keyof TokenTransferParams,
@@ -29,16 +29,9 @@ type RecipientRowProps = {
   fieldArray: { name: FieldArrayPath<MultiTokenTransferParams>; index: number }
   removable?: boolean
   remove?: (index: number) => void
-  SpendingLimitRow: SpendingLimitsContract['SpendingLimitRow']
 }
 
-const RecipientRow = ({
-  fieldArray,
-  removable = true,
-  remove,
-  disableSpendingLimit,
-  SpendingLimitRow,
-}: RecipientRowProps) => {
+const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLimit }: RecipientRowProps) => {
   const balancesItems = useVisibleTokens()
   const spendingLimits = useAppSelector(selectSpendingLimits)
 

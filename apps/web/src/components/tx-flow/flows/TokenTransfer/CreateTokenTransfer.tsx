@@ -33,8 +33,6 @@ import { useHasPermission } from '@/permissions/hooks/useHasPermission'
 import { Permission } from '@/permissions/config'
 import { ZERO_ADDRESS } from '@safe-global/protocol-kit/dist/src/utils/constants'
 import RecipientRow from './RecipientRow'
-import { useLoadFeature } from '@/features/__core__'
-import { SpendingLimitsFeature } from '@/features/spending-limits'
 import { SafeAppsName } from '@/config/constants'
 import { useRemoteSafeApps } from '@/hooks/safe-apps/useRemoteSafeApps'
 import CSVAirdropAppModal from './CSVAirdropAppModal'
@@ -90,8 +88,6 @@ const CreateTokenTransfer = ({ txNonce }: CreateTokenTransferProps): ReactElemen
   const canCreateStandardTx = useHasPermission(Permission.CreateTransaction)
   const canCreateSpendingLimitTx = useHasPermission(Permission.CreateSpendingLimitTransaction)
   const balancesItems = useVisibleTokens()
-  // Get SpendingLimitRow once at parent level to avoid re-render issues in RecipientRow
-  const { SpendingLimitRow } = useLoadFeature(SpendingLimitsFeature)
   const { setNonce } = useContext(SafeTxContext)
   const [safeApps] = useRemoteSafeApps({ name: SafeAppsName.CSV })
   const isMassPayoutsEnabled = useHasFeature(FEATURES.MASS_PAYOUTS)
@@ -124,30 +120,7 @@ const CreateTokenTransfer = ({ txNonce }: CreateTokenTransferProps): ReactElemen
     delayError: 500,
   })
 
-  const { handleSubmit, control, watch, formState, setValue, getValues } = formMethods
-
-  // Auto-select the first token when balances load but no valid token is selected
-  const firstTokenAddress = balancesItems[0]?.tokenInfo?.address
-  useEffect(() => {
-    if (!firstTokenAddress) return
-
-    const recipients = getValues(MultiTokenTransferFields.recipients)
-    recipients.forEach((recipient, index) => {
-      const hasValidToken = balancesItems.some(
-        (item) => item.tokenInfo.address.toLowerCase() === recipient.tokenAddress?.toLowerCase(),
-      )
-      if (!hasValidToken) {
-        const fieldPath = `${MultiTokenTransferFields.recipients}.${index}.${TokenTransferFields.tokenAddress}` as const
-        ;(
-          setValue as (
-            name: string,
-            value: string,
-            options?: { shouldValidate?: boolean; shouldDirty?: boolean },
-          ) => void
-        )(fieldPath, firstTokenAddress, { shouldValidate: true, shouldDirty: true })
-      }
-    })
-  }, [firstTokenAddress, balancesItems, getValues, setValue])
+  const { handleSubmit, control, watch, formState } = formMethods
 
   const hasInsufficientFunds = useMemo(
     () =>
@@ -220,7 +193,6 @@ const CreateTokenTransfer = ({ txNonce }: CreateTokenTransferProps): ReactElemen
                   fieldArray={{ name: MultiTokenTransferFields.recipients, index }}
                   remove={removeRecipient}
                   disableSpendingLimit={disableSpendingLimit || recipientFields.length > 1}
-                  SpendingLimitRow={SpendingLimitRow}
                 />
               ))}
             </Stack>

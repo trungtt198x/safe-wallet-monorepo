@@ -133,6 +133,17 @@ function SidebarProvider({
   )
 }
 
+/**
+ * Sidebar Component
+ *
+ * Figma: https://www.figma.com/design/trBVcpjZslO63zxiNUI9io/?node-id=27:3414
+ *
+ * Intentional differences from Figma:
+ * - None currently
+ *
+ * Changelog:
+ * - 2026-01-29: Removed shadow-sm and ring-1 from floating variant to match Figma
+ */
 function Sidebar({
   side = 'left',
   variant = 'sidebar',
@@ -151,7 +162,12 @@ function Sidebar({
     return (
       <div
         data-slot="sidebar"
-        className={cn('bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col', className)}
+        data-variant={variant}
+        className={cn(
+          'bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col',
+          variant === 'floating' && 'rounded-lg',
+          className,
+        )}
         {...props}
       >
         {children}
@@ -223,7 +239,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-sidebar group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
+          className="bg-sidebar group-data-[variant=floating]:rounded-lg flex size-full flex-col"
         >
           {children}
         </div>

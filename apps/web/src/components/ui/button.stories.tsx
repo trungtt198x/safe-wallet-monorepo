@@ -27,6 +27,101 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+export const AllVariants: Story = {
+  render: () => (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">Variants</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button variant="default">Default</Button>
+          <Button variant="secondary">Secondary</Button>
+          <Button variant="outline">Outline</Button>
+          <Button variant="ghost">Ghost</Button>
+          <Button variant="destructive">Destructive</Button>
+          <Button variant="link">Link</Button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">Sizes</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button size="xs">Extra Small</Button>
+          <Button size="sm">Small</Button>
+          <Button size="default">Default</Button>
+          <Button size="lg">Large</Button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">Icon Sizes</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button size="icon-xs" variant="outline">
+            <Plus className="size-3" />
+          </Button>
+          <Button size="icon-sm" variant="outline">
+            <Plus className="size-4" />
+          </Button>
+          <Button size="icon" variant="outline">
+            <Plus className="size-4" />
+          </Button>
+          <Button size="icon-lg" variant="outline">
+            <Plus className="size-5" />
+          </Button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">With Icons</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button>
+            <Plus className="size-4" />
+            Add Item
+          </Button>
+          <Button variant="secondary">
+            Next
+            <ArrowRight className="size-4" />
+          </Button>
+          <Button variant="outline">
+            <SquareDashed className="size-4" />
+            Label
+          </Button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">States</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button>Normal</Button>
+          <Button disabled>Disabled</Button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">All Variants × Sizes</h3>
+        <div className="flex flex-col gap-4">
+          {(['default', 'secondary', 'outline', 'ghost', 'destructive'] as const).map((variant) => (
+            <div key={variant} className="flex items-center gap-4">
+              <span className="w-24 text-sm text-muted-foreground">{variant}</span>
+              <Button variant={variant} size="xs">
+                XS
+              </Button>
+              <Button variant={variant} size="sm">
+                SM
+              </Button>
+              <Button variant={variant} size="default">
+                Default
+              </Button>
+              <Button variant={variant} size="lg">
+                LG
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ),
+}
+
 export const Default: Story = {
   args: {
     children: 'Button',
@@ -98,96 +193,3 @@ export const Disabled: Story = {
   },
 }
 
-export const AllVariants: Story = {
-  render: () => (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">Variants</h3>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button variant="default">Default</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="destructive">Destructive</Button>
-          <Button variant="link">Link</Button>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">Sizes</h3>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button size="xs">Extra Small</Button>
-          <Button size="sm">Small</Button>
-          <Button size="default">Default</Button>
-          <Button size="lg">Large</Button>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">States</h3>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button>Normal</Button>
-          <Button disabled>Disabled</Button>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">With Icons (Figma style)</h3>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button variant="default">
-            <SquareDashed className="size-5" />
-            Label
-          </Button>
-          <Button variant="secondary">
-            <SquareDashed className="size-5" />
-            Label
-          </Button>
-          <Button variant="secondary">
-            <SquareDashed className="size-5" />
-            Label
-          </Button>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">Icon Variations</h3>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button>
-            <Plus className="size-4" />
-            Add Item
-          </Button>
-          <Button variant="secondary">
-            Next
-            <ArrowRight className="size-4" />
-          </Button>
-          <Button variant="outline" size="icon">
-            <Plus className="size-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">All Variants × Sizes</h3>
-        <div className="flex flex-col gap-4">
-          {(['default', 'secondary', 'outline', 'ghost', 'destructive'] as const).map((variant) => (
-            <div key={variant} className="flex items-center gap-4">
-              <span className="w-24 text-sm text-muted-foreground">{variant}</span>
-              <Button variant={variant} size="xs">
-                XS
-              </Button>
-              <Button variant={variant} size="sm">
-                SM
-              </Button>
-              <Button variant={variant} size="default">
-                Default
-              </Button>
-              <Button variant={variant} size="lg">
-                LG
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  ),
-}

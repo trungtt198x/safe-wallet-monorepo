@@ -237,7 +237,7 @@ export function TaskDashboard({
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="text-muted-foreground">{subtitle}</p>
         </div>
-        <Avatar size="lg">
+        <Avatar size="default">
           <AvatarImage src={avatarSrc} alt="User avatar" />
           <AvatarFallback>{avatarFallback}</AvatarFallback>
         </Avatar>

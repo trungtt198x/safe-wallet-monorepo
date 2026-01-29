@@ -2,13 +2,25 @@ import * as React from 'react'
 
 import { cn } from '@/utils/cn'
 
+/**
+ * Card Component
+ *
+ * Figma: https://www.figma.com/design/trBVcpjZslO63zxiNUI9io/?node-id=179:29234
+ *
+ * Intentional differences from Figma:
+ * - gap-6/gap-4: Figma has no gap (slots handle spacing), code adds default for DX
+ * - py-6/py-4: Figma has no padding, code adds default for DX
+ *
+ * Changelog:
+ * - 2026-01-29: Removed shadow-xs and ring-1 to match Figma (no elevation/border)
+ */
 function Card({ className, size = 'default', ...props }: React.ComponentProps<'div'> & { size?: 'default' | 'sm' }) {
   return (
     <div
       data-slot="card"
       data-size={size}
       className={cn(
-        'ring-foreground/10 bg-card text-card-foreground gap-6 overflow-hidden rounded-xl py-6 text-sm shadow-xs ring-1 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl group/card flex flex-col',
+        'bg-card text-card-foreground gap-6 overflow-hidden rounded-xl py-6 text-sm has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl group/card flex flex-col',
         className,
       )}
       {...props}

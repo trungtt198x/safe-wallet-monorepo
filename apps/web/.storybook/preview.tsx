@@ -7,19 +7,19 @@ import createSafeTheme from '../src/components/theme/safeTheme'
 
 import '../src/styles/globals.css'
 
-const BACKGROUND_COLORS: Record<string, string> = { light: '#ffffff', dark: '#121312' }
-
-// Syncs data-theme attribute and background color with the theme switcher
+// Syncs data-theme attribute with the theme switcher
 const ThemeSyncDecorator = (Story: React.ComponentType, context: { globals?: { theme?: string } }) => {
   const themeMode = context.globals?.theme || 'light'
-  const backgroundColor = BACKGROUND_COLORS[themeMode] || BACKGROUND_COLORS.light
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeMode)
+    document.documentElement.classList.toggle('dark', themeMode === 'dark')
+    // Apply muted background to Storybook canvas (matches Figma canvas)
+    document.body.style.backgroundColor = 'var(--muted)'
   }, [themeMode])
 
   return (
-    <div style={{ backgroundColor, padding: '1rem' }}>
+    <div style={{ padding: '1rem' }}>
       <Story />
     </div>
   )

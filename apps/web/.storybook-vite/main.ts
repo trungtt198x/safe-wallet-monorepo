@@ -57,6 +57,10 @@ const config: StorybookConfig = {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '../src'),
+          // Monorepo package aliases
+          '@safe-global/utils': path.resolve(__dirname, '../../../packages/utils/src'),
+          '@safe-global/store': path.resolve(__dirname, '../../../packages/store/src'),
+          '@safe-global/theme': path.resolve(__dirname, '../../../packages/theme/src'),
         },
       },
       define: {

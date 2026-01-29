@@ -11,16 +11,12 @@ import { TxModalContext } from '@/components/tx-flow'
 import { FEATURES } from '@safe-global/utils/utils/chains'
 import { useAppSelector } from '@/store'
 import { selectSpendingLimits, selectSpendingLimitsLoading } from '../../store/spendingLimitsSlice'
-import { useTriggerSpendingLimitsLoad } from '../../hooks/useTriggerSpendingLimitsLoad'
 
 const SpendingLimitsSettings = () => {
   const { setTxFlow } = useContext(TxModalContext)
   const isEnabled = useHasFeature(FEATURES.SPENDING_LIMIT)
 
-  // Trigger loading (actual fetch happens in global SpendingLimitsLoader)
-  useTriggerSpendingLimitsLoad(true)
-
-  // Read data from store
+  // Read data from store (loaded on app start via SpendingLimitsLoader)
   const spendingLimits = useAppSelector(selectSpendingLimits)
   const spendingLimitsLoading = useAppSelector(selectSpendingLimitsLoading)
 

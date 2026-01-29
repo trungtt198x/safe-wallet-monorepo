@@ -1,24 +1,16 @@
 import { useSpendingLimits } from '../../hooks/useSpendingLimits'
-import { useAppSelector } from '@/store'
-import { selectShouldLoadSpendingLimits } from '../../store/spendingLimitsSlice'
 
 /**
- * Global component that performs the actual spending limits data fetch.
+ * Global component that loads spending limits data on app start.
  * Renders null - only used for its side effect of loading data.
  *
- * This component should be rendered once globally (e.g., in PageLayout).
- * It watches for the loading trigger (set by useTriggerSpendingLimitsLoad)
- * and performs the fetch when triggered.
- *
- * This pattern keeps the heavy loading logic lazy-loaded while allowing
- * lightweight hooks to trigger loading from anywhere in the app.
+ * This component should be rendered once globally (e.g., in _app.tsx).
+ * It loads spending limits data as soon as a Safe is loaded, making the
+ * data available to all components that need it.
  */
 const SpendingLimitsLoader = () => {
-  const shouldLoad = useAppSelector(selectShouldLoadSpendingLimits)
-
-  // This calls the heavy hook only when loading is triggered
-  // The hook handles all the actual fetching logic
-  useSpendingLimits(shouldLoad)
+  // Load spending limits data on mount
+  useSpendingLimits()
 
   return null
 }

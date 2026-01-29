@@ -126,7 +126,7 @@ src/features/spending-limits/
 │   ├── RemoveSpendingLimitReview/
 │   └── ReviewSpendingLimitTx/   # Spending limit execution
 ├── hooks/
-│   ├── useSpendingLimits.ts     # On-demand data loading
+│   ├── useSpendingLimits.ts     # Data loading (used by SpendingLimitsLoader)
 │   ├── useSpendingLimit.ts      # Get limit for token
 │   ├── useSpendingLimitGas.ts   # Gas estimation
 │   └── useIsOnlySpendingLimitBeneficiary.ts
@@ -139,34 +139,24 @@ src/features/spending-limits/
     └── spendingLimitsSlice.ts
 ```
 
-### On-Demand Loading
+### Data Loading
 
-Spending limits data is loaded on-demand rather than globally, optimizing performance.
+Spending limits data is loaded automatically on app start via the `SpendingLimitsLoader` component.
 
 **Architecture:**
 
-1. **Lightweight trigger hook** (`useTriggerSpendingLimitsLoad`) - Sets a flag in Redux to request loading
-2. **Global loader component** (`SpendingLimitsLoader`) - Lazy-loaded, watches for the flag, performs actual fetch
-3. **Store selectors** - Components read data from Redux store
+1. **Global loader component** (`SpendingLimitsLoader`) - Lazy-loaded, fetches data when Safe is loaded
+2. **Store selectors** - Components read data from Redux store
 
-This keeps the heavy fetching logic lazy-loaded while allowing lightweight hooks to trigger loading from anywhere.
+This keeps the heavy fetching logic lazy-loaded while making data available to all components.
 
-**Data is loaded when:**
-
-- User visits Settings > Spending Limits
-- User starts a token transfer (to check if spending limit is available)
-- User is identified as a beneficiary-only user (via CheckWallet with allowSpendingLimit)
-
-**How to trigger loading:**
+**How to read spending limits:**
 
 ```typescript
-import { useTriggerSpendingLimitsLoad, selectSpendingLimits } from '@/features/spending-limits'
+import { selectSpendingLimits } from '@/features/spending-limits'
 import { useAppSelector } from '@/store'
 
-// Trigger loading (actual fetch happens in global SpendingLimitsLoader)
-useTriggerSpendingLimitsLoad(true)
-
-// Read data from store
+// Read data from store (loaded on app start)
 const spendingLimits = useAppSelector(selectSpendingLimits)
 ```
 
@@ -207,7 +197,6 @@ yarn workspace @safe-global/web test --testPathPattern=spending
 - [ ] Create spending limit as Safe owner
 - [ ] Execute transfer as beneficiary
 - [ ] Verify beneficiary-only user permissions
-- [ ] Check that data loads only when needed (Network tab)
 - [ ] Test reset period behavior
 - [ ] Remove spending limit
 

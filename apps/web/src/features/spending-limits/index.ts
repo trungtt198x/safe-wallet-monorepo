@@ -12,8 +12,7 @@ export type * from './types'
 export { getResetTimeOptions } from './constants'
 
 // Lightweight hooks exported directly (always loaded, minimal bundle impact)
-// These hooks only read from Redux store or dispatch actions - no heavy logic
-export { useTriggerSpendingLimitsLoad } from './hooks/useTriggerSpendingLimitsLoad'
+// These hooks only read from Redux store - no heavy logic
 export { default as useSpendingLimit } from './hooks/useSpendingLimit'
 export { default as useSpendingLimitGas } from './hooks/useSpendingLimitGas'
 export {

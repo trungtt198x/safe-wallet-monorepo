@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react'
+import { useEffect, useMemo } from 'react'
 import useAsync from '@safe-global/utils/hooks/useAsync'
 import useSafeInfo from '@/hooks/useSafeInfo'
 import { Errors, logError } from '@/services/exceptions'
@@ -16,18 +16,11 @@ import {
 } from '../store/spendingLimitsSlice'
 
 /**
- * On-demand hook for loading spending limits.
- * Only fetches data when the hook is used, rather than on every page load.
- *
- * Use this hook in:
- * - Settings > Spending Limits page
- * - Token Transfer flow (when user might use spending limit)
- * - Components that need spending limit data
- *
- * @param enabled - If false, returns stored data without triggering a fetch.
- *                  Useful when you want to check existing data without loading.
+ * Hook for loading spending limits data.
+ * Data is loaded once on app start via SpendingLimitsLoader component.
+ * This hook reads from the store and handles the initial fetch.
  */
-export const useSpendingLimits = (enabled = true) => {
+export const useSpendingLimits = () => {
   const dispatch = useAppDispatch()
   const spendingLimits = useAppSelector(selectSpendingLimits)
   const storeLoading = useAppSelector(selectSpendingLimitsLoading)
@@ -42,8 +35,8 @@ export const useSpendingLimits = (enabled = true) => {
     [balances?.items],
   )
 
-  // Skip fetch if already loaded or loading (prevents duplicate requests from multiple components)
-  const shouldFetch = enabled && !storeLoaded && !storeLoading
+  // Skip fetch if already loaded (prevents duplicate requests)
+  const shouldFetch = !storeLoaded && !storeLoading
 
   const [data, error, dataLoading] = useAsync<SpendingLimitState[] | undefined>(
     () => {
@@ -73,10 +66,8 @@ export const useSpendingLimits = (enabled = true) => {
     }
   }, [error])
 
-  // Update the store when fetch completes (only when we actually fetched)
+  // Update the store when fetch completes
   useEffect(() => {
-    // Only update store if we have data or an error (meaning fetch was attempted)
-    // Don't update if we're just skipping the fetch
     if (data !== undefined || error) {
       dispatch(
         spendingLimitSlice.actions.set({
@@ -89,16 +80,9 @@ export const useSpendingLimits = (enabled = true) => {
     }
   }, [dispatch, data, error])
 
-  const refetch = useCallback(() => {
-    // The useAsync hook will refetch when dependencies change
-    // We can trigger a refetch by dispatching a loading state
-    dispatch(spendingLimitSlice.actions.set({ data: spendingLimits, loading: true, loaded: true }))
-  }, [dispatch, spendingLimits])
-
   return {
     spendingLimits,
     loading: storeLoading || dataLoading,
     error,
-    refetch,
   }
 }

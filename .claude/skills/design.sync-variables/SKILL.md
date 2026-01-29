@@ -1,4 +1,17 @@
-# Figma Variable Sync Workflow
+---
+name: design.sync-variables
+description: Sync CSS variables from Figma plugin export to globals.css. Use when updating design tokens/colors from Figma.
+disable-model-invocation: true
+allowed-tools:
+  - Read
+  - Edit
+  - Bash
+  - Grep
+---
+
+# Sync Variables from Figma
+
+Sync CSS variables from Figma plugin export to `globals.css`.
 
 ## Rules
 
@@ -7,23 +20,22 @@
 3. **Direct mappings only** - Only update if Figma has a matching variable
 4. **Use Figma plugin export** - Do NOT use Figma MCP for variables (incomplete data)
 
-## Process
-
-1. Export variables from Figma using the CSS Variables plugin
-2. Store export in `figma-export.css` as reference
-3. Compare Figma values vs `globals.css` existing variables
-4. Update only values that differ (use direct hex values)
-5. Verify: `yarn workspace @safe-global/web type-check`
-
 ## Source Files
 
-- **Source of truth**: `figma-export.css` (plugin export)
+- **Source of truth**: Figma plugin export (user provides)
 - **Target**: `apps/web/src/styles/globals.css`
+
+## Process
+
+1. Ask user for Figma CSS Variables plugin export
+2. Compare Figma values vs `globals.css` existing variables
+3. Update only values that differ (use direct hex values)
+4. Verify: `yarn workspace @safe-global/web type-check`
 
 ## Variable Mapping
 
-| Figma Export | CSS |
-|--------------|-----|
+| Figma Export | CSS Variable |
+|--------------|--------------|
 | `--general-background` | `--background` |
 | `--general-foreground` | `--foreground` |
 | `--general-primary` | `--primary` |
@@ -50,3 +62,17 @@
 | `--sidebar-sidebar-accent-foreground` | `--sidebar-accent-foreground` |
 | `--sidebar-sidebar-border` | `--sidebar-border` |
 | `--sidebar-sidebar-ring` | `--sidebar-ring` |
+
+## Example
+
+User provides export:
+```css
+--general-background: #ffffff;
+--general-primary: #12ff80;
+```
+
+Update in globals.css:
+```css
+--background: #ffffff;
+--primary: #12ff80;
+```

@@ -5,7 +5,6 @@ import { type Balance } from '@safe-global/store/gateway/AUTO_GENERATED/balances
 import { type AddressInfo } from '@safe-global/store/gateway/AUTO_GENERATED/safes'
 import { type AllowanceModule } from '@safe-global/utils/types/contracts'
 import { getERC20TokenInfoOnChain } from '@/utils/tokens'
-import { sameString } from '@safe-global/protocol-kit/dist/src/utils'
 import { multicall } from '@safe-global/utils/utils/multicall'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
 
@@ -15,7 +14,7 @@ const DEFAULT_TOKEN_INFO = {
 }
 
 const discardZeroAllowance = (spendingLimit: SpendingLimitState): boolean =>
-  !(sameString(spendingLimit.amount, '0') && sameString(spendingLimit.resetTimeMin, '0'))
+  !(spendingLimit.amount === '0' && spendingLimit.resetTimeMin === '0')
 
 const getTokenInfoFromBalances = (
   tokenInfoFromBalances: Balance['tokenInfo'][],

@@ -1,6 +1,9 @@
 import type { BigNumberish, BytesLike } from 'ethers'
 import { TokenAmountFields } from '@/components/common/TokenAmountInput'
 
+// Re-export the type from the slice (where it's defined to avoid pulling deps into main bundle)
+export type { SpendingLimitState } from './store/spendingLimitsSlice'
+
 // Form fields for creating spending limits
 enum SpendingLimitFormFields {
   beneficiary = 'beneficiary',
@@ -14,21 +17,6 @@ export type NewSpendingLimitFlowProps = {
   [SpendingLimitFields.tokenAddress]: string
   [SpendingLimitFields.amount]: string
   [SpendingLimitFields.resetTime]: string
-}
-
-export type SpendingLimitState = {
-  beneficiary: string
-  token: {
-    address: string
-    symbol: string
-    decimals?: number | null
-    logoUri?: string
-  }
-  amount: string
-  nonce: string
-  resetTimeMin: string
-  lastResetMin: string
-  spent: string
 }
 
 export type NewSpendingLimitData = {

@@ -1,6 +1,22 @@
 import { createSelector } from '@reduxjs/toolkit'
 import { makeLoadableSlice } from '@/store/common'
-import type { SpendingLimitState } from '../types'
+
+// Type defined here to avoid circular dependencies with types.ts
+// which imports from components that would pull heavy deps into main bundle
+export type SpendingLimitState = {
+  beneficiary: string
+  token: {
+    address: string
+    symbol: string
+    decimals?: number | null
+    logoUri?: string
+  }
+  amount: string
+  nonce: string
+  resetTimeMin: string
+  lastResetMin: string
+  spent: string
+}
 
 const initialState: SpendingLimitState[] = []
 

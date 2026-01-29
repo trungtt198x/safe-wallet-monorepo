@@ -13,25 +13,7 @@ import css from '@/components/tx/ExecuteCheckbox/styles.module.css'
 import TokenAmountInput from '@/components/common/TokenAmountInput'
 import { validateAmount, validateDecimalLength } from '@safe-global/utils/utils/validation'
 import { TxFlowContext, type TxFlowContextType } from '@/components/tx-flow/TxFlowProvider'
-
-enum Fields {
-  beneficiary = 'beneficiary',
-  resetTime = 'resetTime',
-}
-
-enum TokenAmountFields {
-  tokenAddress = 'tokenAddress',
-  amount = 'amount',
-}
-
-export const SpendingLimitFields = { ...Fields, ...TokenAmountFields }
-
-export type NewSpendingLimitFlowProps = {
-  [SpendingLimitFields.beneficiary]: string
-  [SpendingLimitFields.tokenAddress]: string
-  [SpendingLimitFields.amount]: string
-  [SpendingLimitFields.resetTime]: string
-}
+import { SpendingLimitFields, type NewSpendingLimitFlowProps } from '../../types'
 
 export const _validateSpendingLimit = (val: string, decimals?: number | null) => {
   // Allowance amount is uint96 https://github.com/safe-global/safe-modules/blob/main/modules/allowances/contracts/AllowanceModule.sol#L52

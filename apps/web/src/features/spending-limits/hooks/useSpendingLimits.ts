@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import useAsync from '@safe-global/utils/hooks/useAsync'
 import useSafeInfo from '@/hooks/useSafeInfo'
 import { Errors, logError } from '@/services/exceptions'
@@ -19,6 +19,7 @@ import {
  * Hook for loading spending limits data.
  * Data is loaded once on app start via SpendingLimitsLoader component.
  * This hook reads from the store and handles the initial fetch.
+ * Re-fetches when Safe changes (different safeAddress or chainId).
  */
 export const useLoadSpendingLimits = () => {
   const dispatch = useAppDispatch()
@@ -35,8 +36,27 @@ export const useLoadSpendingLimits = () => {
     [balances?.items],
   )
 
-  // Skip fetch if already loaded (prevents duplicate requests)
+  // Track previous Safe to detect changes
+  const safeKey = `${chainId}:${safeAddress}`
+  const prevSafeKeyRef = useRef<string | null>(null)
+
+  // Reset loaded state when Safe changes to allow re-fetching
+  useEffect(() => {
+    if (prevSafeKeyRef.current !== null && prevSafeKeyRef.current !== safeKey) {
+      dispatch(spendingLimitSlice.actions.set({ data: [], loading: false, loaded: false }))
+    }
+    prevSafeKeyRef.current = safeKey
+  }, [dispatch, safeKey])
+
+  // Fetch is needed if not yet loaded for this Safe
   const shouldFetch = !storeLoaded && !storeLoading
+
+  // Set loading state at the start of fetch
+  useEffect(() => {
+    if (shouldFetch && provider && safeLoaded && safe.modules && tokenInfoFromBalances.length > 0) {
+      dispatch(spendingLimitSlice.actions.set({ data: [], loading: true, loaded: false }))
+    }
+  }, [dispatch, shouldFetch, provider, safeLoaded, safe.modules, tokenInfoFromBalances.length])
 
   const [data, error, dataLoading] = useAsync<SpendingLimitState[] | undefined>(
     () => {

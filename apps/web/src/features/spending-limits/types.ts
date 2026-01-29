@@ -1,4 +1,20 @@
 import type { BigNumberish, BytesLike } from 'ethers'
+import { TokenAmountFields } from '@/components/common/TokenAmountInput'
+
+// Form fields for creating spending limits
+enum SpendingLimitFormFields {
+  beneficiary = 'beneficiary',
+  resetTime = 'resetTime',
+}
+
+export const SpendingLimitFields = { ...SpendingLimitFormFields, ...TokenAmountFields }
+
+export type NewSpendingLimitFlowProps = {
+  [SpendingLimitFields.beneficiary]: string
+  [SpendingLimitFields.tokenAddress]: string
+  [SpendingLimitFields.amount]: string
+  [SpendingLimitFields.resetTime]: string
+}
 
 export type SpendingLimitState = {
   beneficiary: string

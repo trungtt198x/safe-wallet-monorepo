@@ -1,25 +1,10 @@
 import SaveAddressIcon from '@/public/images/common/save-address.svg'
 import { ZERO_ADDRESS } from '@safe-global/protocol-kit/dist/src/utils/constants'
-import { TokenAmountFields } from '@/components/common/TokenAmountInput'
 import { TxFlowType } from '@/services/analytics'
 import { TxFlow } from '../../TxFlow'
 import { TxFlowStep } from '../../TxFlowStep'
 import { useLoadFeature } from '@/features/__core__'
-import { SpendingLimitsFeature } from '@/features/spending-limits'
-
-enum Fields {
-  beneficiary = 'beneficiary',
-  resetTime = 'resetTime',
-}
-
-export const SpendingLimitFields = { ...Fields, ...TokenAmountFields }
-
-export type NewSpendingLimitFlowProps = {
-  [SpendingLimitFields.beneficiary]: string
-  [SpendingLimitFields.tokenAddress]: string
-  [SpendingLimitFields.amount]: string
-  [SpendingLimitFields.resetTime]: string
-}
+import { SpendingLimitsFeature, type NewSpendingLimitFlowProps } from '@/features/spending-limits'
 
 const defaultValues: NewSpendingLimitFlowProps = {
   beneficiary: '',

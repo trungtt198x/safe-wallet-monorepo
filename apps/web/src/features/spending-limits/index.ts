@@ -8,7 +8,13 @@ export const SpendingLimitsFeature = createFeatureHandle<SpendingLimitsContract>
 )
 
 export type { SpendingLimitsContract } from './contract'
-export type * from './types'
+export type {
+  SpendingLimitState,
+  NewSpendingLimitFlowProps,
+  NewSpendingLimitData,
+  SpendingLimitTxParams,
+} from './types'
+export { SpendingLimitFields } from './types'
 export { getResetTimeOptions } from './constants'
 
 // Lightweight hooks exported directly (always loaded, minimal bundle impact)

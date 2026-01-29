@@ -24,6 +24,7 @@ describe('[SMOKE] Create transactions tests', () => {
   })
 
   it('[SMOKE] Verify MaxAmount button', () => {
+    createtx.clickOnTokenselectorAndSelectSepoliaEth()
     createtx.setMaxAmount()
     createtx.verifyMaxAmount(constants.tokenNames.sepoliaEther, constants.tokenAbbreviation.sep)
   })

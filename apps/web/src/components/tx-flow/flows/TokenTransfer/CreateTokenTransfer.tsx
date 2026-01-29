@@ -124,7 +124,30 @@ const CreateTokenTransfer = ({ txNonce }: CreateTokenTransferProps): ReactElemen
     delayError: 500,
   })
 
-  const { handleSubmit, control, watch, formState } = formMethods
+  const { handleSubmit, control, watch, formState, setValue, getValues } = formMethods
+
+  // Auto-select the first token when balances load but no valid token is selected
+  const firstTokenAddress = balancesItems[0]?.tokenInfo?.address
+  useEffect(() => {
+    if (!firstTokenAddress) return
+
+    const recipients = getValues(MultiTokenTransferFields.recipients)
+    recipients.forEach((recipient, index) => {
+      const hasValidToken = balancesItems.some(
+        (item) => item.tokenInfo.address.toLowerCase() === recipient.tokenAddress?.toLowerCase(),
+      )
+      if (!hasValidToken) {
+        const fieldPath = `${MultiTokenTransferFields.recipients}.${index}.${TokenTransferFields.tokenAddress}` as const
+        ;(
+          setValue as (
+            name: string,
+            value: string,
+            options?: { shouldValidate?: boolean; shouldDirty?: boolean },
+          ) => void
+        )(fieldPath, firstTokenAddress, { shouldValidate: true, shouldDirty: true })
+      }
+    })
+  }, [firstTokenAddress, balancesItems, getValues, setValue])
 
   const hasInsufficientFunds = useMemo(
     () =>

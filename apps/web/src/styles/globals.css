@@ -65,34 +65,34 @@ button {
   --foreground: #0a0a0a;
   --card: #ffffff;
   --card-foreground: #0a0a0a;
-  --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #121312;
-  --primary-foreground: #ffffff;
+  --popover: #000000;
+  --popover-foreground: #ffffff;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
   --secondary: #f5f5f5;
-  --secondary-foreground: #121312;
+  --secondary-foreground: #171717;
   --muted: #f5f5f5;
   --muted-foreground: #737373;
   --accent: #f5f5f5;
-  --accent-foreground: #121312;
-  --destructive: #ff5f72;
+  --accent-foreground: #171717;
+  --destructive: #dc2626;
   --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #0a0a0a;
+  --input: #ffffff;
+  --ring: #d4d4d4;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 1rem;
-  --sidebar: #fafafa;
-  --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #121312;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #404040;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
   --sidebar-accent: #f5f5f5;
-  --sidebar-accent-foreground: #121312;
+  --sidebar-accent-foreground: #171717;
   --sidebar-border: #e5e5e5;
-  --sidebar-ring: #0a0a0a;
+  --sidebar-ring: #d4d4d4;
 }
 
 input::-webkit-outer-spin-button,
@@ -195,37 +195,37 @@ body.beamerAnnouncementBarTopActive {
 /*---break---*/
 /* shadcn dark theme - Synced from Figma */
 .dark {
-  --background: #121312;
-  --foreground: #ffffff;
-  --card: #1c1c1c;
+  --background: #000000;
+  --foreground: #fafafa;
+  --card: #171717;
   --card-foreground: #ffffff;
-  --popover: #1c1c1c;
-  --popover-foreground: #ffffff;
-  --primary: #12ff80;
-  --primary-foreground: #121312;
-  --secondary: #303033;
-  --secondary-foreground: #ffffff;
-  --muted: #303033;
-  --muted-foreground: #636669;
-  --accent: #404040;
-  --accent-foreground: #ffffff;
-  --destructive: #ff5f72;
-  --border: #303033;
-  --input: #303033;
-  --ring: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #f5f5f5;
+  --primary-foreground: #0a0a0a;
+  --secondary: #262626;
+  --secondary-foreground: #f5f5f5;
+  --muted: #171717;
+  --muted-foreground: #a3a3a3;
+  --accent: #171717;
+  --accent-foreground: #f5f5f5;
+  --destructive: #9e4042;
+  --border: #404040;
+  --input: #ffffff0d;
+  --ring: #404040;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: #1c1c1c;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #12ff80;
-  --sidebar-primary-foreground: #121312;
-  --sidebar-accent: #303033;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #303033;
-  --sidebar-ring: #ffffff;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #d4d4d4;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #171717;
+  --sidebar-accent: #171717;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #262626;
+  --sidebar-ring: #404040;
 }
 
 /*---break---*/

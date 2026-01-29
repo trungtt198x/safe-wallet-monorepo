@@ -1,0 +1,89 @@
+/* Figma Plugin Export - Source of Truth */
+/* From: Obra-shadcn-ui--safe- */
+
+/* Neutral scale (hex values) */
+:root {
+  --neutral-50: #fafafa;
+  --neutral-100: #f5f5f5;
+  --neutral-200: #e5e5e5;
+  --neutral-300: #d4d4d4;
+  --neutral-400: #a3a3a3;
+  --neutral-500: #737373;
+  --neutral-600: #525252;
+  --neutral-700: #404040;
+  --neutral-800: #262626;
+  --neutral-900: #171717;
+  --neutral-950: #0a0a0a;
+  --white: #ffffff;
+  --black: #000000;
+  --red-50: #fef2f2;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-950: #450a0a;
+}
+
+/* semantic colors - LIGHT THEME */
+:root {
+  /* Resolved to hex values */
+  --general-background: #ffffff; /* var(--white) */
+  --general-foreground: #0a0a0a; /* var(--neutral-950) */
+  --general-primary: #171717; /* var(--neutral-900) */
+  --general-primary-foreground: #fafafa; /* var(--neutral-50) */
+  --general-secondary: #f5f5f5; /* var(--neutral-100) */
+  --general-secondary-foreground: #171717; /* var(--neutral-900) */
+  --general-muted: #f5f5f5; /* var(--neutral-100) */
+  --general-muted-foreground: #737373; /* var(--neutral-500) */
+  --general-accent: #f5f5f5; /* var(--neutral-100) */
+  --general-accent-foreground: #171717; /* var(--neutral-900) */
+  --general-destructive: #dc2626; /* var(--red-600) */
+  --general-destructive-foreground: #ffffff; /* var(--white) */
+  --general-border: #e5e5e5; /* var(--neutral-200) */
+  --general-input: #ffffff; /* var(--white) */
+  --card-card: #ffffff; /* var(--white) */
+  --card-card-foreground: #0a0a0a; /* var(--neutral-950) */
+  --popover-popover: #000000; /* var(--black) */
+  --popover-popover-foreground: #ffffff; /* var(--white) */
+  --focus-ring: #d4d4d4; /* var(--neutral-300) */
+  --sidebar-sidebar: #ffffff; /* var(--general-background) */
+  --sidebar-sidebar-foreground: #404040; /* var(--neutral-700) */
+  --sidebar-sidebar-primary: #171717; /* var(--neutral-900) */
+  --sidebar-sidebar-primary-foreground: #fafafa; /* var(--neutral-50) */
+  --sidebar-sidebar-accent: #f5f5f5; /* var(--neutral-100) */
+  --sidebar-sidebar-accent-foreground: #171717; /* var(--neutral-900) */
+  --sidebar-sidebar-border: #e5e5e5; /* var(--neutral-200) */
+  --sidebar-sidebar-ring: #d4d4d4; /* var(--neutral-300) */
+  --sidebar-unofficial-sidebar-muted: #737373; /* var(--neutral-500) */
+}
+
+/* semantic colors - DARK THEME */
+.dark {
+  --general-background: #000000; /* var(--black) */
+  --general-foreground: #fafafa; /* var(--neutral-50) */
+  --general-primary: #f5f5f5; /* var(--neutral-100) */
+  --general-primary-foreground: #0a0a0a; /* var(--neutral-950) */
+  --general-secondary: #262626; /* var(--neutral-800) */
+  --general-secondary-foreground: #f5f5f5; /* var(--neutral-100) */
+  --general-muted: #171717; /* var(--neutral-900) */
+  --general-muted-foreground: #a3a3a3; /* var(--neutral-400) */
+  --general-accent: #171717; /* var(--neutral-900) */
+  --general-accent-foreground: #f5f5f5; /* var(--neutral-100) */
+  --general-destructive: #9e4042;
+  --general-destructive-foreground: #ffffff; /* var(--white) */
+  --general-border: #404040; /* var(--neutral-700) */
+  --general-input: #ffffff0d;
+  --card-card: #171717; /* var(--neutral-900) */
+  --card-card-foreground: #ffffff; /* var(--white) */
+  --popover-popover: #ffffff; /* var(--white) */
+  --popover-popover-foreground: #000000; /* var(--black) */
+  --focus-ring: #404040; /* var(--neutral-700) */
+  --sidebar-sidebar: #0a0a0a; /* var(--neutral-950) */
+  --sidebar-sidebar-foreground: #d4d4d4; /* var(--neutral-300) */
+  --sidebar-sidebar-primary: #fafafa; /* var(--neutral-50) */
+  --sidebar-sidebar-primary-foreground: #171717; /* var(--neutral-900) */
+  --sidebar-sidebar-accent: #171717; /* var(--neutral-900) */
+  --sidebar-sidebar-accent-foreground: #f5f5f5; /* var(--neutral-100) */
+  --sidebar-sidebar-border: #262626; /* var(--neutral-800) */
+  --sidebar-sidebar-ring: #404040; /* var(--neutral-700) */
+}

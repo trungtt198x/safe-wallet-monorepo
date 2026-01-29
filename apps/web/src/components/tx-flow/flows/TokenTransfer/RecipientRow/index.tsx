@@ -12,8 +12,7 @@ import { Permission } from '@/permissions/config'
 import { useCallback, useContext, useEffect, useMemo } from 'react'
 import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
 import { selectSpendingLimits } from '@/features/spending-limits'
-// Direct import to avoid re-renders from useLoadFeature that break the MUI Select
-import SpendingLimitRow from '@/features/spending-limits/components/SpendingLimitRow'
+import type { SpendingLimitsContract } from '@/features/spending-limits'
 import { useAppSelector } from '@/store'
 import { useVisibleTokens } from '../utils'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
@@ -30,9 +29,16 @@ type RecipientRowProps = {
   fieldArray: { name: FieldArrayPath<MultiTokenTransferParams>; index: number }
   removable?: boolean
   remove?: (index: number) => void
+  SpendingLimitRow: SpendingLimitsContract['SpendingLimitRow']
 }
 
-const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLimit }: RecipientRowProps) => {
+const RecipientRow = ({
+  fieldArray,
+  removable = true,
+  remove,
+  disableSpendingLimit,
+  SpendingLimitRow,
+}: RecipientRowProps) => {
   const balancesItems = useVisibleTokens()
   const spendingLimits = useAppSelector(selectSpendingLimits)
 

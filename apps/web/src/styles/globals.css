@@ -60,39 +60,39 @@ button {
 :root {
   --header-height: 56px;
   --footer-height: 67px;
-  /* shadcn light theme */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* shadcn light theme - Synced from Figma */
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #121312;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #121312;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #121312;
+  --destructive: #ff5f72;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #0a0a0a;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 1rem;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #121312;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #121312;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #0a0a0a;
 }
 
 input::-webkit-outer-spin-button,
@@ -193,39 +193,39 @@ body.beamerAnnouncementBarTopActive {
 }
 
 /*---break---*/
-/* shadcn dark theme */
+/* shadcn dark theme - Synced from Figma */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.371 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #121312;
+  --foreground: #ffffff;
+  --card: #1c1c1c;
+  --card-foreground: #ffffff;
+  --popover: #1c1c1c;
+  --popover-foreground: #ffffff;
+  --primary: #12ff80;
+  --primary-foreground: #121312;
+  --secondary: #303033;
+  --secondary-foreground: #ffffff;
+  --muted: #303033;
+  --muted-foreground: #636669;
+  --accent: #404040;
+  --accent-foreground: #ffffff;
+  --destructive: #ff5f72;
+  --border: #303033;
+  --input: #303033;
+  --ring: #ffffff;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #1c1c1c;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #12ff80;
+  --sidebar-primary-foreground: #121312;
+  --sidebar-accent: #303033;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #303033;
+  --sidebar-ring: #ffffff;
 }
 
 /*---break---*/
@@ -263,14 +263,15 @@ body.beamerAnnouncementBarTopActive {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  /* Synced from Figma: trBVcpjZslO63zxiNUI9io (2026-01-28) */
-  --radius-sm: 0.375rem; /* 6px */
-  --radius-md: 0.5rem; /* 8px */
-  --radius-lg: 0.75rem; /* 12px - Figma: rounded-lg */
-  --radius-xl: 1rem; /* 16px */
-  --radius-2xl: 2rem; /* 32px - Figma: rounded-2xl */
-  --radius-3xl: 2rem; /* 32px - Figma: rounded-3xl */
-  --radius-4xl: 2.5rem; /* 40px */
+  /* Synced from Figma: xN0ennrwA6cqy3navhpLYB (2026-01-29) */
+  --radius-2xs: 0.25rem; /* 4px - Figma: 2xs */
+  --radius-xs: 0.5rem; /* 8px - Figma: xs, rounded-md */
+  --radius-sm: 0.5rem; /* 8px - Figma: absolute/radius-8 */
+  --radius-md: 0.75rem; /* 12px - Figma: rounded-lg, semantic/rounded-lg-xl */
+  --radius-lg: 1rem; /* 16px - Figma: radius, md */
+  --radius-xl: 1.5rem; /* 24px - Figma: rounded-xl, xl */
+  --radius-2xl: 1.5rem; /* 24px - Figma: rounded-xl */
+  --radius-infinite: 9999px; /* Figma: rounded-full, radius-infinite */
 }
 
 /*---break---*/

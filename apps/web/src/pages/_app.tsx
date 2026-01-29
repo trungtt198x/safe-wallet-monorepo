@@ -43,9 +43,8 @@ import { useNotificationTracking } from '@/components/settings/PushNotifications
 import Recovery from '@/features/recovery/components/Recovery'
 import WalletProvider from '@/components/common/WalletProvider'
 import { CounterfactualFeature } from '@/features/counterfactual'
+import { SpendingLimitsFeature } from '@/features/spending-limits'
 import { useLoadFeature } from '@/features/__core__'
-// Direct import to avoid lazy-loading delay that causes timing issues with the send form
-import SpendingLimitsLoader from '@/features/spending-limits/components/SpendingLimitsLoader'
 
 /**
  * Wrapper that lazy-loads CounterfactualHooks via the feature system.
@@ -55,6 +54,14 @@ import SpendingLimitsLoader from '@/features/spending-limits/components/Spending
 const CounterfactualHooksLoader = () => {
   const { CounterfactualHooks } = useLoadFeature(CounterfactualFeature)
   return <CounterfactualHooks />
+}
+
+/**
+ * Wrapper that lazy-loads SpendingLimitsLoader via the feature system.
+ */
+const SpendingLimitsLoaderWrapper = () => {
+  const { SpendingLimitsLoader } = useLoadFeature(SpendingLimitsFeature)
+  return <SpendingLimitsLoader />
 }
 import PkModulePopup from '@/services/private-key-module/PkModulePopup'
 import GeoblockingProvider from '@/components/common/GeoblockingProvider'
@@ -176,7 +183,7 @@ const SafeWalletApp = ({
 
             <CounterfactualHooksLoader />
 
-            <SpendingLimitsLoader />
+            <SpendingLimitsLoaderWrapper />
 
             <Analytics />
 

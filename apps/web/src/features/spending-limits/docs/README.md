@@ -126,7 +126,7 @@ src/features/spending-limits/
 │   ├── RemoveSpendingLimitReview/
 │   └── ReviewSpendingLimitTx/   # Spending limit execution
 ├── hooks/
-│   ├── useSpendingLimits.ts     # Data loading (used by SpendingLimitsLoader)
+│   ├── useSpendingLimits.ts     # useLoadSpendingLimits (used by SpendingLimitsLoader)
 │   ├── useSpendingLimit.ts      # Get limit for token
 │   ├── useSpendingLimitGas.ts   # Gas estimation
 │   └── useIsOnlySpendingLimitBeneficiary.ts

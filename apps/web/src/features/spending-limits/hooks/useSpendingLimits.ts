@@ -20,7 +20,7 @@ import {
  * Data is loaded once on app start via SpendingLimitsLoader component.
  * This hook reads from the store and handles the initial fetch.
  */
-export const useSpendingLimits = () => {
+export const useLoadSpendingLimits = () => {
   const dispatch = useAppDispatch()
   const spendingLimits = useAppSelector(selectSpendingLimits)
   const storeLoading = useAppSelector(selectSpendingLimitsLoading)

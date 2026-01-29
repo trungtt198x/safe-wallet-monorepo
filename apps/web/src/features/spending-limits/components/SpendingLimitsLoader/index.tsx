@@ -1,4 +1,4 @@
-import { useSpendingLimits } from '../../hooks/useSpendingLimits'
+import { useLoadSpendingLimits } from '../../hooks/useSpendingLimits'
 
 /**
  * Global component that loads spending limits data on app start.
@@ -10,7 +10,7 @@ import { useSpendingLimits } from '../../hooks/useSpendingLimits'
  */
 const SpendingLimitsLoader = () => {
   // Load spending limits data on mount
-  useSpendingLimits()
+  useLoadSpendingLimits()
 
   return null
 }

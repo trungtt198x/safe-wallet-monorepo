@@ -38,20 +38,12 @@ import useSafeMessagePendingStatuses from '@/hooks/messages/useSafeMessagePendin
 import useChangedValue from '@/hooks/useChangedValue'
 import { TxModalProvider } from '@/components/tx-flow'
 import { useNotificationTracking } from '@/components/settings/PushNotifications/hooks/useNotificationTracking'
+import Recovery from '@/features/recovery/components/Recovery'
 import WalletProvider from '@/components/common/WalletProvider'
 import { CounterfactualFeature } from '@/features/counterfactual'
-import { RecoveryFeature } from '@/features/recovery'
-import { SpendingLimitsFeature } from '@/features/spending-limits'
 import { useLoadFeature } from '@/features/__core__'
-
-/**
- * Wrapper that lazy-loads Recovery via the feature system.
- * This ensures the entire recovery feature loads as a single chunk.
- */
-const RecoveryLoader = () => {
-  const { Recovery } = useLoadFeature(RecoveryFeature)
-  return <Recovery />
-}
+// Direct import to avoid lazy-loading delay that causes timing issues with the send form
+import SpendingLimitsLoader from '@/features/spending-limits/components/SpendingLimitsLoader'
 
 /**
  * Wrapper that lazy-loads CounterfactualHooks via the feature system.
@@ -61,15 +53,6 @@ const RecoveryLoader = () => {
 const CounterfactualHooksLoader = () => {
   const { CounterfactualHooks } = useLoadFeature(CounterfactualFeature)
   return <CounterfactualHooks />
-}
-
-/**
- * Global loader for spending limits data.
- * Lazy-loaded to keep the heavy fetching logic out of the initial bundle.
- */
-const SpendingLimitsLoaderWrapper = () => {
-  const { SpendingLimitsLoader } = useLoadFeature(SpendingLimitsFeature)
-  return <SpendingLimitsLoader />
 }
 import PkModulePopup from '@/services/private-key-module/PkModulePopup'
 import GeoblockingProvider from '@/components/common/GeoblockingProvider'
@@ -187,11 +170,11 @@ const SafeWalletApp = ({
 
             <Notifications />
 
-            <RecoveryLoader />
+            <Recovery />
 
             <CounterfactualHooksLoader />
 
-            <SpendingLimitsLoaderWrapper />
+            <SpendingLimitsLoader />
 
             <Analytics />
 

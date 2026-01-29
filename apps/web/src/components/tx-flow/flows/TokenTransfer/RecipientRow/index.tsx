@@ -11,8 +11,9 @@ import { useHasPermission } from '@/permissions/hooks/useHasPermission'
 import { Permission } from '@/permissions/config'
 import { useCallback, useContext, useEffect, useMemo } from 'react'
 import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
-import { useLoadFeature } from '@/features/__core__'
-import { SpendingLimitsFeature, selectSpendingLimits } from '@/features/spending-limits'
+import { selectSpendingLimits } from '@/features/spending-limits'
+// Direct import to avoid re-renders from useLoadFeature that break the MUI Select
+import SpendingLimitRow from '@/features/spending-limits/components/SpendingLimitRow'
 import { useAppSelector } from '@/store'
 import { useVisibleTokens } from '../utils'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
@@ -34,7 +35,6 @@ type RecipientRowProps = {
 const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLimit }: RecipientRowProps) => {
   const balancesItems = useVisibleTokens()
   const spendingLimits = useAppSelector(selectSpendingLimits)
-  const { SpendingLimitRow } = useLoadFeature(SpendingLimitsFeature)
 
   const {
     formState: { errors },

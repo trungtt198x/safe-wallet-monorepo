@@ -21,6 +21,7 @@ import type HnSecurityReportBtn from './components/HnSecurityReportBtn/HnSecurit
 import type { HnLoginCard } from './components/HnLoginCard'
 import type HypernativeLogo from './components/HypernativeLogo'
 import type { HypernativeTooltip } from './components/HypernativeTooltip'
+import type { SafeHeaderHnTooltip } from './components/SafeHeaderHnTooltip'
 import type { HnAnalysisGroupCard } from './components/HnAnalysisGroupCard'
 import type { HnCustomChecksCard } from './components/HnCustomChecksCard'
 import type { HnInfoCard } from './components/HnInfoCard'
@@ -42,6 +43,7 @@ export interface HypernativeContract {
   // UI Components (PascalCase → stub renders null)
   HypernativeLogo: typeof HypernativeLogo
   HypernativeTooltip: typeof HypernativeTooltip
+  SafeHeaderHnTooltip: typeof SafeHeaderHnTooltip
   HnAnalysisGroupCard: typeof HnAnalysisGroupCard
   HnCustomChecksCard: typeof HnCustomChecksCard
   HnInfoCard: typeof HnInfoCard

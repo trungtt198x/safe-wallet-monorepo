@@ -4,7 +4,9 @@ import * as useSafeInfo from '@/hooks/useSafeInfo'
 import * as useSafeAddress from '@/hooks/useSafeAddress'
 import * as useAddressResolver from '@/hooks/useAddressResolver'
 import * as useVisibleBalances from '@/hooks/useVisibleBalances'
-import * as useIsHypernativeGuard from '@/features/hypernative/hooks'
+import * as useIsHypernativeGuard from '@/features/hypernative/hooks/useIsHypernativeGuard'
+import * as coreFeatures from '@/features/__core__'
+import { SafeHeaderHnTooltip } from '@/features/hypernative/components/SafeHeaderHnTooltip'
 import { extendedSafeInfoBuilder } from '@/tests/builders/safe'
 
 const MOCK_SAFE_ADDRESS = '0x0000000000000000000000000000000000005AFE'
@@ -13,7 +15,13 @@ jest.mock('@/hooks/useSafeInfo')
 jest.mock('@/hooks/useSafeAddress')
 jest.mock('@/hooks/useAddressResolver')
 jest.mock('@/hooks/useVisibleBalances')
-jest.mock('@/features/hypernative/hooks')
+jest.mock('@/features/hypernative/hooks/useIsHypernativeGuard')
+jest.mock('@/features/__core__', () => ({
+  ...jest.requireActual('@/features/__core__'),
+  useLoadFeature: jest.fn(),
+}))
+
+const mockUseLoadFeature = coreFeatures.useLoadFeature as jest.Mock
 
 describe('SafeHeaderInfo', () => {
   beforeEach(() => {
@@ -51,6 +59,13 @@ describe('SafeHeaderInfo', () => {
     jest.spyOn(useIsHypernativeGuard, 'useIsHypernativeGuard').mockReturnValue({
       isHypernativeGuard: false,
       loading: false,
+    })
+
+    mockUseLoadFeature.mockReturnValue({
+      SafeHeaderHnTooltip,
+      $isLoading: false,
+      $isDisabled: false,
+      $isReady: true,
     })
   })
 

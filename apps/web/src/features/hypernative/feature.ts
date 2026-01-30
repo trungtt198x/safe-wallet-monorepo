@@ -21,6 +21,7 @@ import HnSecurityReportBtn from './components/HnSecurityReportBtn/HnSecurityRepo
 import { HnLoginCard } from './components/HnLoginCard'
 import HypernativeLogo from './components/HypernativeLogo'
 import { HypernativeTooltip } from './components/HypernativeTooltip'
+import { SafeHeaderHnTooltip } from './components/SafeHeaderHnTooltip'
 import { HnAnalysisGroupCard } from './components/HnAnalysisGroupCard'
 import { HnCustomChecksCard } from './components/HnCustomChecksCard'
 import { HnInfoCard } from './components/HnInfoCard'
@@ -45,6 +46,7 @@ const feature: HypernativeContract = {
   // UI Components
   HypernativeLogo,
   HypernativeTooltip,
+  SafeHeaderHnTooltip,
   HnAnalysisGroupCard,
   HnCustomChecksCard,
   HnInfoCard,

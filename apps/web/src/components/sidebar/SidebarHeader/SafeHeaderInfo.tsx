@@ -12,7 +12,8 @@ import useSafeAddress from '@/hooks/useSafeAddress'
 import { useAddressResolver } from '@/hooks/useAddressResolver'
 import { useVisibleBalances } from '@/hooks/useVisibleBalances'
 import { InfoTooltip } from '@/features/stake/components/InfoTooltip'
-import { SafeHeaderHnTooltip } from '@/features/hypernative/components/SafeHeaderHnTooltip'
+import { HypernativeFeature } from '@/features/hypernative'
+import { useLoadFeature } from '@/features/__core__'
 
 import css from './styles.module.css'
 
@@ -22,6 +23,7 @@ const SafeHeaderInfo = (): ReactElement => {
   const { safe } = useSafeInfo()
   const { threshold, owners } = safe
   const { ens } = useAddressResolver(safeAddress)
+  const { SafeHeaderHnTooltip } = useLoadFeature(HypernativeFeature)
 
   return (
     <div data-testid="safe-header-info" className={css.safe}>

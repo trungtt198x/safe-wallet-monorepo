@@ -24,9 +24,10 @@ import {
   useHnQueueAssessmentResult,
   useShowHypernativeAssessment,
   useHypernativeOAuth,
-  HnQueueAssessment,
+  HypernativeFeature,
 } from '@/features/hypernative'
 import { getSafeTxHashFromTxId } from '@/utils/transactions'
+import { useLoadFeature } from '@/features/__core__/useLoadFeature'
 
 type TxSummaryProps = {
   isConflictGroup?: boolean
@@ -36,6 +37,7 @@ type TxSummaryProps = {
 
 const TxSummary = ({ item, isConflictGroup, isBulkGroup }: TxSummaryProps): ReactElement => {
   const hasDefaultTokenlist = useHasFeature(FEATURES.DEFAULT_TOKENLIST)
+  const { HnQueueAssessment } = useLoadFeature(HypernativeFeature)
 
   const tx = item.transaction
   const isQueue = isTxQueued(tx.txStatus)
@@ -106,9 +108,9 @@ const TxSummary = ({ item, isConflictGroup, isBulkGroup }: TxSummaryProps): Reac
         </Box>
       )}
 
-      {showAssessment && (
+      {showAssessment && safeTxHash && (
         <Box gridArea="assessment" className={css.assessment}>
-          <HnQueueAssessment safeTxHash={safeTxHash!} assessment={assessment} isAuthenticated={isAuthenticated} />
+          <HnQueueAssessment safeTxHash={safeTxHash} assessment={assessment} isAuthenticated={isAuthenticated} />
         </Box>
       )}
 

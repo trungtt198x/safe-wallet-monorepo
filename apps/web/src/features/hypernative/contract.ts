@@ -25,6 +25,7 @@ import type { HnAnalysisGroupCard } from './components/HnAnalysisGroupCard'
 import type { HnCustomChecksCard } from './components/HnCustomChecksCard'
 import type { HnInfoCard } from './components/HnInfoCard'
 import type { isHypernativeGuard } from './services/hypernativeGuardCheck'
+import type { HnQueueAssessment } from './components/HnQueueAssessment'
 
 export interface HypernativeContract {
   // Banner Components (PascalCase → stub renders null)
@@ -33,6 +34,7 @@ export interface HypernativeContract {
   HnMiniTxBanner: typeof HnMiniTxBanner
   HnPendingBanner: typeof HnPendingBanner
   HnQueueAssessmentBanner: typeof HnQueueAssessmentBanner
+  HnQueueAssessment: typeof HnQueueAssessment
 
   // Settings Components (PascalCase → stub renders null)
   HnActivatedSettingsBanner: typeof HnActivatedBannerForSettings

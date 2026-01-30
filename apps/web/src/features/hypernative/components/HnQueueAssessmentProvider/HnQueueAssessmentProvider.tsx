@@ -43,7 +43,12 @@ export const HnQueueAssessmentProvider = ({ children }: HnQueueAssessmentProvide
       allPages.push(...sourcePages)
     })
 
-    if (allPages.length !== pages.length || allPages.some((page, index) => !isSamePage(page, pages[index]))) {
+    if (allPages.length !== pages.length) {
+      setPages(allPages)
+      return
+    }
+
+    if (allPages.some((page, index) => !isSamePage(page, pages[index]))) {
       setPages(allPages)
     }
   }, [pages])

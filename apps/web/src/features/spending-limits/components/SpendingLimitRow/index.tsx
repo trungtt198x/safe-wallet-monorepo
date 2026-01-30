@@ -14,18 +14,7 @@ import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
 import { useHasPermission } from '@/permissions/hooks/useHasPermission'
 import { Permission } from '@/permissions/config'
 import { HelpCenterArticle } from '@safe-global/utils/config/constants'
-
-// Token transfer type enum - replicated here to avoid circular imports
-export enum TokenTransferType {
-  multiSig = 'multiSig',
-  spendingLimit = 'spendingLimit',
-}
-
-// Field names for multi-transfer forms
-export enum MultiTransfersFields {
-  recipients = 'recipients',
-  type = 'type',
-}
+import { TokenTransferType, MultiTransfersFields } from '@/components/tx-flow/flows/TokenTransfer'
 
 const SpendingLimitRow = ({
   availableAmount,

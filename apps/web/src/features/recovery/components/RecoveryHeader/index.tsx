@@ -9,7 +9,7 @@ import { RecoveryInProgressCard } from '@/features/recovery/components/RecoveryC
 import { RecoveryEvent, RecoveryTxType, recoverySubscribe } from '@/features/recovery/services/recoveryEvents'
 import type { RecoveryQueueItem } from '@/features/recovery/services/recovery-state'
 
-export function InternalRecoveryHeader({
+function InternalRecoveryHeader({
   isProposalInProgress,
   isRecoverer,
   queue,
@@ -61,5 +61,8 @@ const RecoveryHeader = madProps(InternalRecoveryHeader, {
   isRecoverer: useIsRecoverer,
   queue: useRecoveryQueue,
 })
+
+// Export for tests
+export { InternalRecoveryHeader }
 
 export default RecoveryHeader

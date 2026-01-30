@@ -16,6 +16,84 @@ type UseThreatAnalysisHypernativeBatchProps = {
 }
 
 /**
+ * Context object for tracking the fetch operation
+ * @property safeAddress - The Safe address
+ * @property authToken - The authentication token
+ */
+type FetchContext = { safeAddress: string; authToken?: string }
+
+/**
+ * Extracts the Safe transaction hash from a queued item
+ * @param item - The queued item
+ * @returns The Safe transaction hash or null if not found
+ */
+const extractSafeTxHashFromItem = (item: QueuedItemPage['results'][number]): `0x${string}` | null => {
+  if (!isTransactionListItem(item)) return null
+
+  const txId = item.transaction.id
+  if (!txId) return null
+
+  const safeTxHash = getSafeTxHashFromTxId(txId)
+  return safeTxHash ? (safeTxHash as `0x${string}`) : null
+}
+
+/**
+ * Extracts the Safe transaction hashes from a list of queued pages
+ * @param pages - The list of queued pages
+ * @returns The list of Safe transaction hashes
+ */
+const extractSafeTxHashesFromPages = (pages: (QueuedItemPage | undefined)[]): `0x${string}`[] => {
+  const hashSet = new Set<`0x${string}`>()
+
+  for (const page of pages) {
+    const results = page?.results ?? []
+    for (const item of results) {
+      const hash = extractSafeTxHashFromItem(item)
+      if (hash) hashSet.add(hash)
+    }
+  }
+
+  return Array.from(hashSet)
+}
+
+/**
+ * Collects the completed results from the fetched assessments
+ * @param fetchedAssessments - The fetched assessments
+ * @returns The collected results
+ */
+const collectCompletedResults = (
+  fetchedAssessments: Record<string, AsyncResult<ThreatAnalysisResults>>,
+): Record<`0x${string}`, ThreatAnalysisResults | null> => {
+  const results: Record<`0x${string}`, ThreatAnalysisResults | null> = {}
+
+  for (const [hash, result] of Object.entries(fetchedAssessments)) {
+    const [data, error, loading] = result
+    if (loading) continue
+
+    if (error) {
+      results[hash as `0x${string}`] = null
+    } else if (data !== undefined) {
+      results[hash as `0x${string}`] = data
+    }
+  }
+
+  return results
+}
+
+/**
+ * Converts a cached assessment to an AsyncResult
+ * @param cached - The cached assessment
+ * @returns The AsyncResult
+ */
+const cachedToAsyncResult = (
+  cached: ThreatAnalysisResults | null | undefined,
+): AsyncResult<ThreatAnalysisResults> | null => {
+  if (cached === undefined) return null
+  if (cached === null) return [undefined, new Error('Assessment failed'), false]
+  return [cached, undefined, false]
+}
+
+/**
  * Hook for fetching batch Hypernative assessments for all transactions in the queue
  *
  * Extracts safeTxHashes from all loaded queue pages and fetches batch assessments.
@@ -33,53 +111,15 @@ export function useThreatAnalysisHypernativeBatch({
   const [{ token: authToken }] = useAuthToken()
   const dispatch = useAppDispatch()
 
-  // Extract all safeTxHashes from all queue pages
-  const safeTxHashes = useMemo(() => {
-    if (skip) {
-      return []
-    }
+  const safeTxHashes = useMemo(() => (skip ? [] : extractSafeTxHashesFromPages(pages)), [pages, skip])
 
-    const hashSet = new Set<`0x${string}`>()
-
-    for (const page of pages) {
-      if (!page?.results) {
-        continue
-      }
-
-      for (const item of page.results) {
-        // Only process transaction items (skip labels, date labels, etc.)
-        if (!isTransactionListItem(item)) {
-          continue
-        }
-
-        // Extract safeTxHash from transaction ID
-        const txId = item.transaction.id
-        if (!txId) {
-          continue
-        }
-
-        const safeTxHash = getSafeTxHashFromTxId(txId)
-        if (!safeTxHash) {
-          continue
-        }
-
-        hashSet.add(safeTxHash as `0x${string}`)
-      }
-    }
-
-    return Array.from(hashSet)
-  }, [pages, skip])
-
-  // Get cached assessments from Redux
   const cachedAssessments = useAppSelector((state) => selectAssessmentsByHashes(state, safeTxHashes))
 
-  // Determine which hashes need to be fetched (not in cache)
   const hashesToFetch = useMemo(
     () => safeTxHashes.filter((hash) => cachedAssessments[hash] === undefined),
     [safeTxHashes, cachedAssessments],
   )
 
-  // Fetch batch assessments for hashes not in cache
   const fetchedAssessments = useThreatAnalysisHypernativeBatchUtils({
     safeTxHashes: hashesToFetch,
     safeAddress: safeAddress as `0x${string}`,
@@ -87,68 +127,41 @@ export function useThreatAnalysisHypernativeBatch({
     skip,
   })
 
-  // Track the safeAddress and authToken used when fetch was initiated
-  // This prevents storing results for the wrong Safe if user switches accounts during fetch
-  const fetchContextRef = useRef<{ safeAddress: string; authToken?: string } | null>(null)
+  const fetchContextRef = useRef<FetchContext | null>(null)
 
-  // Update fetch context when a new fetch is initiated (hashesToFetch changes)
   useEffect(() => {
     if (hashesToFetch.length > 0) {
       fetchContextRef.current = { safeAddress, authToken }
     }
   }, [hashesToFetch.length, safeAddress, authToken])
 
-  // Store fetched results in Redux when they become available
   useEffect(() => {
-    const resultsToStore: Record<`0x${string}`, ThreatAnalysisResults | null> = {}
+    const resultsToStore = collectCompletedResults(fetchedAssessments)
+    if (Object.keys(resultsToStore).length === 0) return
 
-    Object.entries(fetchedAssessments).forEach(([hash, result]) => {
-      const [data, error, loading] = result
+    const fetchContext = fetchContextRef.current
+    const contextMatches =
+      fetchContext && fetchContext.safeAddress === safeAddress && fetchContext.authToken === authToken
 
-      if (loading) {
-        return
-      }
-
-      if (error) {
-        resultsToStore[hash as `0x${string}`] = null
-      }
-
-      if (data !== undefined) {
-        resultsToStore[hash as `0x${string}`] = data
-      }
-    })
-
-    // Only store if safeAddress and authToken match the context when fetch was initiated
-    // This prevents storing results for the wrong Safe if user switched accounts during fetch
-    if (Object.keys(resultsToStore).length > 0) {
-      const fetchContext = fetchContextRef.current
-      if (fetchContext && fetchContext.safeAddress === safeAddress && fetchContext.authToken === authToken) {
-        dispatch(setBatchAssessments(resultsToStore))
-      }
+    if (contextMatches) {
+      dispatch(setBatchAssessments(resultsToStore))
     }
   }, [fetchedAssessments, dispatch, safeAddress, authToken])
 
-  // Merge cached and fetched assessments
   const assessments = useMemo(() => {
     const merged: Record<`0x${string}`, AsyncResult<ThreatAnalysisResults>> = {}
 
-    // Process all safeTxHashes to ensure they're represented in the result
-    safeTxHashes.forEach((hash) => {
-      // Fetched assessments take precedence over cached ones
+    for (const hash of safeTxHashes) {
       if (fetchedAssessments[hash]) {
         merged[hash] = fetchedAssessments[hash]
-      } else if (Object.hasOwn(cachedAssessments, hash)) {
-        // Use cached assessment (convert null error state back to AsyncResult)
-        const cached = cachedAssessments[hash]
-        if (cached === null) {
-          merged[hash] = [undefined, new Error('Assessment failed'), false]
-        } else {
-          merged[hash] = [cached, undefined, false]
-        }
+        continue
       }
-      // If hash is not cached and not fetched, it will be missing from merged
-      // This is expected if fetching hasn't started yet
-    })
+
+      const cachedResult = cachedToAsyncResult(cachedAssessments[hash])
+      if (cachedResult) {
+        merged[hash] = cachedResult
+      }
+    }
 
     return merged
   }, [safeTxHashes, cachedAssessments, fetchedAssessments])

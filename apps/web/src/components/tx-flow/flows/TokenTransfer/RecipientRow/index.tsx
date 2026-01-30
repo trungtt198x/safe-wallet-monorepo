@@ -95,6 +95,7 @@ const RecipientRow = ({ fieldArray, removable = true, remove, disableSpendingLim
               selectedToken={selectedToken}
               maxAmount={maxAmount}
               deps={[MultiTokenTransferFields.recipients]}
+              defaultTokenAddress={tokenAddress}
             />
           </FormControl>
 

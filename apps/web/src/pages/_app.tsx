@@ -71,6 +71,7 @@ import { useDatadog } from '@/services/datadog'
 import useMixpanel from '@/services/analytics/useMixpanel'
 import { AddressBookSourceProvider } from '@/components/common/AddressBookSourceProvider'
 import { useSafeLabsTerms } from '@/hooks/useSafeLabsTerms'
+import { Captcha } from '@/components/common/Captcha'
 
 const reduxStore = makeStore()
 setStoreInstance(reduxStore)
@@ -164,27 +165,29 @@ const SafeWalletApp = ({
         <AppProviders>
           <CssBaseline />
 
-          <InitApp />
+          <Captcha>
+            <InitApp />
 
-          <TermsGate>
-            <PageLayout pathname={router.pathname}>
-              <Component {...pageProps} key={safeKey} />
-            </PageLayout>
+            <TermsGate>
+              <PageLayout pathname={router.pathname}>
+                <Component {...pageProps} key={safeKey} />
+              </PageLayout>
 
-            <CookieAndTermBanner />
+              <CookieAndTermBanner />
 
-            <OutreachPopup />
+              <OutreachPopup />
 
-            <Notifications />
+              <Notifications />
 
-            <RecoveryLoader />
+              <RecoveryLoader />
 
-            <CounterfactualHooksLoader />
+              <CounterfactualHooksLoader />
 
-            <Analytics />
+              <Analytics />
 
-            <PkModulePopup />
-          </TermsGate>
+              <PkModulePopup />
+            </TermsGate>
+          </Captcha>
         </AppProviders>
       </CacheProvider>
     </Provider>

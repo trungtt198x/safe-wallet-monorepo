@@ -1,7 +1,6 @@
 import { type ReactElement } from 'react'
 import Typography from '@mui/material/Typography'
 import Skeleton from '@mui/material/Skeleton'
-import { Box } from '@mui/material'
 
 import useSafeInfo from '@/hooks/useSafeInfo'
 import SafeIcon from '@/components/common/SafeIcon'
@@ -12,7 +11,7 @@ import useSafeAddress from '@/hooks/useSafeAddress'
 import { useAddressResolver } from '@/hooks/useAddressResolver'
 import { useVisibleBalances } from '@/hooks/useVisibleBalances'
 import { InfoTooltip } from '@/features/stake/components/InfoTooltip'
-import { HypernativeFeature } from '@/features/hypernative'
+import { HypernativeFeature, useIsHypernativeGuard } from '@/features/hypernative'
 import { useLoadFeature } from '@/features/__core__'
 
 import css from './styles.module.css'
@@ -24,6 +23,7 @@ const SafeHeaderInfo = (): ReactElement => {
   const { threshold, owners } = safe
   const { ens } = useAddressResolver(safeAddress)
   const { SafeHeaderHnTooltip } = useLoadFeature(HypernativeFeature)
+  const { isHypernativeGuard } = useIsHypernativeGuard()
 
   return (
     <div data-testid="safe-header-info" className={css.safe}>
@@ -37,10 +37,13 @@ const SafeHeaderInfo = (): ReactElement => {
 
       <div className={css.address}>
         {safeAddress ? (
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <SafeHeaderHnTooltip />
-            <EthHashInfo address={safeAddress} shortAddress showAvatar={false} name={ens} />
-          </Box>
+          <EthHashInfo
+            address={safeAddress}
+            shortAddress
+            showAvatar={false}
+            name={ens}
+            badgeTooltip={isHypernativeGuard ? <SafeHeaderHnTooltip /> : undefined}
+          />
         ) : (
           <Typography variant="body2">
             <Skeleton variant="text" width={86} />

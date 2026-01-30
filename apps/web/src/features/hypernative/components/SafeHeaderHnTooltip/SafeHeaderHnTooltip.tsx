@@ -20,7 +20,7 @@ export const SafeHeaderHnTooltip = (): ReactElement | null => {
   }
 
   return (
-    <HypernativeTooltip placement="left">
+    <HypernativeTooltip placement="right">
       <SvgIcon component={SafeShieldIconSvg} inheritViewBox sx={safeShieldSvgStyles} />
     </HypernativeTooltip>
   )

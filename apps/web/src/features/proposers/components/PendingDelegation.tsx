@@ -153,7 +153,7 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
 
   return (
     <Box>
-      <Box sx={{ bgcolor: 'background.main', borderRadius: 1, p: 2 }}>
+      <Box sx={{ bgcolor: 'var(--color-border-background)', borderRadius: 1, p: 2 }}>
         <Box display="flex" alignItems="center" gap={3}>
           {delegation.action === 'remove' ? (
             <>

@@ -16,12 +16,12 @@ const PendingDelegationsList = () => {
         elevation={0}
         sx={{
           '&.MuiAccordion-root': {
-            border: '1px solid #DCDEE0',
+            border: '1px solid var(--color-border-light)',
             borderRadius: '6px',
-            bgcolor: 'background.paper',
+            bgcolor: 'var(--color-background-paper)',
           },
           '& .MuiAccordionSummary-root': {
-            bgcolor: 'background.paper',
+            bgcolor: 'var(--color-background-paper)',
           },
         }}
       >

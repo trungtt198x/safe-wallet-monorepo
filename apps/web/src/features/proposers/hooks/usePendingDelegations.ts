@@ -83,8 +83,9 @@ export const usePendingDelegations = (): {
 
         // Extract TOTP from the delegate TypedData message
         const typedDataMessage = typeof message.message === 'object' ? message.message : null
-        const messageTotp = typedDataMessage?.message?.totp as number | undefined
-        if (messageTotp === undefined) return acc
+        const rawTotp = typedDataMessage?.message?.totp
+        const messageTotp = rawTotp !== undefined ? Number(rawTotp) : undefined
+        if (messageTotp === undefined || isNaN(messageTotp)) return acc
 
         const status = deriveDelegationStatus(
           message.confirmationsSubmitted,

@@ -5,7 +5,7 @@ import { showNotification } from '@/store/notificationsSlice'
 import Cookies from 'js-cookie'
 import { useAuthToken } from './useAuthToken'
 import useSafeInfo from '@/hooks/useSafeInfo'
-import { useChainId } from '@/hooks/useChainId'
+import useChainId from '@/hooks/useChainId'
 
 /**
  * OAuth authentication status and controls
@@ -327,7 +327,6 @@ export const useHypernativeOAuth = (): HypernativeAuthStatus => {
       const left = window.screenX + window.innerWidth / 2 - POPUP_WIDTH / 2
       const top = window.screenY + window.innerHeight / 2 - POPUP_HEIGHT / 2
 
-      console.log('🚀 ~ useHypernativeOAuth ~ authUrl:', authUrl)
       // Try to open popup first (better UX)
       const popup = window.open(
         authUrl,

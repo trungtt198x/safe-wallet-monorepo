@@ -18,10 +18,10 @@ const PendingDelegationsList = () => {
           '&.MuiAccordion-root': {
             border: '1px solid var(--color-border-light)',
             borderRadius: '6px',
-            bgcolor: 'var(--color-background-paper)',
+            backgroundColor: '#fff',
           },
           '& .MuiAccordionSummary-root': {
-            bgcolor: 'var(--color-background-paper)',
+            backgroundColor: '#fff',
           },
         }}
       >

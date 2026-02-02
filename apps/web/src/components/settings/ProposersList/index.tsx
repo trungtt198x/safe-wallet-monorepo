@@ -1,4 +1,3 @@
-import { Chip } from '@/components/common/Chip'
 import EnhancedTable from '@/components/common/EnhancedTable'
 import tableCss from '@/components/common/EnhancedTable/styles.module.css'
 import CheckWallet from '@/components/common/CheckWallet'
@@ -99,12 +98,14 @@ const ProposersList = () => {
         <Grid container spacing={3}>
           <Grid item xs>
             <Typography fontWeight="bold" mb={2}>
-              Proposers <Chip label="New" sx={{ backgroundColor: 'secondary.light', color: 'static.main' }} />
+              Proposers
             </Typography>
             <Typography mb={2}>
               Proposers can suggest transactions but cannot approve or execute them. Signers should review and approve
               transactions first. <ExternalLink href={HelpCenterArticle.PROPOSERS}>Learn more</ExternalLink>
             </Typography>
+
+            {showPendingDelegations && <PendingDelegationsList />}
 
             {isEnabled && (
               <Box mb={2}>
@@ -130,8 +131,6 @@ const ProposersList = () => {
                 </CheckWallet>
               </Box>
             )}
-
-            {showPendingDelegations && <PendingDelegationsList />}
 
             {rows.length > 0 && <EnhancedTable rows={rows} headCells={headCells} />}
           </Grid>

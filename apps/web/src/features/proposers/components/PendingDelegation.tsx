@@ -1,16 +1,22 @@
 import { useState } from 'react'
-import { Box, Button, Chip, CircularProgress, LinearProgress, Typography } from '@mui/material'
+import { useRouter } from 'next/router'
+import { Box, Button, CircularProgress, SvgIcon, Typography } from '@mui/material'
+import DeleteIcon from '@/public/images/common/delete.svg'
 import EthHashInfo from '@/components/common/EthHashInfo'
 import ErrorMessage from '@/components/tx/ErrorMessage'
+import CopyTooltip from '@/components/common/CopyTooltip'
 import { signProposerTypedDataForSafe } from '@/features/proposers/utils/utils'
 import { confirmDelegationMessage } from '@/features/proposers/services/delegationMessages'
 import { useSubmitDelegation } from '@/features/proposers/hooks/useSubmitDelegation'
 import { usePendingDelegations } from '@/features/proposers/hooks/usePendingDelegations'
+import { getTotpExpirationDate } from '@/features/proposers/utils/totp'
 import useChainId from '@/hooks/useChainId'
 import useWallet from '@/hooks/wallets/useWallet'
+import useOrigin from '@/hooks/useOrigin'
 import { useAppDispatch } from '@/store'
 import { showNotification } from '@/store/notificationsSlice'
 import { getAssertedChainSigner } from '@/services/tx/tx-sender/sdk'
+import { AppRoutes } from '@/config/routes'
 import type { PendingDelegation as PendingDelegationType } from '@/features/proposers/types'
 
 type PendingDelegationProps = {
@@ -23,13 +29,20 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
   const chainId = useChainId()
   const wallet = useWallet()
   const dispatch = useAppDispatch()
+  const router = useRouter()
+  const origin = useOrigin()
   const { submitDelegation, isSubmitting } = useSubmitDelegation()
   const { refetch } = usePendingDelegations()
 
-  const progress = (delegation.confirmationsSubmitted / delegation.confirmationsRequired) * 100
   const hasAlreadySigned = delegation.confirmations.some(
     (c) => c.owner.value.toLowerCase() === wallet?.address?.toLowerCase(),
   )
+
+  const expirationDate = getTotpExpirationDate(delegation.totp)
+  const formattedExpiration = expirationDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  const { safe = '' } = router.query
+  const shareUrl = `${origin}${AppRoutes.transactions.msg}?safe=${safe}&messageHash=${delegation.messageHash}`
 
   const handleSign = async () => {
     if (!wallet?.provider) return
@@ -40,7 +53,6 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
     try {
       const signer = await getAssertedChainSigner(wallet.provider)
 
-      // Sign the same SafeMessage that the initiator signed
       const eoaSignature = await signProposerTypedDataForSafe(
         chainId,
         delegation.delegateAddress,
@@ -48,18 +60,11 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
         signer,
       )
 
-      // Confirm the off-chain message
       await confirmDelegationMessage(dispatch, chainId, delegation.messageHash, eoaSignature)
 
-      // Check if this confirmation meets the threshold
       const newConfirmationsCount = delegation.confirmationsSubmitted + 1
       if (newConfirmationsCount >= delegation.confirmationsRequired) {
-        // Refetch to get the updated preparedSignature, then auto-submit
         refetch()
-
-        // Compute what the preparedSignature would contain for auto-submission
-        // We need to refetch and get the updated message with preparedSignature
-        // The refetch will update the delegation status to 'ready' and show the submit button
         dispatch(
           showNotification({
             variant: 'success',
@@ -104,83 +109,89 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
     }
   }
 
-  const statusChip = {
-    pending: <Chip label="Pending" size="small" color="warning" />,
-    ready: <Chip label="Ready to submit" size="small" color="success" />,
-    expired: <Chip label="Expired" size="small" color="error" />,
+  const renderActionButton = () => {
+    if (delegation.status === 'ready') {
+      return (
+        <Button
+          size="small"
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          sx={{ minWidth: '140px' }}
+        >
+          {isSubmitting ? <CircularProgress size={16} /> : 'Submit delegation'}
+        </Button>
+      )
+    }
+
+    if (delegation.status === 'pending' && !hasAlreadySigned) {
+      return (
+        <Button
+          size="small"
+          variant="contained"
+          onClick={handleSign}
+          disabled={isSignLoading}
+          sx={{ minWidth: '80px' }}
+        >
+          {isSignLoading ? <CircularProgress size={16} /> : 'Sign'}
+        </Button>
+      )
+    }
+
+    if (delegation.status === 'pending' && hasAlreadySigned) {
+      return (
+        <CopyTooltip text={shareUrl} initialToolTipText="Copy link to share">
+          <Button size="small" variant="outlined" sx={{ minWidth: '100px' }}>
+            Copy link
+          </Button>
+        </CopyTooltip>
+      )
+    }
+
+    return null
   }
 
   return (
-    <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1, mb: 1 }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="body2" fontWeight={700}>
-            {delegation.action === 'add' ? 'Add' : 'Remove'} proposer
-          </Typography>
-          {statusChip[delegation.status]}
-        </Box>
-      </Box>
-
-      <Box mb={1}>
-        <EthHashInfo address={delegation.delegateAddress} showCopyButton shortAddress name={delegation.delegateLabel} />
-      </Box>
-
-      {delegation.status !== 'expired' && (
-        <Box mb={1}>
-          <Box display="flex" justifyContent="space-between" mb={0.5}>
-            <Typography variant="caption" color="text.secondary">
-              Signatures
+    <Box>
+      <Box sx={{ bgcolor: 'background.main', borderRadius: 1, p: 2 }}>
+        <Box display="flex" alignItems="center" gap={3}>
+          {delegation.action === 'remove' ? (
+            <>
+              <SvgIcon component={DeleteIcon} inheritViewBox fontSize="small" color="error" sx={{ flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                Remove proposer:
+              </Typography>
+            </>
+          ) : (
+            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+              New proposer:
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {delegation.confirmationsSubmitted} of {delegation.confirmationsRequired}
-            </Typography>
+          )}
+          <Box sx={{ '& .ethHashInfo-name': { fontWeight: 700 } }}>
+            <EthHashInfo
+              address={delegation.delegateAddress}
+              showCopyButton
+              shortAddress={false}
+              name={delegation.delegateLabel}
+              hasExplorer
+            />
           </Box>
-          <LinearProgress variant="determinate" value={progress} />
         </Box>
-      )}
+      </Box>
 
-      <Box display="flex" alignItems="center" justifyContent="space-between" mt={1}>
-        <Typography variant="caption" color="text.secondary">
-          Initiated by <EthHashInfo address={delegation.proposedBy.value} showCopyButton shortAddress avatarSize={16} />
+      <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+        Expires on {formattedExpiration}
+      </Typography>
+
+      <Box display="flex" alignItems="center" justifyContent="space-between" mt={2}>
+        <Typography variant="body1">
+          <Box component="span" fontWeight={700}>
+            {delegation.confirmationsSubmitted}/{delegation.confirmationsRequired}
+          </Box>{' '}
+          signatures collected
         </Typography>
 
-        <Box display="flex" gap={1}>
-          {delegation.status === 'pending' && !hasAlreadySigned && (
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleSign}
-              disabled={isSignLoading}
-              sx={{ minWidth: '80px' }}
-            >
-              {isSignLoading ? <CircularProgress size={16} /> : 'Sign'}
-            </Button>
-          )}
-
-          {delegation.status === 'pending' && hasAlreadySigned && (
-            <Typography variant="caption" color="text.secondary">
-              You have signed
-            </Typography>
-          )}
-
-          {delegation.status === 'ready' && (
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              sx={{ minWidth: '100px' }}
-            >
-              {isSubmitting ? <CircularProgress size={16} /> : 'Submit delegation'}
-            </Button>
-          )}
-
-          {delegation.status === 'expired' && (
-            <Typography variant="caption" color="text.secondary">
-              This delegation request has expired. Please initiate a new one.
-            </Typography>
-          )}
-        </Box>
+        {renderActionButton()}
       </Box>
 
       {error && (

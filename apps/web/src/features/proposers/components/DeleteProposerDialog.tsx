@@ -168,7 +168,10 @@ const InternalDeleteProposer = ({ wallet, safeAddress, chainId, proposer }: Dele
     setMultiSigInitiated(false)
   }
 
-  const canDelete = wallet?.address === proposer.delegate || wallet?.address === proposer.delegator
+  const canDelete =
+    wallet?.address === proposer.delegate ||
+    wallet?.address === proposer.delegator ||
+    (isNestedSafeOwner && nestedSafeOwners?.includes(proposer.delegator))
 
   return (
     <>

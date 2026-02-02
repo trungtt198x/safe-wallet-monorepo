@@ -193,7 +193,9 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
   }
 
   const isEditing = !!proposer
-  const canEdit = wallet?.address === proposer?.delegator
+  const canEdit =
+    wallet?.address === proposer?.delegator ||
+    (isNestedSafeOwner && nestedSafeOwners?.includes(proposer?.delegator ?? ''))
 
   if (multiSigInitiated) {
     return (

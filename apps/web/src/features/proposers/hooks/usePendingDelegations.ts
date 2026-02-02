@@ -92,6 +92,9 @@ export const usePendingDelegations = (): {
           messageTotp,
         )
 
+        // Filter out expired delegations - don't display them at all
+        if (status === 'expired') return acc
+
         acc.push({
           messageHash: message.messageHash,
           action: origin.action,

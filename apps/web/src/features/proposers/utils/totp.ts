@@ -14,3 +14,12 @@ export const isTotpValid = (messageTotp: number): boolean => {
   const currentTotp = getCurrentTotp()
   return currentTotp - messageTotp <= 1
 }
+
+/**
+ * Computes the expiration date for a TOTP-based delegation.
+ * The TOTP is valid for current interval + 1 previous interval.
+ * So expiration is at (totp + 2) intervals from the epoch.
+ */
+export const getTotpExpirationDate = (totp: number): Date => {
+  return new Date((totp + 2) * 3600 * 1000)
+}

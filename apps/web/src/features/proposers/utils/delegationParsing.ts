@@ -8,17 +8,15 @@ export type DelegationWithTimestamp = PendingDelegation & { _timestamp: number }
 /**
  * Parses the origin JSON string from a message and validates it's a delegation origin.
  */
-export const parseDelegationOrigin = (originStr: string | null | undefined): DelegationOrigin | null => {
+export function parseDelegationOrigin(originStr: string | null | undefined): DelegationOrigin | null {
   if (!originStr) return null
   try {
     const parsed = JSON.parse(originStr)
     if (parsed.type === 'proposer-delegation') {
       return parsed as DelegationOrigin
     }
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Failed to parse delegation origin:', originStr, err)
-    }
+  } catch {
+    // Invalid JSON - not a delegation origin
   }
   return null
 }
@@ -26,11 +24,11 @@ export const parseDelegationOrigin = (originStr: string | null | undefined): Del
 /**
  * Derives the delegation status based on confirmations and TOTP validity.
  */
-export const deriveDelegationStatus = (
+export function deriveDelegationStatus(
   confirmationsSubmitted: number,
   confirmationsRequired: number,
   messageTotp: number,
-): 'pending' | 'ready' | 'expired' => {
+): 'pending' | 'ready' | 'expired' {
   if (!isTotpValid(messageTotp)) return 'expired'
   if (confirmationsSubmitted >= confirmationsRequired) return 'ready'
   return 'pending'
@@ -40,21 +38,22 @@ export const deriveDelegationStatus = (
  * Extracts the TOTP value from a typed data message.
  * Returns undefined if the TOTP cannot be extracted or is invalid.
  */
-export const extractTotpFromMessage = (message: MessageItem['message']): number | undefined => {
+export function extractTotpFromMessage(message: MessageItem['message']): number | undefined {
   const typedDataMessage = typeof message === 'object' ? message : null
   const rawTotp = typedDataMessage?.message?.totp
-  const totp = rawTotp !== undefined ? Number(rawTotp) : undefined
-  return totp !== undefined && !isNaN(totp) ? totp : undefined
+  if (rawTotp === undefined) return undefined
+  const totp = Number(rawTotp)
+  return isNaN(totp) ? undefined : totp
 }
 
 /**
  * Parses a message item into a delegation object if it's a valid delegation for the given Safe.
  */
-export const parseMessageToDelegation = (
+export function parseMessageToDelegation(
   message: MessageItem,
   safeAddress: string,
   parentSafeAddress: string,
-): DelegationWithTimestamp | null => {
+): DelegationWithTimestamp | null {
   const origin = parseDelegationOrigin(message.origin)
   if (!origin || !sameAddress(origin.nestedSafe, safeAddress)) {
     return null

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import type { ReactElement } from 'react'
+import { useState } from 'react'
 import { Box, Button, CircularProgress, Typography } from '@mui/material'
 import { Countdown } from '@/components/common/Countdown'
 import EthHashInfo from '@/components/common/EthHashInfo'
@@ -27,7 +28,7 @@ type PendingDelegationProps = {
   delegation: PendingDelegationType
 }
 
-const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
+function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactElement {
   const [isSignLoading, setIsSignLoading] = useState(false)
   const [error, setError] = useState<Error>()
   const chainId = useChainId()
@@ -39,15 +40,8 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
   const { refetch } = usePendingDelegations()
 
   const hasAlreadySigned = delegation.confirmations.some((c) => sameAddress(c.owner.value, wallet?.address))
-
   const expirationDate = getTotpExpirationDate(delegation.totp)
-
-  // Calculate remaining seconds for countdown
-  const remainingSeconds = useMemo(() => {
-    const now = Date.now()
-    const expirationMs = expirationDate.getTime()
-    return Math.max(0, Math.floor((expirationMs - now) / 1000))
-  }, [expirationDate])
+  const remainingSeconds = Math.max(0, Math.floor((expirationDate.getTime() - Date.now()) / 1000))
 
   // Link to the parent safe's message page where other owners can sign
   const parentSafeId = chain?.shortName
@@ -126,7 +120,7 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
     }
   }
 
-  const renderActionButton = () => {
+  function renderActionButton(): ReactElement | null {
     if (delegation.status === 'ready') {
       return (
         <Button
@@ -141,21 +135,11 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
       )
     }
 
-    if (delegation.status === 'pending' && !hasAlreadySigned) {
-      return (
-        <Button
-          size="small"
-          variant="contained"
-          onClick={handleSign}
-          disabled={isSignLoading}
-          sx={{ minWidth: '80px' }}
-        >
-          {isSignLoading ? <CircularProgress size={16} /> : 'Sign'}
-        </Button>
-      )
+    if (delegation.status !== 'pending') {
+      return null
     }
 
-    if (delegation.status === 'pending' && hasAlreadySigned) {
+    if (hasAlreadySigned) {
       return (
         <CopyTooltip text={shareUrl} initialToolTipText="Copy link to share">
           <Button size="small" variant="outlined" sx={{ minWidth: '100px' }} disabled={!shareUrl}>
@@ -165,7 +149,11 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
       )
     }
 
-    return null
+    return (
+      <Button size="small" variant="contained" onClick={handleSign} disabled={isSignLoading} sx={{ minWidth: '80px' }}>
+        {isSignLoading ? <CircularProgress size={16} /> : 'Sign'}
+      </Button>
+    )
   }
 
   return (

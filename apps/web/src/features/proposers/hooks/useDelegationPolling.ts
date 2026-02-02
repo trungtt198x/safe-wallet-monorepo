@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   DELEGATION_POLLING_INTERVAL_MS,
   MAX_POLLING_INTERVAL_MS,
@@ -18,70 +18,40 @@ type UseDelegationPollingParams = {
  * - Caps at MAX_POLLING_INTERVAL_MS (60s)
  * - Resets to fast polling when pending delegations exist
  */
-export const useDelegationPolling = ({ refetch, hasPendingDelegations, isEnabled }: UseDelegationPollingParams) => {
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const currentIntervalMs = useRef(DELEGATION_POLLING_INTERVAL_MS)
+export function useDelegationPolling({ refetch, hasPendingDelegations, isEnabled }: UseDelegationPollingParams): void {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const intervalMsRef = useRef(DELEGATION_POLLING_INTERVAL_MS)
 
-  const clearCurrentInterval = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }, [])
-
-  const scheduleNextPoll = useCallback(() => {
-    clearCurrentInterval()
-
+  useEffect(() => {
     if (!isEnabled) return
 
-    intervalRef.current = setInterval(() => {
-      refetch()
-
-      // After polling, calculate next interval
-      if (hasPendingDelegations) {
-        // Reset to fast polling when there are pending delegations
-        currentIntervalMs.current = DELEGATION_POLLING_INTERVAL_MS
-      } else {
-        // Apply exponential backoff when no pending delegations
-        currentIntervalMs.current = Math.min(currentIntervalMs.current * BACKOFF_MULTIPLIER, MAX_POLLING_INTERVAL_MS)
-      }
-
-      // Reschedule with the new interval
-      scheduleNextPoll()
-    }, currentIntervalMs.current)
-  }, [clearCurrentInterval, isEnabled, refetch, hasPendingDelegations])
-
-  // Reset to fast polling when pending delegations appear
-  useEffect(() => {
-    if (hasPendingDelegations && currentIntervalMs.current !== DELEGATION_POLLING_INTERVAL_MS) {
-      currentIntervalMs.current = DELEGATION_POLLING_INTERVAL_MS
-      scheduleNextPoll()
-    }
-  }, [hasPendingDelegations, scheduleNextPoll])
-
-  // Start/stop polling based on isEnabled
-  useEffect(() => {
-    if (isEnabled) {
-      scheduleNextPoll()
-    } else {
-      clearCurrentInterval()
+    // Reset to fast polling when pending delegations exist
+    if (hasPendingDelegations) {
+      intervalMsRef.current = DELEGATION_POLLING_INTERVAL_MS
     }
 
-    return clearCurrentInterval
-  }, [isEnabled, scheduleNextPoll, clearCurrentInterval])
+    function scheduleNextPoll(): void {
+      timeoutRef.current = setTimeout(() => {
+        refetch()
 
-  // Reset interval when component unmounts
-  useEffect(() => {
+        // Calculate next interval
+        if (hasPendingDelegations) {
+          intervalMsRef.current = DELEGATION_POLLING_INTERVAL_MS
+        } else {
+          intervalMsRef.current = Math.min(intervalMsRef.current * BACKOFF_MULTIPLIER, MAX_POLLING_INTERVAL_MS)
+        }
+
+        scheduleNextPoll()
+      }, intervalMsRef.current)
+    }
+
+    scheduleNextPoll()
+
     return () => {
-      currentIntervalMs.current = DELEGATION_POLLING_INTERVAL_MS
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
     }
-  }, [])
-
-  return {
-    currentInterval: currentIntervalMs.current,
-    resetToFastPolling: useCallback(() => {
-      currentIntervalMs.current = DELEGATION_POLLING_INTERVAL_MS
-      scheduleNextPoll()
-    }, [scheduleNextPoll]),
-  }
+  }, [isEnabled, hasPendingDelegations, refetch])
 }

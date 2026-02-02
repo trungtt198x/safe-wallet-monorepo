@@ -1,10 +1,11 @@
+import type { ReactElement } from 'react'
 import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Divider, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import PendingDelegationCard from './PendingDelegation'
 import DelegationErrorBoundary from './DelegationErrorBoundary'
 import { usePendingDelegations } from '@/features/proposers/hooks/usePendingDelegations'
 
-const PendingDelegationsList = () => {
+function PendingDelegationsList(): ReactElement | null {
   const { pendingDelegations, isLoading, refetch } = usePendingDelegations()
 
   if (isLoading || pendingDelegations.length === 0) return null

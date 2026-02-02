@@ -3,10 +3,11 @@ import type { DelegationWithTimestamp } from './delegationParsing'
 
 /**
  * Keeps only the latest delegation per delegate address.
- * Uses lowercase address as key for consistent hashing.
+ * Uses lowercase address as key for consistent comparison.
  */
-export const keepLatestPerDelegate = (delegations: DelegationWithTimestamp[]): Map<string, DelegationWithTimestamp> => {
+export function keepLatestPerDelegate(delegations: DelegationWithTimestamp[]): Map<string, DelegationWithTimestamp> {
   const latestByDelegate = new Map<string, DelegationWithTimestamp>()
+
   for (const delegation of delegations) {
     const key = delegation.delegateAddress.toLowerCase()
     const existing = latestByDelegate.get(key)
@@ -14,6 +15,7 @@ export const keepLatestPerDelegate = (delegations: DelegationWithTimestamp[]): M
       latestByDelegate.set(key, delegation)
     }
   }
+
   return latestByDelegate
 }
 
@@ -22,18 +24,22 @@ export const keepLatestPerDelegate = (delegations: DelegationWithTimestamp[]): M
  * - "add" delegations are filtered if the delegate is already in currentDelegates
  * - "remove" delegations are filtered if the delegate is not in currentDelegates
  */
-export const filterActedUponDelegations = (
+export function filterActedUponDelegations(
   delegations: Map<string, DelegationWithTimestamp>,
   currentDelegates: Set<string>,
-): PendingDelegation[] => {
+): PendingDelegation[] {
   const result: PendingDelegation[] = []
+
   for (const delegation of delegations.values()) {
     const delegateLower = delegation.delegateAddress.toLowerCase()
-    if (delegation.action === 'add' && currentDelegates.has(delegateLower)) continue
-    if (delegation.action === 'remove' && !currentDelegates.has(delegateLower)) continue
+    const isAlreadyDelegate = currentDelegates.has(delegateLower)
 
-    const { _timestamp, ...cleanDelegation } = delegation
+    if (delegation.action === 'add' && isAlreadyDelegate) continue
+    if (delegation.action === 'remove' && !isAlreadyDelegate) continue
+
+    const { _timestamp: _, ...cleanDelegation } = delegation
     result.push(cleanDelegation)
   }
+
   return result
 }

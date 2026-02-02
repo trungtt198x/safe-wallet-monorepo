@@ -1,12 +1,12 @@
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { ErrorBoundary } from '@sentry/react'
 import { Box, Button, Typography } from '@mui/material'
 
 type FallbackProps = {
   error: Error
-  componentStack: string | null
-  eventId: string | null
   resetError: () => void
+  fallbackMessage?: string
+  onRetry?: () => void
 }
 
 type DelegationErrorBoundaryProps = {
@@ -15,13 +15,8 @@ type DelegationErrorBoundaryProps = {
   onRetry?: () => void
 }
 
-const DelegationFallback = ({
-  error,
-  resetError,
-  fallbackMessage,
-  onRetry,
-}: FallbackProps & { fallbackMessage?: string; onRetry?: () => void }) => {
-  const handleRetry = () => {
+function DelegationFallback({ error, resetError, fallbackMessage, onRetry }: FallbackProps): ReactElement {
+  function handleRetry(): void {
     onRetry?.()
     resetError()
   }
@@ -50,7 +45,7 @@ const DelegationFallback = ({
   )
 }
 
-const DelegationErrorBoundary = ({ children, fallbackMessage, onRetry }: DelegationErrorBoundaryProps) => {
+function DelegationErrorBoundary({ children, fallbackMessage, onRetry }: DelegationErrorBoundaryProps): ReactElement {
   return (
     <ErrorBoundary
       fallback={(props) => <DelegationFallback {...props} fallbackMessage={fallbackMessage} onRetry={onRetry} />}

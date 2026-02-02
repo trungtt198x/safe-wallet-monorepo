@@ -3,17 +3,18 @@ import type { TypedData, CreateMessageDto } from '@safe-global/store/gateway/AUT
 import { cgwApi } from '@safe-global/store/gateway/AUTO_GENERATED/messages'
 import { normalizeTypedData } from '@safe-global/utils/utils/web3'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
+import { parseDelegationOrigin } from '@/features/proposers/utils/delegationParsing'
 import type { AppDispatch } from '@/store'
 
 /**
  * Builds the origin metadata JSON string for a delegation off-chain message.
  */
-export const buildDelegationOrigin = (
+export function buildDelegationOrigin(
   action: 'add' | 'remove',
   delegate: string,
   nestedSafe: string,
   label: string,
-): string => {
+): string {
   const origin: DelegationOrigin = {
     type: 'proposer-delegation',
     action,
@@ -25,24 +26,6 @@ export const buildDelegationOrigin = (
 }
 
 /**
- * Parses the origin from a message to extract the delegation action.
- */
-const parseOriginAction = (originStr: string | null | undefined): 'add' | 'remove' | null => {
-  if (!originStr) return null
-  try {
-    const parsed = JSON.parse(originStr)
-    if (parsed.type === 'proposer-delegation') {
-      return parsed.action
-    }
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Failed to parse delegation origin action:', originStr, err)
-    }
-  }
-  return null
-}
-
-/**
  * Creates a new off-chain delegation message on the parent Safe.
  * This initiates the multi-sig signature collection process.
  *
@@ -50,32 +33,23 @@ const parseOriginAction = (originStr: string | null | undefined): 'add' | 'remov
  * - If the action matches, confirms the existing message instead
  * - If the action differs, throws an error (can't have add + remove in same TOTP window)
  */
-export const createDelegationMessage = async (
+export async function createDelegationMessage(
   dispatch: AppDispatch,
   chainId: string,
   parentSafeAddress: string,
   delegateTypedData: TypedData,
   signature: string,
   origin: string,
-): Promise<void> => {
-  // Validate origin delegate matches typed data delegate to prevent mismatch attacks
+): Promise<void> {
   const typedDataDelegate = (delegateTypedData.message as { delegateAddress?: string })?.delegateAddress
-  let parsedOrigin: { delegate?: string } | null = null
-  try {
-    parsedOrigin = JSON.parse(origin) as { delegate?: string }
-  } catch {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Failed to parse delegation origin for validation:', origin)
-    }
-  }
-  const originDelegate = parsedOrigin?.delegate
+  const parsedOrigin = parseDelegationOrigin(origin)
 
-  if (typedDataDelegate && originDelegate && !sameAddress(typedDataDelegate, originDelegate)) {
+  if (typedDataDelegate && parsedOrigin && !sameAddress(typedDataDelegate, parsedOrigin.delegate)) {
     throw new Error('Security error: Origin delegate does not match typed data')
   }
 
   const normalizedMessage = normalizeTypedData(delegateTypedData)
-  const requestedAction = parseOriginAction(origin)
+  const requestedAction = parsedOrigin?.action ?? null
 
   const createMessageDto: CreateMessageDto = {
     message: normalizedMessage,
@@ -105,16 +79,15 @@ export const createDelegationMessage = async (
       ).unwrap()
 
       // Find the existing message for this delegate
-      const delegateAddress = (delegateTypedData.message as { delegateAddress?: string })?.delegateAddress
       const existingMessage = messagesResult.results?.find((msg) => {
         if (msg.type !== 'MESSAGE') return false
-        const msgOrigin = parseOriginAction(msg.origin)
+        const msgOrigin = parseDelegationOrigin(msg.origin)
         const msgDelegate = (msg.message as { message?: { delegateAddress?: string } })?.message?.delegateAddress
-        return sameAddress(msgDelegate, delegateAddress) && msgOrigin !== null
+        return sameAddress(msgDelegate, typedDataDelegate) && msgOrigin !== null
       })
 
       if (existingMessage && existingMessage.type === 'MESSAGE') {
-        const existingAction = parseOriginAction(existingMessage.origin)
+        const existingAction = parseDelegationOrigin(existingMessage.origin)?.action
 
         if (existingAction === requestedAction) {
           // Same action - confirm the existing message instead
@@ -140,12 +113,12 @@ export const createDelegationMessage = async (
 /**
  * Adds a co-owner's signature to an existing delegation message.
  */
-export const confirmDelegationMessage = async (
+export async function confirmDelegationMessage(
   dispatch: AppDispatch,
   chainId: string,
   messageHash: string,
   signature: string,
-): Promise<void> => {
+): Promise<void> {
   await dispatch(
     cgwApi.endpoints.messagesUpdateMessageSignatureV1.initiate({
       chainId,

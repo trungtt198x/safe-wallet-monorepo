@@ -9034,14 +9034,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/swc-linux-arm64-gnu@npm:^16.1.4":
-  version: 16.1.4
-  resolution: "@next/swc-linux-arm64-gnu@npm:16.1.4"
-  checksum: 10/acd3838defc6c9b6e23aa5e190817f6f2441464d30052359f59759369a9af091e636b0cfe8243ef495b11cf087092206f4c702d3210ea3b0697edb449c797145
-  conditions: os=linux & cpu=arm64 & libc=glibc
-  languageName: node
-  linkType: hard
-
 "@next/swc-linux-arm64-musl@npm:15.5.7":
   version: 15.5.7
   resolution: "@next/swc-linux-arm64-musl@npm:15.5.7"
@@ -11669,7 +11661,6 @@ __metadata:
     "@mui/x-date-pickers": "npm:^7.23.3"
     "@next/bundle-analyzer": "npm:^15.0.4"
     "@next/mdx": "npm:^15.0.4"
-    "@next/swc-linux-arm64-gnu": "npm:^16.1.4"
     "@next/third-parties": "npm:^15.2.0"
     "@openzeppelin/contracts": "npm:^4.9.6"
     "@playwright/test": "npm:^1.57.0"

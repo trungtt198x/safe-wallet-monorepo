@@ -41,7 +41,7 @@ describe('useSubmitDelegation', () => {
     jest.clearAllMocks()
     jest.spyOn(useChainIdModule, 'default').mockReturnValue(chainId)
     jest.spyOn(useSafeAddressModule, 'default').mockReturnValue(safeAddress)
-    jest.spyOn(utilsModule, 'encodeEIP1271Signature').mockReturnValue(encodedSignature)
+    jest.spyOn(utilsModule, 'encodeEIP1271Signature').mockResolvedValue(encodedSignature)
 
     mockAddDelegateV2 = jest.fn().mockReturnValue({ unwrap: jest.fn().mockResolvedValue({}) })
     mockDeleteDelegateV2 = jest.fn().mockReturnValue({ unwrap: jest.fn().mockResolvedValue({}) })

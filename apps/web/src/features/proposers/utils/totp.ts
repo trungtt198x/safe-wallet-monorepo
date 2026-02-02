@@ -1,9 +1,11 @@
+import { TOTP_INTERVAL_SECONDS } from '@/features/proposers/constants'
+
 /**
  * Returns the current TOTP value (hour-based).
  * The delegate API uses totp = floor(now / 3600) as a time-based nonce.
  */
 export const getCurrentTotp = (): number => {
-  return Math.floor(Date.now() / 1000 / 3600)
+  return Math.floor(Date.now() / 1000 / TOTP_INTERVAL_SECONDS)
 }
 
 /**
@@ -21,5 +23,5 @@ export const isTotpValid = (messageTotp: number): boolean => {
  * So expiration is at (totp + 2) intervals from the epoch.
  */
 export const getTotpExpirationDate = (totp: number): Date => {
-  return new Date((totp + 2) * 3600 * 1000)
+  return new Date((totp + 2) * TOTP_INTERVAL_SECONDS * 1000)
 }

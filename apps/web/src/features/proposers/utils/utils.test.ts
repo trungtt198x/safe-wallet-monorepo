@@ -1,6 +1,7 @@
 import { encodeEIP1271Signature, signProposerTypedDataForSafe } from './utils'
 import { faker } from '@faker-js/faker'
 import { getAddress } from 'ethers'
+import type { JsonRpcSigner } from 'ethers'
 import * as web3Utils from '@safe-global/utils/utils/web3'
 import * as delegateUtils from '@safe-global/utils/services/delegates'
 
@@ -13,14 +14,14 @@ describe('encodeEIP1271Signature', () => {
     'b'.repeat(64) + // s (32 bytes)
     '1c' // v (1 byte = 28)
 
-  it('should return a valid hex string', () => {
-    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+  it('should return a valid hex string', async () => {
+    const result = await encodeEIP1271Signature(parentSafeAddress, ownerSignature)
 
     expect(result).toMatch(/^0x[0-9a-fA-F]+$/)
   })
 
-  it('should contain the parent Safe address left-padded to 32 bytes in the r-value', () => {
-    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+  it('should contain the parent Safe address left-padded to 32 bytes in the r-value', async () => {
+    const result = await encodeEIP1271Signature(parentSafeAddress, ownerSignature)
 
     // r is bytes 0-31 (hex chars 2-66, after "0x")
     const rValue = result.slice(2, 66)
@@ -31,8 +32,8 @@ describe('encodeEIP1271Signature', () => {
     expect(rValue.toLowerCase()).toBe(expectedR.toLowerCase())
   })
 
-  it('should have s-value of 65 (0x41) left-padded to 32 bytes', () => {
-    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+  it('should have s-value of 65 (0x41) left-padded to 32 bytes', async () => {
+    const result = await encodeEIP1271Signature(parentSafeAddress, ownerSignature)
 
     // s is bytes 32-63 (hex chars 66-130)
     const sValue = result.slice(66, 130)
@@ -43,8 +44,8 @@ describe('encodeEIP1271Signature', () => {
     expect(sValue).toBe(expectedS)
   })
 
-  it('should have v-value of 0x00 (contract signature type)', () => {
-    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+  it('should have v-value of 0x00 (contract signature type)', async () => {
+    const result = await encodeEIP1271Signature(parentSafeAddress, ownerSignature)
 
     // v is byte 64 (hex chars 130-132)
     const vValue = result.slice(130, 132)
@@ -52,14 +53,13 @@ describe('encodeEIP1271Signature', () => {
     expect(vValue).toBe('00')
   })
 
-  it('should include ABI-encoded owner signature in the dynamic data portion', () => {
-    const result = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+  it('should include length-prefixed owner signature in the dynamic data portion', async () => {
+    const result = await encodeEIP1271Signature(parentSafeAddress, ownerSignature)
 
     // Dynamic data starts at byte 65 (hex char 132)
     const dynamicData = result.slice(132)
 
     // The dynamic data contains the length-prefixed owner signature
-    // ABI encoding of bytes: 32 bytes length + padded data
     // Length of ownerSignature = 65 bytes = 0x41
     const lengthHex = dynamicData.slice(0, 64)
     expect(parseInt(lengthHex, 16)).toBe(65) // 65 bytes for ECDSA signature
@@ -69,20 +69,20 @@ describe('encodeEIP1271Signature', () => {
     expect(sigData.toLowerCase()).toBe(ownerSignature.slice(2).toLowerCase())
   })
 
-  it('should produce consistent output for the same inputs', () => {
-    const result1 = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
-    const result2 = encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+  it('should produce consistent output for the same inputs', async () => {
+    const result1 = await encodeEIP1271Signature(parentSafeAddress, ownerSignature)
+    const result2 = await encodeEIP1271Signature(parentSafeAddress, ownerSignature)
 
     expect(result1).toBe(result2)
   })
 
-  it('should correctly encode multi-owner preparedSignature (2 concatenated 65-byte signatures)', () => {
+  it('should correctly encode multi-owner preparedSignature (2 concatenated 65-byte signatures)', async () => {
     // Two 65-byte signatures concatenated (as returned by preparedSignature for a 2/N Safe)
     const sig1 = 'a'.repeat(64) + 'b'.repeat(64) + '1b' // 65 bytes
     const sig2 = 'c'.repeat(64) + 'd'.repeat(64) + '1c' // 65 bytes
     const multiOwnerSignature = '0x' + sig1 + sig2 // 130 bytes total
 
-    const result = encodeEIP1271Signature(parentSafeAddress, multiOwnerSignature)
+    const result = await encodeEIP1271Signature(parentSafeAddress, multiOwnerSignature)
 
     expect(result).toMatch(/^0x[0-9a-fA-F]+$/)
 
@@ -108,14 +108,14 @@ describe('encodeEIP1271Signature', () => {
     expect(sigData.toLowerCase()).toBe((sig1 + sig2).toLowerCase())
   })
 
-  it('should correctly encode multi-owner preparedSignature (3 concatenated 65-byte signatures)', () => {
+  it('should correctly encode multi-owner preparedSignature (3 concatenated 65-byte signatures)', async () => {
     // Three 65-byte signatures concatenated (as returned by preparedSignature for a 3/N Safe)
     const sig1 = '1'.repeat(130) // 65 bytes
     const sig2 = '2'.repeat(130) // 65 bytes
     const sig3 = '3'.repeat(130) // 65 bytes
     const multiOwnerSignature = '0x' + sig1 + sig2 + sig3 // 195 bytes total
 
-    const result = encodeEIP1271Signature(parentSafeAddress, multiOwnerSignature)
+    const result = await encodeEIP1271Signature(parentSafeAddress, multiOwnerSignature)
 
     // Dynamic data: length should be 195 bytes
     const dynamicData = result.slice(132)
@@ -134,7 +134,7 @@ describe('signProposerTypedDataForSafe', () => {
   const mockParentSafeAddress = getAddress(faker.finance.ethereumAddress())
   const mockSignature = '0x' + 'ab'.repeat(65)
   const mockDelegateHash = '0x' + 'dd'.repeat(32)
-  const mockSigner = {} as any
+  const mockSigner = {} as JsonRpcSigner
 
   beforeEach(() => {
     jest.clearAllMocks()

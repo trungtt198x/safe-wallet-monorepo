@@ -6,6 +6,7 @@ import useSafeAddress from '@/hooks/useSafeAddress'
 import { useNestedSafeOwners } from '@/hooks/useNestedSafeOwners'
 import useProposers from '@/hooks/useProposers'
 import { isTotpValid } from '@/features/proposers/utils/totp'
+import { DELEGATION_POLLING_INTERVAL_MS } from '@/features/proposers/constants'
 import type { DelegationOrigin, PendingDelegation } from '@/features/proposers/types'
 
 const parseDelegationOrigin = (originStr: string | null | undefined): DelegationOrigin | null => {
@@ -15,8 +16,10 @@ const parseDelegationOrigin = (originStr: string | null | undefined): Delegation
     if (parsed.type === 'proposer-delegation') {
       return parsed as DelegationOrigin
     }
-  } catch {
-    // Not a valid delegation origin
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Failed to parse delegation origin:', originStr, err)
+    }
   }
   return null
 }
@@ -124,7 +127,7 @@ export const usePendingDelegations = (): {
     },
     {
       skip: !parentSafeAddress,
-      pollingInterval: 5000, // Poll every 5 seconds to detect new signatures
+      pollingInterval: DELEGATION_POLLING_INTERVAL_MS,
     },
   )
 

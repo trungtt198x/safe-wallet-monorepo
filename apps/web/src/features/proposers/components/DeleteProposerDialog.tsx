@@ -94,6 +94,7 @@ const InternalDeleteProposer = ({ wallet, safeAddress, chainId, proposer }: Dele
 
         setMultiSigInitiated(true)
         trackEvent(SETTINGS_EVENTS.PROPOSERS.SUBMIT_REMOVE_PROPOSER)
+        setIsLoading(false)
         return
       }
 
@@ -102,7 +103,7 @@ const InternalDeleteProposer = ({ wallet, safeAddress, chainId, proposer }: Dele
       if (parentSafeAddress) {
         // Single-sig nested Safe owner
         const eoaSignature = await signProposerTypedDataForSafe(chainId, proposer.delegate, parentSafeAddress, signer)
-        signature = encodeEIP1271Signature(parentSafeAddress, eoaSignature)
+        signature = await encodeEIP1271Signature(parentSafeAddress, eoaSignature)
 
         await deleteDelegateV2({
           chainId,

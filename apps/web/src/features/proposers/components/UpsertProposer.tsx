@@ -128,12 +128,13 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
 
           setMultiSigInitiated(true)
           trackEvent(SETTINGS_EVENTS.PROPOSERS.SUBMIT_ADD_PROPOSER)
+          setIsLoading(false)
           return
         }
 
         // Single-sig nested Safe owner: sign and submit immediately
         const eoaSignature = await signProposerTypedDataForSafe(chainId, data.address, parentSafeAddress, signer)
-        signature = encodeEIP1271Signature(parentSafeAddress, eoaSignature)
+        signature = await encodeEIP1271Signature(parentSafeAddress, eoaSignature)
         delegator = parentSafeAddress
       } else {
         // Direct owner: sign delegate typed data directly

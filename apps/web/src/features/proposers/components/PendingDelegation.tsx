@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Box, Button, CircularProgress, Typography } from '@mui/material'
+import { Countdown } from '@/components/common/Countdown'
 import EthHashInfo from '@/components/common/EthHashInfo'
 import ErrorMessage from '@/components/tx/ErrorMessage'
 import CopyTooltip from '@/components/common/CopyTooltip'
@@ -16,6 +17,9 @@ import { useAppDispatch } from '@/store'
 import { showNotification } from '@/store/notificationsSlice'
 import { getAssertedChainSigner } from '@/services/tx/tx-sender/sdk'
 import { AppRoutes } from '@/config/routes'
+import { logError } from '@/services/exceptions'
+import ErrorCodes from '@safe-global/utils/services/exceptions/ErrorCodes'
+import { asError } from '@safe-global/utils/services/exceptions/utils'
 import type { PendingDelegation as PendingDelegationType } from '@/features/proposers/types'
 
 type PendingDelegationProps = {
@@ -38,11 +42,21 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
   )
 
   const expirationDate = getTotpExpirationDate(delegation.totp)
-  const formattedExpiration = expirationDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  // Calculate remaining seconds for countdown
+  const remainingSeconds = useMemo(() => {
+    const now = Date.now()
+    const expirationMs = expirationDate.getTime()
+    return Math.max(0, Math.floor((expirationMs - now) / 1000))
+  }, [expirationDate])
 
   // Link to the parent safe's message page where other owners can sign
-  const parentSafeId = `${chain?.shortName}:${delegation.parentSafeAddress}`
-  const shareUrl = `${origin}${AppRoutes.transactions.msg}?safe=${parentSafeId}&messageHash=${delegation.messageHash}`
+  const parentSafeId = chain?.shortName
+    ? `${chain.shortName}:${delegation.parentSafeAddress}`
+    : `${chainId}:${delegation.parentSafeAddress}`
+  const shareUrl = origin
+    ? `${origin}${AppRoutes.transactions.msg}?safe=${parentSafeId}&messageHash=${delegation.messageHash}`
+    : ''
 
   const handleSign = async () => {
     if (!wallet?.provider) return
@@ -85,7 +99,9 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
         refetch()
       }
     } catch (err) {
-      setError(err as Error)
+      const error = asError(err)
+      setError(error)
+      logError(ErrorCodes._820, err)
     } finally {
       setIsSignLoading(false)
     }
@@ -105,7 +121,9 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
       )
       refetch()
     } catch (err) {
-      setError(err as Error)
+      const error = asError(err)
+      setError(error)
+      logError(ErrorCodes._820, err)
     }
   }
 
@@ -141,7 +159,7 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
     if (delegation.status === 'pending' && hasAlreadySigned) {
       return (
         <CopyTooltip text={shareUrl} initialToolTipText="Copy link to share">
-          <Button size="small" variant="outlined" sx={{ minWidth: '100px' }}>
+          <Button size="small" variant="outlined" sx={{ minWidth: '100px' }} disabled={!shareUrl}>
             Copy link
           </Button>
         </CopyTooltip>
@@ -171,7 +189,15 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
       </Box>
 
       <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-        Expires on {formattedExpiration}
+        {remainingSeconds > 0 ? (
+          <>
+            Expires in <Countdown seconds={remainingSeconds} />
+          </>
+        ) : (
+          <Typography component="span" variant="caption" color="error">
+            Expired
+          </Typography>
+        )}
       </Typography>
 
       <Box display="flex" alignItems="center" justifyContent="space-between" mt={2}>

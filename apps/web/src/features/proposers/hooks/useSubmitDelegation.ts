@@ -3,7 +3,9 @@ import {
   useDelegatesPostDelegateV2Mutation,
   useDelegatesDeleteDelegateV2Mutation,
 } from '@safe-global/store/gateway/AUTO_GENERATED/delegates'
+import { asError } from '@safe-global/utils/services/exceptions/utils'
 import { encodeEIP1271Signature } from '@/features/proposers/utils/utils'
+import { isTotpValid } from '@/features/proposers/utils/totp'
 import useChainId from '@/hooks/useChainId'
 import useSafeAddress from '@/hooks/useSafeAddress'
 import type { PendingDelegation } from '@/features/proposers/types'
@@ -22,6 +24,10 @@ export const useSubmitDelegation = () => {
 
   const submitDelegation = useCallback(
     async (delegation: PendingDelegation) => {
+      if (!isTotpValid(delegation.totp)) {
+        throw new Error('Delegation has expired. Please create a new delegation request.')
+      }
+
       if (!delegation.preparedSignature) {
         throw new Error('Cannot submit delegation: preparedSignature is not available')
       }
@@ -30,7 +36,10 @@ export const useSubmitDelegation = () => {
       setSubmitError(undefined)
 
       try {
-        const eip1271Signature = encodeEIP1271Signature(delegation.parentSafeAddress, delegation.preparedSignature)
+        const eip1271Signature = await encodeEIP1271Signature(
+          delegation.parentSafeAddress,
+          delegation.preparedSignature,
+        )
 
         if (delegation.action === 'add') {
           await addDelegateV2({
@@ -55,8 +64,9 @@ export const useSubmitDelegation = () => {
           }).unwrap()
         }
       } catch (error) {
-        setSubmitError(error as Error)
-        throw error
+        const err = asError(error)
+        setSubmitError(err)
+        throw err
       } finally {
         setIsSubmitting(false)
       }

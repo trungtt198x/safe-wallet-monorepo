@@ -1,9 +1,9 @@
 import { hashTypedData, signTypedData } from '@safe-global/utils/utils/web3'
-import { SigningMethod } from '@safe-global/protocol-kit'
+import { SigningMethod, EthSafeSignature, buildContractSignature, buildSignatureBytes } from '@safe-global/protocol-kit'
 import { adjustVInSignature } from '@safe-global/protocol-kit/dist/src/utils/signatures'
 import type { JsonRpcSigner } from 'ethers'
-import { AbiCoder, zeroPadValue } from 'ethers'
 import { getDelegateTypedData } from '@safe-global/utils/services/delegates'
+import { TOTP_INTERVAL_SECONDS } from '@/features/proposers/constants'
 
 export const signProposerTypedData = async (chainId: string, proposerAddress: string, signer: JsonRpcSigner) => {
   const typedData = getDelegateTypedData(chainId, proposerAddress)
@@ -52,7 +52,7 @@ export const signProposerTypedDataForSafe = async (
 }
 
 const getProposerDataV1 = (proposerAddress: string) => {
-  const totp = Math.floor(Date.now() / 1000 / 3600)
+  const totp = Math.floor(Date.now() / 1000 / TOTP_INTERVAL_SECONDS)
 
   return `${proposerAddress}${totp}`
 }
@@ -68,30 +68,19 @@ export const signProposerData = async (proposerAddress: string, signer: JsonRpcS
 /**
  * Encodes an EOA signature in EIP-1271 contract signature format for a parent Safe.
  *
- * Format:
+ * Uses Safe Protocol Kit's buildContractSignature to create the proper format:
  * - bytes 0-31:  r = parentSafeAddress (left-padded to 32 bytes)
- * - bytes 32-63: s = 0x41 (65 decimal, offset to dynamic signature data)
+ * - bytes 32-63: s = offset to dynamic signature data
  * - byte 64:     v = 0x00 (contract signature type)
- * - bytes 65+:   ABI-encoded bytes of the owner signature (length-prefixed)
+ * - bytes 65+:   length-prefixed owner signature(s)
  */
-export const encodeEIP1271Signature = (parentSafeAddress: string, ownerSignature: string): string => {
-  const abiCoder = AbiCoder.defaultAbiCoder()
+export const encodeEIP1271Signature = async (parentSafeAddress: string, ownerSignature: string): Promise<string> => {
+  // Create a SafeSignature object from the raw owner signature
+  const ownerSig = new EthSafeSignature(parentSafeAddress, ownerSignature, false)
 
-  // r: parent Safe address left-padded to 32 bytes
-  const r = zeroPadValue(parentSafeAddress, 32)
+  // Build the contract signature wrapper for EIP-1271 validation
+  const contractSig = await buildContractSignature([ownerSig], parentSafeAddress)
 
-  // s: offset to dynamic data = 65 (0x41), left-padded to 32 bytes
-  const s = zeroPadValue('0x41', 32)
-
-  // v: 0x00 indicates contract signature
-  const v = '00'
-
-  // Dynamic part: ABI-encoded bytes of the owner signature
-  // abi.encode(["bytes"], [signature]) produces: 32 bytes offset + 32 bytes length + padded data
-  // We skip the first 32 bytes (offset pointer) since it's inline here
-  const encodedSig = abiCoder.encode(['bytes'], [ownerSignature])
-  // Remove the 0x prefix and the first 32 bytes (offset = 0x20) from abi.encode output
-  const dynamicData = encodedSig.slice(66) // skip "0x" + 64 hex chars (32 bytes offset)
-
-  return `${r}${s.slice(2)}${v}${dynamicData}`
+  // Encode to the final signature bytes string
+  return '0x' + buildSignatureBytes([contractSig]).slice(2)
 }

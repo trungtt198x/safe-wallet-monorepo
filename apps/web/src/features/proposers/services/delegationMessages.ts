@@ -33,8 +33,10 @@ const parseOriginAction = (originStr: string | null | undefined): 'add' | 'remov
     if (parsed.type === 'proposer-delegation') {
       return parsed.action
     }
-  } catch {
-    // Not a valid delegation origin
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Failed to parse delegation origin action:', originStr, err)
+    }
   }
   return null
 }
@@ -55,6 +57,22 @@ export const createDelegationMessage = async (
   signature: string,
   origin: string,
 ): Promise<void> => {
+  // Validate origin delegate matches typed data delegate to prevent mismatch attacks
+  const typedDataDelegate = (delegateTypedData.message as { delegateAddress?: string })?.delegateAddress?.toLowerCase()
+  let parsedOrigin: { delegate?: string } | null = null
+  try {
+    parsedOrigin = JSON.parse(origin) as { delegate?: string }
+  } catch {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Failed to parse delegation origin for validation:', origin)
+    }
+  }
+  const originDelegate = parsedOrigin?.delegate?.toLowerCase()
+
+  if (typedDataDelegate && originDelegate && typedDataDelegate !== originDelegate) {
+    throw new Error('Security error: Origin delegate does not match typed data')
+  }
+
   const normalizedMessage = normalizeTypedData(delegateTypedData)
   const requestedAction = parseOriginAction(origin)
 
@@ -112,6 +130,9 @@ export const createDelegationMessage = async (
               `Please wait for it to expire (~1 hour) before initiating a "${requestedAction}" action.`,
           )
         }
+      } else {
+        // Message conflict reported but existing message not found - rethrow original error
+        throw error
       }
     }
     // Re-throw other errors

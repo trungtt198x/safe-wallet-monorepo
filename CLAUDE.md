@@ -49,11 +49,6 @@ Use `@AGENTS.md` in your prompts to include the full guidelines, which cover:
 
 ## Active Technologies
 
-- Safe Transaction Service off-chain messages (existing infrastructure, no new storage) (004-proposer-multisig-validation)
-
-- TypeScript 5.x (Next.js 14.x) + React, MUI, Redux Toolkit (RTK Query), ethers.js, @safe-global/protocol-kit, @safe-global/api-kit (001-nested-safe-proposer)
-- N/A (backend-managed via CGW API) (001-nested-safe-proposer)
-
 - TypeScript 5.x (Next.js 14.x) + Next.js (dynamic imports), ESLint (import restrictions), Redux Toolkit (state management) (001-feature-architecture)
 - N/A (architecture pattern, no new data storage) (001-feature-architecture)
 

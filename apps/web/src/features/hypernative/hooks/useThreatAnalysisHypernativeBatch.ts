@@ -4,7 +4,7 @@ import type { ThreatAnalysisResults } from '@safe-global/utils/features/safe-shi
 import type { AsyncResult } from '@safe-global/utils/hooks/useAsync'
 import { useThreatAnalysisHypernativeBatch as useThreatAnalysisHypernativeBatchUtils } from '@safe-global/utils/features/safe-shield/hooks/useThreatAnalysisHypernativeBatch'
 import { getSafeTxHashFromTxId } from '@/utils/transactions'
-import { isTransactionListItem } from '@/utils/transaction-guards'
+import { isTransactionQueuedItem } from '@/utils/transaction-guards'
 import { useAuthToken } from './useAuthToken'
 import useSafeInfo from '@/hooks/useSafeInfo'
 import { useAppSelector, useAppDispatch } from '@/store'
@@ -28,7 +28,7 @@ type FetchContext = { safeAddress: string; authToken?: string }
  * @returns The Safe transaction hash or null if not found
  */
 const extractSafeTxHashFromItem = (item: QueuedItemPage['results'][number]): `0x${string}` | null => {
-  if (!isTransactionListItem(item)) return null
+  if (!isTransactionQueuedItem(item)) return null
 
   const txId = item.transaction.id
   if (!txId) return null

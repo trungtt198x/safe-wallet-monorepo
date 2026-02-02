@@ -111,7 +111,6 @@
     "@mdx-js/react": "^3.0.1",
     "@next/bundle-analyzer": "^15.0.4",
     "@next/mdx": "^15.0.4",
-    "@next/swc-linux-arm64-gnu": "^16.1.4",
     "@openzeppelin/contracts": "^4.9.6",
     "@playwright/test": "^1.57.0",
     "@rspack/plugin-react-refresh": "^1.0.0",

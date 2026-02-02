@@ -40,7 +40,8 @@ jest.mock('@/hooks/useSafeInfo', () => ({
 }))
 
 jest.mock('@/hooks/useChainId', () => ({
-  useChainId: () => mockChainIdValue.chainId,
+  __esModule: true,
+  default: () => mockChainIdValue.chainId,
 }))
 
 // Mock oauth config to ensure consistent test values

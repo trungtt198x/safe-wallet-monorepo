@@ -2,6 +2,7 @@ import type { DelegationOrigin } from '@/features/proposers/types'
 import type { TypedData, CreateMessageDto } from '@safe-global/store/gateway/AUTO_GENERATED/messages'
 import { cgwApi } from '@safe-global/store/gateway/AUTO_GENERATED/messages'
 import { normalizeTypedData } from '@safe-global/utils/utils/web3'
+import { sameAddress } from '@safe-global/utils/utils/addresses'
 import type { AppDispatch } from '@/store'
 
 /**
@@ -58,7 +59,7 @@ export const createDelegationMessage = async (
   origin: string,
 ): Promise<void> => {
   // Validate origin delegate matches typed data delegate to prevent mismatch attacks
-  const typedDataDelegate = (delegateTypedData.message as { delegateAddress?: string })?.delegateAddress?.toLowerCase()
+  const typedDataDelegate = (delegateTypedData.message as { delegateAddress?: string })?.delegateAddress
   let parsedOrigin: { delegate?: string } | null = null
   try {
     parsedOrigin = JSON.parse(origin) as { delegate?: string }
@@ -67,9 +68,9 @@ export const createDelegationMessage = async (
       console.warn('Failed to parse delegation origin for validation:', origin)
     }
   }
-  const originDelegate = parsedOrigin?.delegate?.toLowerCase()
+  const originDelegate = parsedOrigin?.delegate
 
-  if (typedDataDelegate && originDelegate && typedDataDelegate !== originDelegate) {
+  if (typedDataDelegate && originDelegate && !sameAddress(typedDataDelegate, originDelegate)) {
     throw new Error('Security error: Origin delegate does not match typed data')
   }
 
@@ -104,16 +105,12 @@ export const createDelegationMessage = async (
       ).unwrap()
 
       // Find the existing message for this delegate
-      const delegateAddress = (
-        delegateTypedData.message as { delegateAddress?: string }
-      )?.delegateAddress?.toLowerCase()
+      const delegateAddress = (delegateTypedData.message as { delegateAddress?: string })?.delegateAddress
       const existingMessage = messagesResult.results?.find((msg) => {
         if (msg.type !== 'MESSAGE') return false
         const msgOrigin = parseOriginAction(msg.origin)
-        const msgDelegate = (
-          msg.message as { message?: { delegateAddress?: string } }
-        )?.message?.delegateAddress?.toLowerCase()
-        return msgDelegate === delegateAddress && msgOrigin !== null
+        const msgDelegate = (msg.message as { message?: { delegateAddress?: string } })?.message?.delegateAddress
+        return sameAddress(msgDelegate, delegateAddress) && msgOrigin !== null
       })
 
       if (existingMessage && existingMessage.type === 'MESSAGE') {

@@ -4,6 +4,7 @@ import { Countdown } from '@/components/common/Countdown'
 import EthHashInfo from '@/components/common/EthHashInfo'
 import ErrorMessage from '@/components/tx/ErrorMessage'
 import CopyTooltip from '@/components/common/CopyTooltip'
+import { sameAddress } from '@safe-global/utils/utils/addresses'
 import { signProposerTypedDataForSafe } from '@/features/proposers/utils/utils'
 import { confirmDelegationMessage } from '@/features/proposers/services/delegationMessages'
 import { useSubmitDelegation } from '@/features/proposers/hooks/useSubmitDelegation'
@@ -37,9 +38,7 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
   const { submitDelegation, isSubmitting } = useSubmitDelegation()
   const { refetch } = usePendingDelegations()
 
-  const hasAlreadySigned = delegation.confirmations.some(
-    (c) => c.owner.value.toLowerCase() === wallet?.address?.toLowerCase(),
-  )
+  const hasAlreadySigned = delegation.confirmations.some((c) => sameAddress(c.owner.value, wallet?.address))
 
   const expirationDate = getTotpExpirationDate(delegation.totp)
 

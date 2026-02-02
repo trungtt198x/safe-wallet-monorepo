@@ -34,6 +34,7 @@ jest.mock('@/hooks/useProposers', () => ({
 
 jest.mock('@/hooks/useChains', () => ({
   __esModule: true,
+  default: jest.fn(() => ({ configs: [] })),
   useHasFeature: jest.fn(() => true),
 }))
 

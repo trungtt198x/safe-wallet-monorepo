@@ -27,7 +27,7 @@ const WalletLogin = ({
     return (
       <Button
         variant="contained"
-        sx={{ padding: '8px 16px' }}
+        size="stretched"
         onClick={onContinue}
         fullWidth={fullWidth}
         style={{ color: '#fff', background: '#121312' }}

@@ -254,7 +254,7 @@ const AdvancedOptionsStep = ({ onSubmit, onBack, data, setStep }: StepRenderProp
               >
                 Back
               </Button>
-              <Button data-testid="next-btn" type="submit" variant="contained" size="stretched" disabled={isDisabled}>
+              <Button data-testid="next-btn" type="submit" variant="contained" size="large" disabled={isDisabled}>
                 Next
               </Button>
             </Box>

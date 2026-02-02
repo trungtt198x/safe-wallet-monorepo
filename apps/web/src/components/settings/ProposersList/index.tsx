@@ -113,7 +113,7 @@ const ProposersList = () => {
                             variant="text"
                             startIcon={<SvgIcon component={AddIcon} inheritViewBox fontSize="small" />}
                             disabled={!isOk || isUndeployedSafe}
-                            size="compact"
+                            size="medium"
                           >
                             Add proposer
                           </Button>

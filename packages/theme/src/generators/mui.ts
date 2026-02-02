@@ -153,7 +153,9 @@ export function generateMuiTheme(mode: PaletteMode): Theme {
       },
       MuiButton: {
         variants: [
+          // @deprecated Use size="medium" instead. Compact variant is redundant now that medium is correctly sized at 36px.
           { props: { size: 'compact' }, style: { padding: '8px 16px' } },
+          // @deprecated Use size="large" instead. Stretched variant will be removed in a future version.
           { props: { size: 'stretched' }, style: { padding: '12px 48px' } },
           {
             props: { color: 'background.paper' },
@@ -195,8 +197,9 @@ export function generateMuiTheme(mode: PaletteMode): Theme {
           },
         ],
         styleOverrides: {
-          sizeSmall: { fontSize: '14px', padding: '8px 24px', height: '32px' },
-          sizeMedium: { fontSize: '16px', padding: '12px 24px' },
+          sizeSmall: { fontSize: '13px', padding: '6px 24px', height: '32px' },
+          sizeMedium: { fontSize: '14px', padding: '8px 24px', height: '36px' },
+          sizeLarge: { fontSize: '14px', padding: '12px 24px', height: '42px' },
           root: ({ theme }) => ({
             borderRadius: theme.shape.borderRadius,
             fontWeight: 'bold',
@@ -210,7 +213,6 @@ export function generateMuiTheme(mode: PaletteMode): Theme {
             fontWeight: '600',
             '&:hover': { border: '1.5px solid' },
           },
-          sizeLarge: { fontSize: '16px' },
         },
       },
       MuiAccordion: {

@@ -613,7 +613,7 @@ describe('useIsHypernativeGuard', () => {
     })
 
     it('should return loading true when provider is unavailable even with provided safeInfo', () => {
-      jest.spyOn(web3, 'useWeb3ReadOnly').mockReturnValue(undefined)
+      jest.spyOn(web3ReadOnly, 'useWeb3ReadOnly').mockReturnValue(undefined)
 
       jest.spyOn(useSafeInfo, 'default').mockReturnValue({
         safe: extendedSafeInfoBuilder().build(),

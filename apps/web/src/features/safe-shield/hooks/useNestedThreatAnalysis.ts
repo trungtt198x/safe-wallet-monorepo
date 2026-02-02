@@ -31,16 +31,14 @@ export function useNestedThreatAnalysis(
   const { safeTx, safeMessage, txOrigin } = useContext(SafeTxContext)
   const walletAddress = signer?.address ?? ''
   const isHypernativeFeatureEnabled = useIsHypernativeFeatureEnabled()
-  const { isHypernativeEligible, loading: eligibilityLoading } = useIsHypernativeEligible()
-
-  // Hypernative analysis requires feature to be enabled AND eligibility
-  const useHypernativeAnalysis = isHypernativeFeatureEnabled && isHypernativeEligible
 
   const chain = useCurrentChain()
   const txToAnalyze = overrideSafeTx || safeTx || safeMessage
 
   const safeTxToCheck = (txToAnalyze && 'data' in txToAnalyze ? txToAnalyze : undefined) as SafeTransaction | undefined
   const { nestedSafeInfo, nestedSafeTx, isNested } = useNestedTransaction(safeTxToCheck, chain)
+
+  const { isHypernativeEligible, loading: eligibilityLoading } = useIsHypernativeEligible(nestedSafeInfo)
 
   const nestedTxProps = useMemo(
     () => ({
@@ -54,6 +52,10 @@ export function useNestedThreatAnalysis(
     [nestedSafeInfo, safeAddress, chainId, isNested, nestedSafeTx, walletAddress, txOrigin, version],
   )
 
+  // Hypernative analysis requires feature to be enabled AND eligibility
+  const useHypernativeAnalysis = isHypernativeFeatureEnabled && isHypernativeEligible
+
+  // Skip analysis if the nested Safe is not loaded or the eligibility check is loading
   const shouldSkipAnalysis = !isNested || eligibilityLoading
 
   const nestedBlockaidAnalysis = useThreatAnalysisUtils({

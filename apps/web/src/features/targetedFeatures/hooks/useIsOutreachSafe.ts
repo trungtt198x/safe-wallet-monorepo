@@ -2,14 +2,21 @@ import { useTargetedMessagingGetTargetedSafeV1Query } from '@safe-global/store/g
 
 import useSafeInfo from '@/hooks/useSafeInfo'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
+import type { SafeInfo } from '@safe-global/safe-gateway-typescript-sdk'
 
 export type OutreachSafeResult = {
   isTargeted: boolean
   loading: boolean
 }
 
-export function useIsOutreachSafe(outreachId: number, options?: { skip?: boolean }): OutreachSafeResult {
-  const { safe } = useSafeInfo()
+export function useIsOutreachSafe(
+  outreachId: number,
+  options?: { skip?: boolean; safeInfo?: SafeInfo },
+): OutreachSafeResult {
+  const currentSafeInfo = useSafeInfo()
+
+  const safe = options?.safeInfo || currentSafeInfo.safe
+
   const isSafeUnavailable = !safe.address.value
   const shouldSkip = options?.skip || isSafeUnavailable
 

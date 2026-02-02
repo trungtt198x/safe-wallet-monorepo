@@ -57,6 +57,7 @@ export const usePendingDelegations = (): {
     },
     {
       skip: !parentSafeAddress,
+      pollingInterval: 5000, // Poll every 5 seconds to detect new signatures
     },
   )
 
@@ -66,55 +67,73 @@ export const usePendingDelegations = (): {
     // Build set of current delegate addresses to detect already-submitted delegations
     const currentDelegates = new Set(proposers.data?.results.map((p) => p.delegate.toLowerCase()) ?? [])
 
-    return messagesPage.results
-      .filter((item): item is MessageItem => item.type === 'MESSAGE')
-      .reduce<PendingDelegation[]>((acc, message) => {
-        const origin = parseDelegationOrigin(message.origin)
-        if (!origin || origin.nestedSafe.toLowerCase() !== safeAddress.toLowerCase()) {
-          return acc
-        }
+    // First pass: collect all valid delegation messages
+    const allDelegations: Array<PendingDelegation & { _timestamp: number }> = []
 
-        // Skip delegations that have already been submitted:
-        // - "add" delegations where the delegate already exists in the proposers list
-        // - "remove" delegations where the delegate no longer exists in the proposers list
-        const delegateLower = origin.delegate.toLowerCase()
-        if (origin.action === 'add' && currentDelegates.has(delegateLower)) return acc
-        if (origin.action === 'remove' && !currentDelegates.has(delegateLower)) return acc
+    for (const item of messagesPage.results) {
+      if (item.type !== 'MESSAGE') continue
+      const message = item as MessageItem
 
-        // Extract TOTP from the delegate TypedData message
-        const typedDataMessage = typeof message.message === 'object' ? message.message : null
-        const rawTotp = typedDataMessage?.message?.totp
-        const messageTotp = rawTotp !== undefined ? Number(rawTotp) : undefined
-        if (messageTotp === undefined || isNaN(messageTotp)) return acc
+      const origin = parseDelegationOrigin(message.origin)
+      if (!origin || origin.nestedSafe.toLowerCase() !== safeAddress.toLowerCase()) {
+        continue
+      }
 
-        const status = deriveDelegationStatus(
-          message.confirmationsSubmitted,
-          message.confirmationsRequired,
-          messageTotp,
-        )
+      // Extract TOTP from the delegate TypedData message
+      const typedDataMessage = typeof message.message === 'object' ? message.message : null
+      const rawTotp = typedDataMessage?.message?.totp
+      const messageTotp = rawTotp !== undefined ? Number(rawTotp) : undefined
+      if (messageTotp === undefined || isNaN(messageTotp)) continue
 
-        // Filter out expired delegations - don't display them at all
-        if (status === 'expired') return acc
+      const status = deriveDelegationStatus(message.confirmationsSubmitted, message.confirmationsRequired, messageTotp)
 
-        acc.push({
-          messageHash: message.messageHash,
-          action: origin.action,
-          delegateAddress: origin.delegate,
-          delegateLabel: origin.label,
-          nestedSafeAddress: origin.nestedSafe,
-          parentSafeAddress,
-          totp: messageTotp,
-          status,
-          confirmationsSubmitted: message.confirmationsSubmitted,
-          confirmationsRequired: message.confirmationsRequired,
-          confirmations: message.confirmations,
-          preparedSignature: message.preparedSignature ?? null,
-          creationTimestamp: message.creationTimestamp,
-          proposedBy: message.proposedBy,
-        })
+      // Filter out expired delegations
+      if (status === 'expired') continue
 
-        return acc
-      }, [])
+      allDelegations.push({
+        messageHash: message.messageHash,
+        action: origin.action,
+        delegateAddress: origin.delegate,
+        delegateLabel: origin.label,
+        nestedSafeAddress: origin.nestedSafe,
+        parentSafeAddress,
+        totp: messageTotp,
+        status,
+        confirmationsSubmitted: message.confirmationsSubmitted,
+        confirmationsRequired: message.confirmationsRequired,
+        confirmations: message.confirmations,
+        preparedSignature: message.preparedSignature ?? null,
+        creationTimestamp: message.creationTimestamp,
+        proposedBy: message.proposedBy,
+        _timestamp: message.creationTimestamp,
+      })
+    }
+
+    // Second pass: keep only the most recent message per delegate (by creationTimestamp)
+    // This prevents old messages from reappearing after add/remove cycles
+    const latestByDelegate = new Map<string, PendingDelegation & { _timestamp: number }>()
+    for (const delegation of allDelegations) {
+      const key = delegation.delegateAddress.toLowerCase()
+      const existing = latestByDelegate.get(key)
+      if (!existing || delegation._timestamp > existing._timestamp) {
+        latestByDelegate.set(key, delegation)
+      }
+    }
+
+    // Third pass: filter out delegations that have already been acted upon
+    const result: PendingDelegation[] = []
+    for (const delegation of latestByDelegate.values()) {
+      const delegateLower = delegation.delegateAddress.toLowerCase()
+      // Skip "add" if delegate already exists, skip "remove" if delegate doesn't exist
+      if (delegation.action === 'add' && currentDelegates.has(delegateLower)) continue
+      if (delegation.action === 'remove' && !currentDelegates.has(delegateLower)) continue
+
+      // Remove internal _timestamp field
+      const { _timestamp, ...cleanDelegation } = delegation
+      result.push(cleanDelegation)
+    }
+
+    return result
   }, [messagesPage, parentSafeAddress, safeAddress, proposers.data])
 
   return { pendingDelegations, isLoading, refetch }

@@ -24,8 +24,28 @@ export const buildDelegationOrigin = (
 }
 
 /**
+ * Parses the origin from a message to extract the delegation action.
+ */
+const parseOriginAction = (originStr: string | null | undefined): 'add' | 'remove' | null => {
+  if (!originStr) return null
+  try {
+    const parsed = JSON.parse(originStr)
+    if (parsed.type === 'proposer-delegation') {
+      return parsed.action
+    }
+  } catch {
+    // Not a valid delegation origin
+  }
+  return null
+}
+
+/**
  * Creates a new off-chain delegation message on the parent Safe.
  * This initiates the multi-sig signature collection process.
+ *
+ * If a message already exists for the same delegate/totp:
+ * - If the action matches, confirms the existing message instead
+ * - If the action differs, throws an error (can't have add + remove in same TOTP window)
  */
 export const createDelegationMessage = async (
   dispatch: AppDispatch,
@@ -36,6 +56,7 @@ export const createDelegationMessage = async (
   origin: string,
 ): Promise<void> => {
   const normalizedMessage = normalizeTypedData(delegateTypedData)
+  const requestedAction = parseOriginAction(origin)
 
   const createMessageDto: CreateMessageDto = {
     message: normalizedMessage,
@@ -44,13 +65,58 @@ export const createDelegationMessage = async (
     origin,
   }
 
-  await dispatch(
-    cgwApi.endpoints.messagesCreateMessageV1.initiate({
-      chainId,
-      safeAddress: parentSafeAddress,
-      createMessageDto,
-    }),
-  ).unwrap()
+  try {
+    await dispatch(
+      cgwApi.endpoints.messagesCreateMessageV1.initiate({
+        chainId,
+        safeAddress: parentSafeAddress,
+        createMessageDto,
+      }),
+    ).unwrap()
+  } catch (error: unknown) {
+    // Check if message already exists (400 error)
+    const err = error as { status?: number; data?: { message?: string } }
+    if (err.status === 400 && err.data?.message?.includes('already exists')) {
+      // Fetch existing messages to find the conflicting one
+      const messagesResult = await dispatch(
+        cgwApi.endpoints.messagesGetMessagesBySafeV1.initiate({
+          chainId,
+          safeAddress: parentSafeAddress,
+        }),
+      ).unwrap()
+
+      // Find the existing message for this delegate
+      const delegateAddress = (
+        delegateTypedData.message as { delegateAddress?: string }
+      )?.delegateAddress?.toLowerCase()
+      const existingMessage = messagesResult.results?.find((msg) => {
+        if (msg.type !== 'MESSAGE') return false
+        const msgOrigin = parseOriginAction(msg.origin)
+        const msgDelegate = (
+          msg.message as { message?: { delegateAddress?: string } }
+        )?.message?.delegateAddress?.toLowerCase()
+        return msgDelegate === delegateAddress && msgOrigin !== null
+      })
+
+      if (existingMessage && existingMessage.type === 'MESSAGE') {
+        const existingAction = parseOriginAction(existingMessage.origin)
+
+        if (existingAction === requestedAction) {
+          // Same action - confirm the existing message instead
+          await confirmDelegationMessage(dispatch, chainId, existingMessage.messageHash, signature)
+          return
+        } else {
+          // Different action - can't have add + remove in same TOTP window
+          throw new Error(
+            `A pending "${existingAction}" delegation already exists for this proposer. ` +
+              `Please wait for it to expire (~1 hour) before initiating a "${requestedAction}" action.`,
+          )
+        }
+      }
+    }
+    // Re-throw other errors
+    throw error
+  }
 }
 
 /**

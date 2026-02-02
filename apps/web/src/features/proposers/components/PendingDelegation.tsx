@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { useRouter } from 'next/router'
-import { Box, Button, CircularProgress, SvgIcon, Typography } from '@mui/material'
-import DeleteIcon from '@/public/images/common/delete.svg'
+import { Box, Button, CircularProgress, Typography } from '@mui/material'
 import EthHashInfo from '@/components/common/EthHashInfo'
 import ErrorMessage from '@/components/tx/ErrorMessage'
 import CopyTooltip from '@/components/common/CopyTooltip'
@@ -11,6 +9,7 @@ import { useSubmitDelegation } from '@/features/proposers/hooks/useSubmitDelegat
 import { usePendingDelegations } from '@/features/proposers/hooks/usePendingDelegations'
 import { getTotpExpirationDate } from '@/features/proposers/utils/totp'
 import useChainId from '@/hooks/useChainId'
+import { useCurrentChain } from '@/hooks/useChains'
 import useWallet from '@/hooks/wallets/useWallet'
 import useOrigin from '@/hooks/useOrigin'
 import { useAppDispatch } from '@/store'
@@ -27,9 +26,9 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
   const [isSignLoading, setIsSignLoading] = useState(false)
   const [error, setError] = useState<Error>()
   const chainId = useChainId()
+  const chain = useCurrentChain()
   const wallet = useWallet()
   const dispatch = useAppDispatch()
-  const router = useRouter()
   const origin = useOrigin()
   const { submitDelegation, isSubmitting } = useSubmitDelegation()
   const { refetch } = usePendingDelegations()
@@ -41,8 +40,9 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
   const expirationDate = getTotpExpirationDate(delegation.totp)
   const formattedExpiration = expirationDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-  const { safe = '' } = router.query
-  const shareUrl = `${origin}${AppRoutes.transactions.msg}?safe=${safe}&messageHash=${delegation.messageHash}`
+  // Link to the parent safe's message page where other owners can sign
+  const parentSafeId = `${chain?.shortName}:${delegation.parentSafeAddress}`
+  const shareUrl = `${origin}${AppRoutes.transactions.msg}?safe=${parentSafeId}&messageHash=${delegation.messageHash}`
 
   const handleSign = async () => {
     if (!wallet?.provider) return
@@ -155,18 +155,9 @@ const PendingDelegationCard = ({ delegation }: PendingDelegationProps) => {
     <Box>
       <Box sx={{ bgcolor: 'var(--color-border-background)', borderRadius: 1, p: 2 }}>
         <Box display="flex" alignItems="center" gap={3}>
-          {delegation.action === 'remove' ? (
-            <>
-              <SvgIcon component={DeleteIcon} inheritViewBox fontSize="small" color="error" sx={{ flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-                Remove proposer:
-              </Typography>
-            </>
-          ) : (
-            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-              New proposer:
-            </Typography>
-          )}
+          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+            {delegation.action === 'remove' ? 'Remove proposer:' : 'New proposer:'}
+          </Typography>
           <Box sx={{ '& .ethHashInfo-name': { fontWeight: 700 } }}>
             <EthHashInfo
               address={delegation.delegateAddress}

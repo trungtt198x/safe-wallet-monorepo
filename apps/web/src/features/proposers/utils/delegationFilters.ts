@@ -22,19 +22,27 @@ export function keepLatestPerDelegate(delegations: DelegationWithTimestamp[]): M
 /**
  * Filters out delegations that have already been acted upon.
  * - "add" delegations are filtered if the delegate is already in currentDelegates
+ * - "edit" delegations are filtered if the delegate doesn't exist OR the label already matches (edit applied)
  * - "remove" delegations are filtered if the delegate is not in currentDelegates
+ *
+ * @param currentDelegates Map of lowercase delegate address -> current label
  */
 export function filterActedUponDelegations(
   delegations: Map<string, DelegationWithTimestamp>,
-  currentDelegates: Set<string>,
+  currentDelegates: Map<string, string>,
 ): PendingDelegation[] {
   const result: PendingDelegation[] = []
 
   for (const delegation of delegations.values()) {
     const delegateLower = delegation.delegateAddress.toLowerCase()
-    const isAlreadyDelegate = currentDelegates.has(delegateLower)
+    const currentLabel = currentDelegates.get(delegateLower)
+    const isAlreadyDelegate = currentLabel !== undefined
 
     if (delegation.action === 'add' && isAlreadyDelegate) continue
+    if (delegation.action === 'edit') {
+      // Filter if delegate doesn't exist OR if label already matches (edit was applied)
+      if (!isAlreadyDelegate || currentLabel === delegation.delegateLabel) continue
+    }
     if (delegation.action === 'remove' && !isAlreadyDelegate) continue
 
     const { _timestamp: _, ...cleanDelegation } = delegation

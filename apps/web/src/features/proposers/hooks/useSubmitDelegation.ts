@@ -41,7 +41,7 @@ export const useSubmitDelegation = () => {
           delegation.preparedSignature,
         )
 
-        if (delegation.action === 'add') {
+        if (delegation.action === 'add' || delegation.action === 'edit') {
           await addDelegateV2({
             chainId,
             createDelegateDto: {
@@ -52,7 +52,7 @@ export const useSubmitDelegation = () => {
               label: delegation.delegateLabel,
             },
           }).unwrap()
-        } else {
+        } else if (delegation.action === 'remove') {
           await deleteDelegateV2({
             chainId,
             delegateAddress: delegation.delegateAddress,

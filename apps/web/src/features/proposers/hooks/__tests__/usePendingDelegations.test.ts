@@ -19,9 +19,10 @@ describe('usePendingDelegations', () => {
 
   const createMessageItem = (
     overrides: Partial<{
-      action: 'add' | 'remove'
+      action: 'add' | 'remove' | 'edit'
       delegate: string
       nestedSafe: string
+      label: string
       totp: number
       confirmationsSubmitted: number
       confirmationsRequired: number
@@ -32,6 +33,7 @@ describe('usePendingDelegations', () => {
     const action = overrides.action ?? 'add'
     const delegate = overrides.delegate ?? delegateAddress
     const nestedSafe = overrides.nestedSafe ?? safeAddress
+    const label = overrides.label ?? 'Test Proposer'
     const totp = overrides.totp ?? currentTotp
 
     return {
@@ -63,7 +65,7 @@ describe('usePendingDelegations', () => {
         action,
         delegate,
         nestedSafe,
-        label: 'Test Proposer',
+        label,
       }),
     }
   }
@@ -175,7 +177,7 @@ describe('usePendingDelegations', () => {
 
     // For remove action, the delegate must exist in proposers list (otherwise it's filtered out)
     jest.spyOn(useProposersModule, 'default').mockReturnValue({
-      data: { results: [{ delegate }] },
+      data: { results: [{ delegate, label: 'Existing Label' }] },
       isLoading: false,
       refetch: jest.fn(),
     } as unknown as ReturnType<typeof useProposersModule.default>)
@@ -261,7 +263,7 @@ describe('usePendingDelegations', () => {
     const existingDelegate = checksumAddress(faker.finance.ethereumAddress())
     jest.spyOn(useNestedSafeOwnersModule, 'useNestedSafeOwners').mockReturnValue([parentSafeAddress])
     jest.spyOn(useProposersModule, 'default').mockReturnValue({
-      data: { results: [{ delegate: existingDelegate }] },
+      data: { results: [{ delegate: existingDelegate, label: 'Existing Label' }] },
       isLoading: false,
       refetch: jest.fn(),
     } as unknown as ReturnType<typeof useProposersModule.default>)
@@ -328,7 +330,7 @@ describe('usePendingDelegations', () => {
     const existingDelegate = checksumAddress(faker.finance.ethereumAddress())
     jest.spyOn(useNestedSafeOwnersModule, 'useNestedSafeOwners').mockReturnValue([parentSafeAddress])
     jest.spyOn(useProposersModule, 'default').mockReturnValue({
-      data: { results: [{ delegate: existingDelegate }] },
+      data: { results: [{ delegate: existingDelegate, label: 'Existing Label' }] },
       isLoading: false,
       refetch: jest.fn(),
     } as unknown as ReturnType<typeof useProposersModule.default>)
@@ -397,5 +399,73 @@ describe('usePendingDelegations', () => {
 
     expect(result.current.pendingDelegations).toHaveLength(1)
     expect(result.current.pendingDelegations[0].messageHash).toBe(validMessage.messageHash)
+  })
+
+  it('should keep edit delegation when delegate exists and label is different', () => {
+    const existingDelegate = checksumAddress(faker.finance.ethereumAddress())
+    jest.spyOn(useNestedSafeOwnersModule, 'useNestedSafeOwners').mockReturnValue([parentSafeAddress])
+    jest.spyOn(useProposersModule, 'default').mockReturnValue({
+      data: { results: [{ delegate: existingDelegate, label: 'Old Label' }] },
+      isLoading: false,
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useProposersModule.default>)
+
+    const editMessage = createMessageItem({ delegate: existingDelegate, action: 'edit', label: 'New Label' })
+
+    jest.spyOn(messagesQueries, 'useMessagesGetMessagesBySafeV1Query').mockReturnValue({
+      data: { results: [editMessage] },
+      isLoading: false,
+      refetch: mockRefetch,
+    } as ReturnType<typeof messagesQueries.useMessagesGetMessagesBySafeV1Query>)
+
+    const { result } = renderHook(() => usePendingDelegations())
+
+    expect(result.current.pendingDelegations).toHaveLength(1)
+    expect(result.current.pendingDelegations[0].action).toBe('edit')
+  })
+
+  it('should filter out edit delegation when delegate does not exist', () => {
+    const nonExistentDelegate = checksumAddress(faker.finance.ethereumAddress())
+    jest.spyOn(useNestedSafeOwnersModule, 'useNestedSafeOwners').mockReturnValue([parentSafeAddress])
+    jest.spyOn(useProposersModule, 'default').mockReturnValue({
+      data: { results: [] },
+      isLoading: false,
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useProposersModule.default>)
+
+    const editMessage = createMessageItem({ delegate: nonExistentDelegate, action: 'edit', label: 'New Label' })
+
+    jest.spyOn(messagesQueries, 'useMessagesGetMessagesBySafeV1Query').mockReturnValue({
+      data: { results: [editMessage] },
+      isLoading: false,
+      refetch: mockRefetch,
+    } as ReturnType<typeof messagesQueries.useMessagesGetMessagesBySafeV1Query>)
+
+    const { result } = renderHook(() => usePendingDelegations())
+
+    expect(result.current.pendingDelegations).toHaveLength(0)
+  })
+
+  it('should filter out edit delegation when label already matches (edit was applied)', () => {
+    const existingDelegate = checksumAddress(faker.finance.ethereumAddress())
+    jest.spyOn(useNestedSafeOwnersModule, 'useNestedSafeOwners').mockReturnValue([parentSafeAddress])
+    jest.spyOn(useProposersModule, 'default').mockReturnValue({
+      data: { results: [{ delegate: existingDelegate, label: 'Updated Label' }] },
+      isLoading: false,
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useProposersModule.default>)
+
+    // Pending edit with same label as current - means edit was already applied
+    const editMessage = createMessageItem({ delegate: existingDelegate, action: 'edit', label: 'Updated Label' })
+
+    jest.spyOn(messagesQueries, 'useMessagesGetMessagesBySafeV1Query').mockReturnValue({
+      data: { results: [editMessage] },
+      isLoading: false,
+      refetch: mockRefetch,
+    } as ReturnType<typeof messagesQueries.useMessagesGetMessagesBySafeV1Query>)
+
+    const { result } = renderHook(() => usePendingDelegations())
+
+    expect(result.current.pendingDelegations).toHaveLength(0)
   })
 })

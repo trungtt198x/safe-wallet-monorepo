@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Divider, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import PendingDelegationCard from './PendingDelegation'
+import PendingDelegation from './PendingDelegation'
 import DelegationErrorBoundary from './DelegationErrorBoundary'
 import { usePendingDelegations } from '@/features/proposers/hooks/usePendingDelegations'
 
@@ -57,7 +57,7 @@ function PendingDelegationsList(): ReactElement | null {
             {pendingDelegations.map((delegation, index) => (
               <Box key={delegation.messageHash}>
                 <DelegationErrorBoundary fallbackMessage="Failed to load this delegation.">
-                  <PendingDelegationCard delegation={delegation} />
+                  <PendingDelegation delegation={delegation} onRefetch={refetch} />
                 </DelegationErrorBoundary>
                 {index < pendingDelegations.length - 1 && <Divider sx={{ my: 2 }} />}
               </Box>

@@ -1,5 +1,6 @@
 import type { MessageItem } from '@safe-global/store/gateway/AUTO_GENERATED/messages'
 import { sameAddress } from '@safe-global/utils/utils/addresses'
+import { isAddress } from 'ethers'
 import { isTotpValid } from '@/features/proposers/utils/totp'
 import type { DelegationOrigin, PendingDelegation } from '@/features/proposers/types'
 
@@ -12,7 +13,15 @@ export function parseDelegationOrigin(originStr: string | null | undefined): Del
   if (!originStr) return null
   try {
     const parsed = JSON.parse(originStr)
-    if (parsed.type === 'proposer-delegation') {
+    if (
+      parsed?.type === 'proposer-delegation' &&
+      (parsed.action === 'add' || parsed.action === 'remove' || parsed.action === 'edit') &&
+      typeof parsed.delegate === 'string' &&
+      isAddress(parsed.delegate) &&
+      typeof parsed.nestedSafe === 'string' &&
+      isAddress(parsed.nestedSafe) &&
+      typeof parsed.label === 'string'
+    ) {
       return parsed as DelegationOrigin
     }
   } catch {

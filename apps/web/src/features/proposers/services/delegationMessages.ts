@@ -10,7 +10,7 @@ import type { AppDispatch } from '@/store'
  * Builds the origin metadata JSON string for a delegation off-chain message.
  */
 export function buildDelegationOrigin(
-  action: 'add' | 'remove',
+  action: 'add' | 'remove' | 'edit',
   delegate: string,
   nestedSafe: string,
   label: string,

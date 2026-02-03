@@ -14,6 +14,7 @@ import DeleteIcon from '@/public/images/common/delete.svg'
 import { SETTINGS_EVENTS, trackEvent } from '@/services/analytics'
 import { useAppDispatch } from '@/store'
 import { showNotification } from '@/store/notificationsSlice'
+import { asError } from '@safe-global/utils/services/exceptions/utils'
 import { shortenAddress } from '@safe-global/utils/utils/formatters'
 import { isEthSignWallet } from '@/utils/wallets'
 import {
@@ -153,8 +154,8 @@ const InternalDeleteProposer = ({ wallet, safeAddress, chainId, proposer }: Dele
         }),
       )
       setOpen(false)
-    } catch (error) {
-      setError(error as Error)
+    } catch (err) {
+      setError(asError(err))
       return
     } finally {
       setIsLoading(false)

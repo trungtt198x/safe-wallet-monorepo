@@ -2,7 +2,7 @@ import type { AddressInfo, MessageConfirmation } from '@safe-global/store/gatewa
 
 export interface DelegationOrigin {
   type: 'proposer-delegation'
-  action: 'add' | 'remove'
+  action: 'add' | 'remove' | 'edit'
   delegate: string
   nestedSafe: string
   label: string
@@ -10,7 +10,7 @@ export interface DelegationOrigin {
 
 export interface PendingDelegation {
   messageHash: string
-  action: 'add' | 'remove'
+  action: 'add' | 'remove' | 'edit'
   delegateAddress: string
   delegateLabel: string
   nestedSafeAddress: string

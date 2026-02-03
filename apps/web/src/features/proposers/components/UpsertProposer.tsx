@@ -19,6 +19,7 @@ import { SETTINGS_EVENTS, trackEvent } from '@/services/analytics'
 import { getAssertedChainSigner } from '@/services/tx/tx-sender/sdk'
 import { useAppDispatch } from '@/store'
 import { showNotification } from '@/store/notificationsSlice'
+import { asError } from '@safe-global/utils/services/exceptions/utils'
 import { shortenAddress } from '@safe-global/utils/utils/formatters'
 import { addressIsNotCurrentSafe, addressIsNotOwner } from '@safe-global/utils/utils/validation'
 import { isEthSignWallet } from '@/utils/wallets'
@@ -122,7 +123,7 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
           // Multi-sig flow: create off-chain message on parent Safe for signature collection
           const eoaSignature = await signProposerTypedDataForSafe(chainId, data.address, parentSafeAddress, signer)
           const delegateTypedData = getDelegateTypedData(chainId, data.address) as TypedData
-          const origin = buildDelegationOrigin('add', data.address, safeAddress, data.name)
+          const origin = buildDelegationOrigin(proposer ? 'edit' : 'add', data.address, safeAddress, data.name)
 
           await createDelegationMessage(dispatch, chainId, parentSafeAddress, delegateTypedData, eoaSignature, origin)
 
@@ -173,8 +174,8 @@ const UpsertProposer = ({ onClose, onSuccess, proposer }: UpsertProposerProps) =
       )
 
       onSuccess()
-    } catch (error) {
-      setError(error as Error)
+    } catch (err) {
+      setError(asError(err))
       return
     } finally {
       setIsLoading(false)

@@ -9,7 +9,6 @@ import { sameAddress } from '@safe-global/utils/utils/addresses'
 import { signProposerTypedDataForSafe } from '@/features/proposers/utils/utils'
 import { confirmDelegationMessage } from '@/features/proposers/services/delegationMessages'
 import { useSubmitDelegation } from '@/features/proposers/hooks/useSubmitDelegation'
-import { usePendingDelegations } from '@/features/proposers/hooks/usePendingDelegations'
 import { getTotpExpirationDate } from '@/features/proposers/utils/totp'
 import useChainId from '@/hooks/useChainId'
 import { useCurrentChain } from '@/hooks/useChains'
@@ -26,9 +25,10 @@ import type { PendingDelegation as PendingDelegationType } from '@/features/prop
 
 type PendingDelegationProps = {
   delegation: PendingDelegationType
+  onRefetch: () => void
 }
 
-function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactElement {
+function PendingDelegation({ delegation, onRefetch }: PendingDelegationProps): ReactElement {
   const [isSignLoading, setIsSignLoading] = useState(false)
   const [error, setError] = useState<Error>()
   const chainId = useChainId()
@@ -37,7 +37,6 @@ function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactEle
   const dispatch = useAppDispatch()
   const origin = useOrigin()
   const { submitDelegation, isSubmitting } = useSubmitDelegation()
-  const { refetch } = usePendingDelegations()
 
   const hasAlreadySigned = delegation.confirmations.some((c) => sameAddress(c.owner.value, wallet?.address))
   const expirationDate = getTotpExpirationDate(delegation.totp)
@@ -71,7 +70,7 @@ function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactEle
 
       const newConfirmationsCount = delegation.confirmationsSubmitted + 1
       if (newConfirmationsCount >= delegation.confirmationsRequired) {
-        refetch()
+        onRefetch()
         dispatch(
           showNotification({
             variant: 'success',
@@ -89,7 +88,7 @@ function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactEle
             message: `${newConfirmationsCount} of ${delegation.confirmationsRequired} signatures collected.`,
           }),
         )
-        refetch()
+        onRefetch()
       }
     } catch (err) {
       const error = asError(err)
@@ -108,11 +107,11 @@ function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactEle
         showNotification({
           variant: 'success',
           groupKey: 'delegation-submitted',
-          title: `Proposer ${delegation.action === 'add' ? 'added' : 'removed'} successfully!`,
+          title: `Proposer ${delegation.action === 'add' ? 'added' : delegation.action === 'edit' ? 'updated' : 'removed'} successfully!`,
           message: '',
         }),
       )
-      refetch()
+      onRefetch()
     } catch (err) {
       const error = asError(err)
       setError(error)
@@ -161,7 +160,11 @@ function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactEle
       <Box sx={{ bgcolor: 'var(--color-border-background)', borderRadius: 1, p: 2 }}>
         <Box display="flex" alignItems="center" gap={3}>
           <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-            {delegation.action === 'remove' ? 'Remove proposer:' : 'New proposer:'}
+            {delegation.action === 'remove'
+              ? 'Remove proposer:'
+              : delegation.action === 'edit'
+                ? 'Edit proposer:'
+                : 'New proposer:'}
           </Typography>
           <Box sx={{ '& .ethHashInfo-name': { fontWeight: 700 } }}>
             <EthHashInfo
@@ -209,4 +212,4 @@ function PendingDelegationCard({ delegation }: PendingDelegationProps): ReactEle
   )
 }
 
-export default PendingDelegationCard
+export default PendingDelegation

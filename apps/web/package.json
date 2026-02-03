@@ -45,9 +45,6 @@
     "test:visual:update": "cross-env TZ=UTC test-storybook --url http://localhost:6006 -u",
     "generate:storybook-tests": "node scripts/generate-storybook-tests.cjs",
     "integrity": "node scripts/integrity-hashes.cjs",
-    "storybook:inventory": "npx tsx ../../scripts/storybook/inventory.ts",
-    "storybook:coverage": "npx tsx ../../scripts/storybook/coverage-report.ts",
-    "storybook:dependencies": "npx tsx ../../scripts/storybook/dependency-audit.ts",
     "storybook:generate-coverage": "npx tsx ../../scripts/storybook/generate-storybook-coverage.ts && prettier -w .storybook/COVERAGE.md",
     "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN"
   },

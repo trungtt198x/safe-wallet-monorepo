@@ -1,9 +1,9 @@
 import ModalDialog from '@/components/common/ModalDialog'
 import type { SafeItem, SafeItems } from '@/features/myAccounts/hooks/useAllSafes'
 import { useSafesSearch } from '@/features/myAccounts/hooks/useSafesSearch'
-import AddManually, { type AddManuallyFormValues } from '@/features/spaces/components/AddAccounts/AddManually'
-import SafesList, { getSafeId } from '@/features/spaces/components/AddAccounts/SafesList'
-import { useCurrentSpaceId } from '@/features/spaces/hooks/useCurrentSpaceId'
+import AddManually, { type AddManuallyFormValues } from './AddManually'
+import SafesList, { getSafeId } from './SafesList'
+import { useCurrentSpaceId } from '@/features/spaces'
 import SearchIcon from '@/public/images/common/search.svg'
 import { useSpaceSafesCreateV1Mutation } from '@safe-global/store/gateway/AUTO_GENERATED/spaces'
 
@@ -36,8 +36,8 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { trackEvent } from '@/services/analytics'
 import { SPACE_EVENTS, SPACE_LABELS } from '@/services/analytics/events/spaces'
 import Track from '@/components/common/Track'
-import { useIsAdmin } from '@/features/spaces/hooks/useSpaceMembers'
-import { useSpaceSafes } from '@/features/spaces/hooks/useSpaceSafes'
+import { useIsAdmin } from '@/features/spaces'
+import { useSpaceSafes } from '@/features/spaces'
 import { showNotification } from '@/store/notificationsSlice'
 
 export type AddAccountsFormValues = {

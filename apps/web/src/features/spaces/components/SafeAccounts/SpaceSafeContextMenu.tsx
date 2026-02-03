@@ -1,6 +1,6 @@
 import type { SafeItem } from '@/features/myAccounts/hooks/useAllSafes'
 import type { MultiChainSafeItem } from '@/features/myAccounts/hooks/useAllSafesGrouped'
-import RemoveSafeDialog from '@/features/spaces/components/SafeAccounts/RemoveSafeDialog'
+import RemoveSafeDialog from './RemoveSafeDialog'
 import { type MouseEvent, useState } from 'react'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { SvgIcon } from '@mui/material'
@@ -17,7 +17,7 @@ import { selectAllAddressBooks } from '@/store/addressBookSlice'
 import { isMultiChainSafeItem } from '@/features/multichain'
 import { SPACE_EVENTS } from '@/services/analytics/events/spaces'
 import { trackEvent } from '@/services/analytics'
-import { useIsAdmin } from '@/features/spaces/hooks/useSpaceMembers'
+import { useIsAdmin } from '@/features/spaces'
 
 enum ModalType {
   RENAME = 'rename',

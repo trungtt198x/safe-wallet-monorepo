@@ -3,22 +3,25 @@ import SpacesCTACard from './SpacesCTACard'
 import AddressBookCard from './ImportAddressBookCard'
 import { Card, Grid2, Stack, Typography } from '@mui/material'
 import Grid from '@mui/material/Grid2'
-import { useSpaceSafes } from '@/features/spaces'
+import {
+  useSpaceSafes,
+  useCurrentSpaceId,
+  useSpaceMembersByStatus,
+  useIsInvited,
+  useTrackSpace,
+} from '@/features/spaces'
 import SafesList from '@/features/myAccounts/components/SafesList'
 import AddAccountsCard from './AddAccountsCard'
 import { AppRoutes } from '@/config/routes'
-import { useCurrentSpaceId } from '@/features/spaces'
 import type { LinkProps } from 'next/link'
 import NextLink from 'next/link'
 import { Link } from '@mui/material'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import DashboardMembersList from './DashboardMembersList'
-import { useSpaceMembersByStatus, useIsInvited } from '@/features/spaces'
 import PreviewInvite from '../InviteBanner/PreviewInvite'
 import { SPACE_EVENTS } from '@/services/analytics/events/spaces'
 import Track from '@/components/common/Track'
 import AggregatedBalance from './AggregatedBalances'
-import { useTrackSpace } from '@/features/spaces'
 import { flattenSafeItems } from '@/features/myAccounts/hooks/useAllSafesGrouped'
 
 const ViewAllLink = ({ url }: { url: LinkProps['href'] }) => {

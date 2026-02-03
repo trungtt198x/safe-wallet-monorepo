@@ -3,7 +3,7 @@ import type { SafeItem, SafeItems } from '@/features/myAccounts/hooks/useAllSafe
 import { useSafesSearch } from '@/features/myAccounts/hooks/useSafesSearch'
 import AddManually, { type AddManuallyFormValues } from './AddManually'
 import SafesList, { getSafeId } from './SafesList'
-import { useCurrentSpaceId } from '@/features/spaces'
+import { useCurrentSpaceId, useIsAdmin, useSpaceSafes } from '@/features/spaces'
 import SearchIcon from '@/public/images/common/search.svg'
 import { useSpaceSafesCreateV1Mutation } from '@safe-global/store/gateway/AUTO_GENERATED/spaces'
 
@@ -36,8 +36,6 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { trackEvent } from '@/services/analytics'
 import { SPACE_EVENTS, SPACE_LABELS } from '@/services/analytics/events/spaces'
 import Track from '@/components/common/Track'
-import { useIsAdmin } from '@/features/spaces'
-import { useSpaceSafes } from '@/features/spaces'
 import { showNotification } from '@/store/notificationsSlice'
 
 export type AddAccountsFormValues = {

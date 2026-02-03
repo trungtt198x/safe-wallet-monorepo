@@ -99,7 +99,13 @@ describe('delegationMessages', () => {
         proposedBy: { value: checksumAddress(faker.finance.ethereumAddress()), name: null, logoUri: null },
         confirmations: [],
         preparedSignature: null,
-        origin: JSON.stringify({ type: 'proposer-delegation', action: 'add' }),
+        origin: JSON.stringify({
+          type: 'proposer-delegation',
+          action: 'add',
+          delegate: delegateAddress,
+          nestedSafe: nestedSafeAddress,
+          label: 'Test',
+        }),
       }
 
       let callCount = 0
@@ -161,7 +167,13 @@ describe('delegationMessages', () => {
         proposedBy: { value: checksumAddress(faker.finance.ethereumAddress()), name: null, logoUri: null },
         confirmations: [],
         preparedSignature: null,
-        origin: JSON.stringify({ type: 'proposer-delegation', action: 'remove' }), // Different action
+        origin: JSON.stringify({
+          type: 'proposer-delegation',
+          action: 'remove', // Different action
+          delegate: delegateAddress,
+          nestedSafe: nestedSafeAddress,
+          label: 'Test',
+        }),
       }
 
       let callCount = 0

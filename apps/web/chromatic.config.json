@@ -4,9 +4,5 @@
   "onlyChanged": true,
   "externals": ["public/**"],
   "skip": "dependabot/**",
-  "onlyStoryNames": [
-    "Pages/Core/Home/Default",
-    "Pages/Core/Balances/Default",
-    "Pages/Core/Transactions/History/Default"
-  ]
+  "onlyStoryNames": ["Pages/Core/Home/Default", "Pages/Core/Balances/Default", "Pages/Core/Transactions/Queue/Default"]
 }

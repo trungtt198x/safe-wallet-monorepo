@@ -29,11 +29,10 @@ import {
 import { ellipsis, maybePlural, shortenAddress } from '@safe-global/utils/utils/formatters'
 import { useCurrentChain } from '@/hooks/useChains'
 import { SwapTx } from '@/features/swap/components/SwapTxInfo/SwapTx'
-import StakingTxExitInfo from '@/features/stake/components/StakingTxExitInfo'
-import StakingTxWithdrawInfo from '@/features/stake/components/StakingTxWithdrawInfo'
+import { StakeFeature } from '@/features/stake'
+import { useLoadFeature } from '@/features/__core__'
 import { Box } from '@mui/material'
 import css from './styles.module.css'
-import StakingTxDepositInfo from '@/features/stake/components/StakingTxDepositInfo'
 import { VaultDepositTxInfo, VaultRedeemTxInfo } from '@/features/earn'
 
 export const TransferTx = ({
@@ -127,6 +126,8 @@ const MigrationToL2Tx = (): ReactElement => {
 }
 
 const TxInfo = ({ info, ...rest }: { info: TransactionInfo; omitSign?: boolean; withLogo?: boolean }): ReactElement => {
+  const stake = useLoadFeature(StakeFeature)
+
   if (isSettingsChangeTxInfo(info)) {
     return <SettingsChangeTx info={info} />
   }
@@ -152,15 +153,15 @@ const TxInfo = ({ info, ...rest }: { info: TransactionInfo; omitSign?: boolean; 
   }
 
   if (isStakingTxDepositInfo(info)) {
-    return <StakingTxDepositInfo info={info} />
+    return <stake.StakingTxDepositInfo info={info} />
   }
 
   if (isStakingTxExitInfo(info)) {
-    return <StakingTxExitInfo info={info} />
+    return <stake.StakingTxExitInfo info={info} />
   }
 
   if (isStakingTxWithdrawInfo(info)) {
-    return <StakingTxWithdrawInfo info={info} />
+    return <stake.StakingTxWithdrawInfo info={info} />
   }
 
   if (isVaultDepositTxInfo(info)) {

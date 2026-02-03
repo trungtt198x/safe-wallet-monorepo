@@ -31,9 +31,8 @@ import TransferTxInfo from '@/components/transactions/TxDetails/TxData/Transfer'
 import useChainId from '@/hooks/useChainId'
 import { MigrationToL2TxData } from './MigrationToL2TxData'
 import SwapOrder from '@/features/swap/components/SwapOrder'
-import StakingTxDepositDetails from '@/features/stake/components/StakingTxDepositDetails'
-import StakingTxExitDetails from '@/features/stake/components/StakingTxExitDetails'
-import StakingTxWithdrawDetails from '@/features/stake/components/StakingTxWithdrawDetails'
+import { StakeFeature } from '@/features/stake'
+import { useLoadFeature } from '@/features/__core__'
 import { OnChainConfirmation } from './NestedTransaction/OnChainConfirmation'
 import { ExecTransaction } from './NestedTransaction/ExecTransaction'
 import SafeUpdate from './SafeUpdate'
@@ -59,21 +58,22 @@ const TxData = ({
   imitation: boolean
 }>): ReactElement => {
   const chainId = useChainId()
+  const stake = useLoadFeature(StakeFeature)
 
   if (isOrderTxInfo(txInfo)) {
     return <SwapOrder txData={txData} txInfo={txInfo} />
   }
 
   if (isStakingTxDepositInfo(txInfo)) {
-    return <StakingTxDepositDetails txData={txData} info={txInfo} />
+    return <stake.StakingTxDepositDetails txData={txData} info={txInfo} />
   }
 
   if (isStakingTxExitInfo(txInfo)) {
-    return <StakingTxExitDetails info={txInfo} />
+    return <stake.StakingTxExitDetails info={txInfo} />
   }
 
   if (isStakingTxWithdrawInfo(txInfo)) {
-    return <StakingTxWithdrawDetails info={txInfo} />
+    return <stake.StakingTxWithdrawDetails info={txInfo} />
   }
 
   // @ts-ignore: TODO: Fix this type

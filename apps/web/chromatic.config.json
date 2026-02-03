@@ -3,5 +3,10 @@
   "buildScriptName": "build-storybook",
   "onlyChanged": true,
   "externals": ["public/**"],
-  "skip": "dependabot/**"
+  "skip": "dependabot/**",
+  "onlyStoryNames": [
+    "Pages/Core/Home/Default",
+    "Pages/Core/Balances/Default",
+    "Pages/Core/Transactions/History/Default"
+  ]
 }

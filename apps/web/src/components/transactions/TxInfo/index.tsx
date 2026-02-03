@@ -28,7 +28,8 @@ import {
 } from '@/utils/transaction-guards'
 import { ellipsis, maybePlural, shortenAddress } from '@safe-global/utils/utils/formatters'
 import { useCurrentChain } from '@/hooks/useChains'
-import { SwapTx } from '@/features/swap/components/SwapTxInfo/SwapTx'
+import { SwapFeature } from '@/features/swap'
+import { useLoadFeature } from '@/features/__core__'
 import StakingTxExitInfo from '@/features/stake/components/StakingTxExitInfo'
 import StakingTxWithdrawInfo from '@/features/stake/components/StakingTxWithdrawInfo'
 import { Box } from '@mui/material'
@@ -127,6 +128,8 @@ const MigrationToL2Tx = (): ReactElement => {
 }
 
 const TxInfo = ({ info, ...rest }: { info: TransactionInfo; omitSign?: boolean; withLogo?: boolean }): ReactElement => {
+  const { SwapTx } = useLoadFeature(SwapFeature)
+
   if (isSettingsChangeTxInfo(info)) {
     return <SettingsChangeTx info={info} />
   }

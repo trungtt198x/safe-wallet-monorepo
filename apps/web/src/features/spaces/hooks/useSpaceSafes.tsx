@@ -1,5 +1,5 @@
 import { useSpaceSafesGetV1Query } from '@safe-global/store/gateway/AUTO_GENERATED/spaces'
-import { useCurrentSpaceId } from 'src/features/spaces/hooks/useCurrentSpaceId'
+import { useCurrentSpaceId } from 'src/features/spaces'
 import { _buildSafeItems, type AllSafeItems } from '@/features/myAccounts/hooks/useAllSafesGrouped'
 import { useAllSafesGrouped } from '@/features/myAccounts/hooks/useAllSafesGrouped'
 import { useAppSelector } from '@/store'

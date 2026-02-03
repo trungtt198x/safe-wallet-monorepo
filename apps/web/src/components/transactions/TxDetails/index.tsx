@@ -50,6 +50,7 @@ import {
   useShowHypernativeAssessment,
   useHypernativeOAuth,
   HypernativeFeature,
+  useIsHypernativeQueueScanFeature,
 } from '@/features/hypernative'
 
 export const NOT_AVAILABLE = 'n/a'
@@ -120,6 +121,7 @@ const TxDetailsBlock = ({ txSummary, txDetails }: TxDetailsProps): ReactElement 
     isQueue,
     safeTxHash,
   })
+  const isHypernativeQueueScanEnabled = useIsHypernativeQueueScanFeature()
 
   return (
     <>
@@ -212,13 +214,18 @@ const TxDetailsBlock = ({ txSummary, txDetails }: TxDetailsProps): ReactElement 
             proposer={proposer}
           />
 
-          {showAssessmentBanner && safeTxHash && chainId && (
-            <hn.HnQueueAssessmentBanner
-              safeTxHash={safeTxHash}
-              assessment={assessment}
-              isAuthenticated={isAuthenticated}
-            />
-          )}
+          {isHypernativeQueueScanEnabled
+            ? showAssessmentBanner &&
+              safeTxHash &&
+              chainId && (
+                <hn.HnQueueAssessmentBanner
+                  safeTxHash={safeTxHash}
+                  assessment={assessment}
+                  isAuthenticated={isAuthenticated}
+                />
+              )
+            : // If Hypernative queue scan is not enabled, show the old security report button
+              isQueue && <hn.HnSecurityReportBtnForTxDetails txDetails={txDetails} />}
 
           {txDetails.txHash && <TxExplorerLink txHash={txDetails.txHash} />}
 

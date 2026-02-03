@@ -82,6 +82,23 @@ const SAFE_VIEWPORTS = {
 }
 
 const preview: Preview = {
+  globalTypes: {
+    theme: {
+      description: 'Global theme for components',
+      toolbar: {
+        title: 'Theme',
+        icon: 'paintbrush',
+        items: [
+          { value: 'light', title: 'Light', icon: 'sun' },
+          { value: 'dark', title: 'Dark', icon: 'moon' },
+        ],
+        dynamicTitle: true,
+      },
+    },
+  },
+  initialGlobals: {
+    theme: 'light',
+  },
   parameters: {
     options: {
       storySort: {
@@ -115,7 +132,6 @@ const preview: Preview = {
       defaultViewport: 'desktop',
     },
     chromatic: {
-      viewports: [1280], // Desktop width for full-page layouts
       modes: {
         light: { theme: 'light' },
         dark: { theme: 'dark' },

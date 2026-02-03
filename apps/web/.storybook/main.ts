@@ -101,7 +101,7 @@ const config: StorybookConfig = {
       },
     }
 
-    if (process.env.NODE_ENV !== 'production' && process.env.STORYBOOK_LAZY !== 'false') {
+    if (process.env.NODE_ENV !== 'production' && process.env.STORYBOOK_LAZY === 'true') {
       config.experiments = {
         ...config.experiments,
         lazyCompilation: {

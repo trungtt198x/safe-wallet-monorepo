@@ -41,6 +41,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".storybook/**/*.ts",
+    ".storybook/**/*.tsx",
+    ".storybook-vite/**/*.ts",
+    ".storybook-vite/**/*.tsx",
     "./jest.setup.js",
     "./eslint.config.mjs",
     "../../config/test/**/*.ts"

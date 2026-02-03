@@ -1,5 +1,5 @@
 import { useSpaceSafesGetV1Query } from '@safe-global/store/gateway/AUTO_GENERATED/spaces'
-import { useCurrentSpaceId } from 'src/features/spaces'
+import { useCurrentSpaceId, useGetSpaceAddressBook, mapSpaceContactsToAddressBookState } from '@/features/spaces'
 import { _buildSafeItems, type AllSafeItems } from '@/features/myAccounts/hooks/useAllSafesGrouped'
 import { useAllSafesGrouped } from '@/features/myAccounts/hooks/useAllSafesGrouped'
 import { useAppSelector } from '@/store'
@@ -9,8 +9,6 @@ import { useMemo } from 'react'
 import { isAuthenticated } from '@/store/authSlice'
 import useAllOwnedSafes from '@/features/myAccounts/hooks/useAllOwnedSafes'
 import useWallet from '@/hooks/wallets/useWallet'
-import { mapSpaceContactsToAddressBookState } from '@/features/spaces/utils'
-import useGetSpaceAddressBook from '@/features/spaces/hooks/useGetSpaceAddressBook'
 
 export const useSpaceSafes = () => {
   const spaceId = useCurrentSpaceId()

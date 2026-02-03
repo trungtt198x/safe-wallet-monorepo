@@ -19,8 +19,10 @@
 
 **Purpose**: Establish baseline metrics before making changes
 
-- [ ] T001 Record baseline webpack build time by running `time yarn workspace @safe-global/web build` and documenting the result
-- [ ] T002 Verify current legal pages render correctly with webpack build by checking /terms, /cookie, /privacy in the output
+- [x] T001 Record baseline webpack build time by running `time yarn workspace @safe-global/web build` and documenting the result
+  - **Result**: 1 minute 42.81 seconds (102.81s)
+- [x] T002 Verify current legal pages render correctly with webpack build by checking /terms, /cookie, /privacy in the output
+  - **Result**: All 3 pages exist, cookie.html contains 2 tables
 
 **Checkpoint**: Baseline established - proceed to user story implementation
 
@@ -34,8 +36,11 @@
 
 ### Option A: Enable Remark Plugins (Preferred)
 
-- [ ] T003 [US1] Modify MDX config in `next.config.mjs:168-177` to enable `remarkGfm` and `remarkHeadingId` for rspack builds
-- [ ] T004 [US1] Test rspack build with remark plugins by running `cross-env USE_RSPACK=1 next build`
+- [x] T003 [US1] Modify MDX config in `next.config.mjs:168-177` to enable `remarkGfm` and `remarkHeadingId` for rspack builds
+  - **Result**: Config updated with remarkGfm and remarkHeadingId for rspack
+- [x] T004 [US1] Test rspack build with remark plugins by running `cross-env USE_RSPACK=1 next build`
+  - **Result**: FAILED - "Cannot read properties of undefined (reading 'get')" - remark plugins incompatible with rspack
+  - **Decision**: Proceeding to Option B (convert MD to TSX)
 - [ ] T005 [US1] Verify /cookie page: confirm 2 GFM tables render with proper HTML table formatting
 - [ ] T006 [US1] Verify /terms page: test 3-5 TOC anchor links navigate to correct sections
 - [ ] T007 [US1] Verify /privacy page: confirm content renders correctly without raw markdown syntax

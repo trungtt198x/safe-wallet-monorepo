@@ -69,6 +69,7 @@ const withPWA = withPWAInit({
 
 const isProd = process.env.NODE_ENV === 'production'
 const enableExperimentalOptimizations = process.env.ENABLE_EXPERIMENTAL_OPTIMIZATIONS === '1'
+const isRspack = process.env.USE_RSPACK === '1'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -85,7 +86,8 @@ const nextConfig = {
     NEXT_PUBLIC_APP_HOMEPAGE: pkg.homepage,
   },
 
-  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
+  // Remove md/mdx from pageExtensions for rspack builds (legal content is now TSX)
+  pageExtensions: isRspack ? ['js', 'jsx', 'ts', 'tsx'] : ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
   eslint: {
@@ -162,11 +164,12 @@ const nextConfig = {
   },
 }
 
-const isRspack = process.env.USE_RSPACK === '1'
 const enablePWA = process.env.ENABLE_PWA === '1'
+const disablePWA = process.env.ENABLE_PWA === '0'
 
+// Skip MDX wrapper for rspack builds since legal content is now TSX
 const withMDX = isRspack
-  ? createMDX({ extension: /\.(md|mdx)?$/, jsx: true, options: {} })
+  ? (config) => config // passthrough for rspack
   : createMDX({
       extension: /\.(md|mdx)?$/,
       jsx: true,
@@ -176,7 +179,7 @@ const withMDX = isRspack
       },
     })
 
-const shouldEnablePWA = isProd || enablePWA
+const shouldEnablePWA = !disablePWA && (isProd || enablePWA)
 let config = shouldEnablePWA ? withPWA(withMDX(nextConfig)) : withMDX(nextConfig)
 if (withRspack) config = withRspack(config)
 export default withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' })(config)

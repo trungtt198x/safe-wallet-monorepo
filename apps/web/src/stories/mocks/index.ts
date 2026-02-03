@@ -81,10 +81,4 @@ export {
 } from './handlers'
 
 // State utilities (for escape hatch)
-export {
-  createDefaultSettings,
-  createChainsState,
-  createSafeInfoState,
-  createSafeAppsState,
-  createInitialState,
-} from './defaults'
+export { createDefaultSettings, createSafeInfoState, createSafeAppsState, createInitialState } from './defaults'

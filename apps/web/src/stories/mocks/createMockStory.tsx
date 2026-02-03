@@ -2,7 +2,6 @@ import React from 'react'
 import type { Decorator, StoryContext } from '@storybook/react'
 import { SAFE_ADDRESSES } from '../../../../../config/test/msw/fixtures'
 import { MockContextProvider } from './MockContextProvider'
-import { createChainData } from './chains'
 import { resolveWallet } from './wallets'
 import { createHandlers, getFixtureData } from './handlers'
 import { createInitialState } from './defaults'
@@ -73,9 +72,6 @@ export function createMockStory(config: MockStoryConfig = {}): MockStoryResult {
   // Get fixture data for scenario
   const { safeData } = getFixtureData(scenario)
 
-  // Create chain data with specified features
-  const chainData = createChainData(features)
-
   // Get safe address info for router
   const safeAddressInfo = scenario === 'empty' ? SAFE_ADDRESSES.efSafe : SAFE_ADDRESSES[scenario]
   const safeAddress = safeAddressInfo.address
@@ -100,7 +96,6 @@ export function createMockStory(config: MockStoryConfig = {}): MockStoryResult {
     // Create initial store state
     const initialState = createInitialState({
       safeData,
-      chainData,
       isDarkMode,
       overrides: storeOverrides,
       isAuthenticated,
@@ -122,7 +117,6 @@ export function createMockStory(config: MockStoryConfig = {}): MockStoryResult {
   // Create initial state for external use (without dark mode - will be set by decorator)
   const initialState = createInitialState({
     safeData,
-    chainData,
     isDarkMode: false,
     overrides: storeOverrides,
     isAuthenticated,

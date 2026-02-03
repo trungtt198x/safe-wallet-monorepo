@@ -1,7 +1,8 @@
-import type { Chain } from '@safe-global/store/gateway/AUTO_GENERATED/chains'
 import type { SafeState } from '@safe-global/store/gateway/AUTO_GENERATED/safes'
+import type { QueuedItemPage, TransactionItemPage } from '@safe-global/store/gateway/AUTO_GENERATED/transactions'
 import { TOKEN_LISTS } from '@/store/settingsSlice'
 import type { StoreOverrides } from './types'
+import { createMockPendingTransactions, createMockHistoryTransactions } from './handlers'
 
 /**
  * Creates default settings state for stories
@@ -22,18 +23,9 @@ export function createDefaultSettings(isDarkMode: boolean) {
   }
 }
 
-/**
- * Creates default chains state
- *
- * @param chainData - Chain configuration data
- * @returns Chains slice initial state
- */
-export function createChainsState(chainData: Chain) {
-  return {
-    data: [chainData],
-    loading: false,
-  }
-}
+// Note: Chain data is loaded via RTK Query (gatewayApi), not a Redux slice.
+// The createChainData function in chains.ts creates mock chain data that MSW
+// handlers use to respond to /v1/chains/* API requests.
 
 /**
  * Creates default safe info state
@@ -57,6 +49,34 @@ export function createSafeInfoState(safeData: SafeState) {
 export function createSafeAppsState() {
   return {
     pinned: [],
+  }
+}
+
+/**
+ * Creates default tx queue state with mock pending transactions
+ *
+ * @param safeData - Safe fixture data
+ * @returns TxQueue slice initial state
+ */
+export function createTxQueueState(safeData: SafeState) {
+  return {
+    data: createMockPendingTransactions(safeData) as QueuedItemPage,
+    loading: false,
+    loaded: true,
+  }
+}
+
+/**
+ * Creates default tx history state with mock executed transactions
+ *
+ * @param safeData - Safe fixture data
+ * @returns TxHistory slice initial state
+ */
+export function createTxHistoryState(safeData: SafeState) {
+  return {
+    data: createMockHistoryTransactions(safeData) as TransactionItemPage,
+    loading: false,
+    loaded: true,
   }
 }
 
@@ -103,20 +123,21 @@ export function createAuthState(isAuthenticated: boolean) {
  */
 export function createInitialState(options: {
   safeData: SafeState
-  chainData: Chain
   isDarkMode: boolean
   overrides?: StoreOverrides
   isAuthenticated?: boolean
 }) {
-  const { safeData, chainData, isDarkMode, overrides = {}, isAuthenticated = false } = options
+  const { safeData, isDarkMode, overrides = {}, isAuthenticated = false } = options
 
   // Build base state
+  // Note: Chain data is loaded via RTK Query from MSW handlers, not preloaded
   const baseState = {
     settings: createDefaultSettings(isDarkMode),
-    chains: createChainsState(chainData),
     safeInfo: createSafeInfoState(safeData),
     safeApps: createSafeAppsState(),
     auth: createAuthState(isAuthenticated),
+    txQueue: createTxQueueState(safeData),
+    txHistory: createTxHistoryState(safeData),
   }
 
   // Merge overrides
@@ -125,7 +146,6 @@ export function createInitialState(options: {
     ...overrides,
     // Deep merge specific slices if provided in overrides
     settings: overrides.settings ? { ...baseState.settings, ...overrides.settings } : baseState.settings,
-    chains: overrides.chains ? { ...baseState.chains, ...overrides.chains } : baseState.chains,
     safeInfo: overrides.safeInfo
       ? {
           ...baseState.safeInfo,

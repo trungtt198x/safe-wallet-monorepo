@@ -426,6 +426,16 @@ import {
 - **For simple components**: Use basic story format without mocking utilities
 - **Do not override feature flags** unless testing a specific disabled feature state (e.g., `features: { swaps: false }` to test no-swap UI). The defaults (`portfolio: true`, `positions: true`, `swaps: true`) should be used for most stories.
 
+#### Transaction Mocking (Known Limitation)
+
+Transaction page stories (Queue, History) have basic MSW handlers but **transaction mocking is not fully working** and requires further work. Current limitations:
+
+- Transaction details use `txData: null` to avoid "Error parsing data" errors in the Receipt component
+- Expanding transaction details may show incomplete data or errors
+- The CGW staging API (`safe-client.staging.5afe.dev`) can be used to fetch real fixture data, but the complex `txData` structure causes parsing issues in the UI components
+
+To improve transaction mocking, the `txData` structure in `handlers.ts` would need to match what the Receipt/Summary components expect, which requires deeper investigation of the CGW response format.
+
 #### Decorator Stacking Warning
 
 **IMPORTANT**: Storybook decorators stack - story-level decorators are added to meta-level decorators, they don't replace them. If you define a decorator at the meta level AND override it at the story level, both will run, which can cause duplicate layouts or elements.

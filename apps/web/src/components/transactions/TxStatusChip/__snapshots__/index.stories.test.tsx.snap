@@ -5,17 +5,17 @@ exports[`./index.stories Default 1`] = `
   style="background-color: rgb(255, 255, 255); padding: 1rem;"
 >
   <div
-    class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 css-1xulk7h-MuiPaper-root"
+    class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 mui-style-1xulk7h-MuiPaper-root"
     style="--Paper-shadow: none;"
   >
     <div
-      class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a204je-MuiChip-root"
+      class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault mui-style-a204je-MuiChip-root"
     >
       <span
-        class="MuiChip-label MuiChip-labelSmall css-qmwq9b-MuiChip-label"
+        class="MuiChip-label MuiChip-labelSmall mui-style-qmwq9b-MuiChip-label"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-lkspku-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption mui-style-lkspku-MuiTypography-root"
         >
           Processing
         </span>
@@ -30,21 +30,21 @@ exports[`./index.stories Success 1`] = `
   style="background-color: rgb(255, 255, 255); padding: 1rem;"
 >
   <div
-    class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 css-1xulk7h-MuiPaper-root"
+    class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 mui-style-1xulk7h-MuiPaper-root"
     style="--Paper-shadow: none;"
   >
     <div
-      class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cjet8q-MuiChip-root"
+      class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault mui-style-1cjet8q-MuiChip-root"
     >
       <span
-        class="MuiChip-label MuiChip-labelSmall css-qmwq9b-MuiChip-label"
+        class="MuiChip-label MuiChip-labelSmall mui-style-qmwq9b-MuiChip-label"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-lkspku-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption mui-style-lkspku-MuiTypography-root"
         >
           <svg
             aria-hidden="true"
-            class="MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-tqxw8e-MuiSvgIcon-root"
+            class="MuiSvgIcon-root MuiSvgIcon-fontSizeSmall mui-style-tqxw8e-MuiSvgIcon-root"
             data-testid="CheckIcon"
             focusable="false"
             viewBox="0 0 24 24"
@@ -66,21 +66,21 @@ exports[`./index.stories Warning 1`] = `
   style="background-color: rgb(255, 255, 255); padding: 1rem;"
 >
   <div
-    class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 css-1xulk7h-MuiPaper-root"
+    class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 mui-style-1xulk7h-MuiPaper-root"
     style="--Paper-shadow: none;"
   >
     <div
-      class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-2q1p8k-MuiChip-root"
+      class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault mui-style-2q1p8k-MuiChip-root"
     >
       <span
-        class="MuiChip-label MuiChip-labelSmall css-qmwq9b-MuiChip-label"
+        class="MuiChip-label MuiChip-labelSmall mui-style-qmwq9b-MuiChip-label"
       >
         <span
-          class="MuiTypography-root MuiTypography-caption css-lkspku-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption mui-style-lkspku-MuiTypography-root"
         >
           <svg
             aria-hidden="true"
-            class="MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-tqxw8e-MuiSvgIcon-root"
+            class="MuiSvgIcon-root MuiSvgIcon-fontSizeSmall mui-style-tqxw8e-MuiSvgIcon-root"
             data-testid="ScheduleIcon"
             focusable="false"
             viewBox="0 0 24 24"

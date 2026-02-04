@@ -16,12 +16,6 @@ import StakePage from './components/StakePage'
 import StakeButton from './components/StakeButton'
 import StakingStatus from './components/StakingStatus'
 import StakingConfirmationTx from './components/StakingConfirmationTx'
-import StakingTxDepositDetails from './components/StakingTxDepositDetails'
-import StakingTxDepositInfo from './components/StakingTxDepositInfo'
-import StakingTxExitDetails from './components/StakingTxExitDetails'
-import StakingTxExitInfo from './components/StakingTxExitInfo'
-import StakingTxWithdrawDetails from './components/StakingTxWithdrawDetails'
-import StakingTxWithdrawInfo from './components/StakingTxWithdrawInfo'
 
 // Service imports
 import { getStakeTitle } from './helpers/utils'
@@ -36,14 +30,6 @@ const feature: StakeContract = {
   StakeButton,
   StakingStatus,
   StakingConfirmationTx,
-
-  // Transaction Details
-  StakingTxDepositDetails,
-  StakingTxDepositInfo,
-  StakingTxExitDetails,
-  StakingTxExitInfo,
-  StakingTxWithdrawDetails,
-  StakingTxWithdrawInfo,
 
   // Services
   getStakeTitle,

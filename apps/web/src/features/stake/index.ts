@@ -51,9 +51,3 @@ export { useGetStakeWidgetUrl } from './hooks/useGetStakeWidgetUrl'
 // ─────────────────────────────────────────────────────────────────
 
 export * from './constants'
-// ─────────────────────────────────────────────────────────────────
-// SHARED UI COMPONENTS (always available, not feature-flag dependent)
-// ─────────────────────────────────────────────────────────────────
-
-// InfoTooltip is a generic utility component used across the app
-export { InfoTooltip } from './components/InfoTooltip'

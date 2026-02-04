@@ -61,7 +61,7 @@ const Queue: NextPage = () => {
         </TxHeader>
 
         <main>
-          <Box mb={4}>
+          <Box mb={3}>
             {hnLoading && (
               <Box mb={3}>
                 <Skeleton variant="rounded" height={30} />

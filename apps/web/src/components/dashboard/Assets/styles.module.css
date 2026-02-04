@@ -69,7 +69,7 @@
 
 .tokenAmount * {
   font-weight: normal;
-  color: var(--color-primary-light);
+  color: var(--color-text-secondary);
 }
 
 .barPercentage {

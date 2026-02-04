@@ -3,7 +3,6 @@ import { SvgIcon } from '@mui/material'
 
 import { HypernativeTooltip } from '@/features/hypernative/components/HypernativeTooltip'
 import SafeShieldIconSvg from '@/public/images/safe-shield/safe-shield-logo-no-text.svg'
-import { useIsHypernativeGuard } from '@/features/hypernative/hooks'
 
 import { safeShieldSvgStyles } from './styles'
 
@@ -13,12 +12,6 @@ import { safeShieldSvgStyles } from './styles'
  * Only renders when Hypernative Guard is active
  */
 export const SafeHeaderHnTooltip = (): ReactElement | null => {
-  const { isHypernativeGuard } = useIsHypernativeGuard()
-
-  if (!isHypernativeGuard) {
-    return null
-  }
-
   return (
     <HypernativeTooltip placement="right">
       <SvgIcon component={SafeShieldIconSvg} inheritViewBox sx={safeShieldSvgStyles} />

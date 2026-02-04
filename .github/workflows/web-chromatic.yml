@@ -42,6 +42,6 @@ jobs:
           workingDir: apps/web
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           storybookBuildDir: storybook-static
-          onlyChanged: true
+          # onlyStoryNames is set in chromatic.config.json (mutually exclusive with onlyChanged)
           autoAcceptChanges: 'dev | main'
           exitOnceUploaded: true

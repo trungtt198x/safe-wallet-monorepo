@@ -87,39 +87,49 @@ function partitionByCoverage(
   return { covered, uncovered }
 }
 
+/** Build a map of family path → group info */
+function buildGroupInfoMap(groups: TopLevelGroup[]): Map<string, { name: string; isCovered: boolean }> {
+  const map = new Map<string, { name: string; isCovered: boolean }>()
+  for (const group of groups) {
+    const isCovered = group.coverage !== 'none'
+    for (const family of group.families) {
+      map.set(family.path, { name: group.name, isCovered })
+    }
+  }
+  return map
+}
+
+/** Determine coverage type for a component based on hierarchy */
+function determineCoverageType(
+  entry: ComponentEntry,
+  familyIsCovered: boolean,
+  familyName: string,
+  groupInfo: { name: string; isCovered: boolean } | undefined,
+): ComponentCoverage {
+  if (entry.hasStory) return { type: 'own' }
+  if (familyIsCovered) return { type: 'family', familyName }
+  if (groupInfo?.isCovered) return { type: 'group', groupName: groupInfo.name }
+  return { type: 'none' }
+}
+
 /** Build a map of component path → coverage source with details */
 function buildComponentCoverageMap(
   families: ComponentFamily[],
   groups: TopLevelGroup[],
 ): Map<string, ComponentCoverage> {
   const map = new Map<string, ComponentCoverage>()
-
-  // Build a map of family path → group info (name and whether covered)
-  const groupInfoMap = new Map<string, { name: string; isCovered: boolean }>()
-  for (const group of groups) {
-    const groupIsCovered = group.coverage !== 'none'
-    for (const family of group.families) {
-      groupInfoMap.set(family.path, { name: group.name, isCovered: groupIsCovered })
-    }
-  }
+  const groupInfoMap = buildGroupInfoMap(groups)
 
   for (const family of families) {
     const groupInfo = groupInfoMap.get(family.path)
-    const groupIsCovered = groupInfo?.isCovered === true
     const familyIsCovered = family.coverage !== 'none'
 
     for (const entry of family.componentEntries) {
-      if (entry.hasStory) {
-        map.set(entry.path, { type: 'own' })
-      } else if (familyIsCovered) {
-        map.set(entry.path, { type: 'family', familyName: family.name })
-      } else if (groupIsCovered && groupInfo) {
-        map.set(entry.path, { type: 'group', groupName: groupInfo.name })
-      } else {
-        map.set(entry.path, { type: 'none' })
-      }
+      const coverage = determineCoverageType(entry, familyIsCovered, family.name, groupInfo)
+      map.set(entry.path, coverage)
     }
   }
+
   return map
 }
 

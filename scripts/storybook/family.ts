@@ -185,54 +185,65 @@ function getRootDir(): string {
 }
 
 /**
+ * Resolves the full path to a story file, handling both absolute and relative paths.
+ * Returns null if the file doesn't exist.
+ */
+function resolveStoryPath(storyPath: string): string | null {
+  if (fs.existsSync(storyPath)) {
+    return storyPath
+  }
+
+  const rootDir = getRootDir()
+  const fullPath = path.join(rootDir, storyPath)
+
+  if (fs.existsSync(fullPath)) {
+    return fullPath
+  }
+
+  return null
+}
+
+/**
+ * Extracts exported story names from a TypeScript source file.
+ * Filters out meta, default, and __namedExportsOrder exports.
+ */
+function extractStoryExportNames(sourceFile: ts.SourceFile): string[] {
+  const exports: string[] = []
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (!ts.isVariableStatement(node)) return
+
+    const modifiers = ts.getModifiers(node)
+    const hasExport = modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+    if (!hasExport) return
+
+    for (const declaration of node.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name)) continue
+
+      const name = declaration.name.text
+      if (name !== 'default' && name !== 'meta' && name !== '__namedExportsOrder') {
+        exports.push(name)
+      }
+    }
+  })
+
+  return exports
+}
+
+/**
  * Analyzes a story file to extract all exported story names.
  */
 function analyzeStoryExports(storyPath: string): string[] {
-  const exports: string[] = []
+  const fullPath = resolveStoryPath(storyPath)
+  if (!fullPath) return []
 
   try {
-    // Handle both absolute and relative paths
-    const rootDir = getRootDir()
-    let fullPath = storyPath
-
-    // If path doesn't exist as-is, try prepending root dir
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(rootDir, storyPath)
-    }
-
-    // Still doesn't exist? Try without any prefix manipulation
-    if (!fs.existsSync(fullPath)) {
-      return exports
-    }
-
     const content = fs.readFileSync(fullPath, 'utf-8')
     const sourceFile = ts.createSourceFile(fullPath, content, ts.ScriptTarget.Latest, true)
-
-    ts.forEachChild(sourceFile, (node) => {
-      // Look for exported const declarations (CSF3 format)
-      if (ts.isVariableStatement(node)) {
-        const modifiers = ts.getModifiers(node)
-        const hasExport = modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-
-        if (hasExport) {
-          for (const declaration of node.declarationList.declarations) {
-            if (ts.isIdentifier(declaration.name)) {
-              const name = declaration.name.text
-              // Skip meta export and default
-              if (name !== 'default' && name !== 'meta' && name !== '__namedExportsOrder') {
-                exports.push(name)
-              }
-            }
-          }
-        }
-      }
-    })
+    return extractStoryExportNames(sourceFile).sort()
   } catch {
-    // Ignore errors, return empty exports
+    return []
   }
-
-  // Sort for deterministic output
-  return exports.sort()
 }
 
 /**
@@ -481,39 +492,15 @@ function findTopLevelStory(
  * Analyzes story exports from a file path.
  */
 function analyzeStoryExportsFromFile(storyPath: string): string[] {
-  const exports: string[] = []
+  if (!fs.existsSync(storyPath)) return []
 
   try {
-    if (!fs.existsSync(storyPath)) {
-      return exports
-    }
-
     const content = fs.readFileSync(storyPath, 'utf-8')
     const sourceFile = ts.createSourceFile(storyPath, content, ts.ScriptTarget.Latest, true)
-
-    ts.forEachChild(sourceFile, (node) => {
-      if (ts.isVariableStatement(node)) {
-        const modifiers = ts.getModifiers(node)
-        const hasExport = modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-
-        if (hasExport) {
-          for (const declaration of node.declarationList.declarations) {
-            if (ts.isIdentifier(declaration.name)) {
-              const name = declaration.name.text
-              if (name !== 'default' && name !== 'meta' && name !== '__namedExportsOrder') {
-                exports.push(name)
-              }
-            }
-          }
-        }
-      }
-    })
+    return extractStoryExportNames(sourceFile).sort()
   } catch {
-    // Ignore errors
+    return []
   }
-
-  // Sort for deterministic output
-  return exports.sort()
 }
 
 /**

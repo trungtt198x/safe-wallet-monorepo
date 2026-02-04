@@ -12,10 +12,43 @@
  */
 
 import * as fs from 'fs'
-import * as path from 'path'
 import * as ts from 'typescript'
 import type { ComponentEntry, StoryInfo } from './types'
 import { EXPECTED_STATES } from './types'
+
+// ============================================================================
+// Component Type Detection
+// ============================================================================
+
+type ComponentType = 'async' | 'form' | 'toggle' | 'interactive' | 'default'
+
+/** Patterns for detecting component types from name */
+const NAME_PATTERNS: Array<{ type: ComponentType; patterns: string[] }> = [
+  { type: 'form', patterns: ['input', 'form', 'field', 'textarea'] },
+  { type: 'toggle', patterns: ['toggle', 'switch', 'checkbox'] },
+  { type: 'interactive', patterns: ['button', 'select', 'dropdown', 'menu'] },
+]
+
+/** Detect component type from name patterns */
+function detectTypeFromName(lowerName: string): ComponentType | null {
+  for (const { type, patterns } of NAME_PATTERNS) {
+    if (patterns.some((p) => lowerName.includes(p))) {
+      return type
+    }
+  }
+  return null
+}
+
+/** Check if component is async (has API calls) */
+function isAsyncComponent(dependencies: ComponentEntry['dependencies']): boolean {
+  return dependencies.needsMsw || dependencies.apiCalls.length > 0
+}
+
+/** Check if component is interactive UI */
+function isInteractiveUI(category: string, lowerName: string): boolean {
+  if (category !== 'ui') return false
+  return ['button', 'select', 'dropdown', 'menu'].some((p) => lowerName.includes(p))
+}
 
 /**
  * Analyzes story coverage for components
@@ -33,57 +66,63 @@ export function analyzeStoryCoverage(components: ComponentEntry[]): ComponentEnt
   })
 }
 
+// ============================================================================
+// Story File Analysis
+// ============================================================================
+
+/** Create a default story info for missing/errored files */
+function createDefaultStoryInfo(storyPath: string, component: ComponentEntry): StoryInfo {
+  return {
+    path: storyPath,
+    variants: [],
+    isComplete: false,
+    missingStates: getExpectedStates(component),
+  }
+}
+
+/** Extract exported variant names from a TypeScript source file */
+function extractVariantNames(sourceFile: ts.SourceFile): string[] {
+  const variants: string[] = []
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (!ts.isVariableStatement(node)) return
+
+    const hasExport = ts.getModifiers(node)?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+    if (!hasExport) return
+
+    for (const declaration of node.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name)) continue
+
+      const name = declaration.name.text
+      if (name !== 'default' && name !== 'meta') {
+        variants.push(name)
+      }
+    }
+  })
+
+  return variants
+}
+
+/** Find missing states by comparing variants against expected states */
+function findMissingStates(variants: string[], expectedStates: string[]): string[] {
+  return expectedStates.filter((state) => !variants.some((v) => v.toLowerCase().includes(state.toLowerCase())))
+}
+
 /**
  * Analyzes a story file to extract variant information
  */
 function analyzeStoryFile(storyPath: string, component: ComponentEntry): StoryInfo {
-  const variants: string[] = []
-  const missingStates: string[] = []
+  if (!fs.existsSync(storyPath)) {
+    return createDefaultStoryInfo(storyPath, component)
+  }
 
   try {
-    if (!fs.existsSync(storyPath)) {
-      return {
-        path: storyPath,
-        variants: [],
-        isComplete: false,
-        missingStates: getExpectedStates(component),
-      }
-    }
-
     const content = fs.readFileSync(storyPath, 'utf-8')
     const sourceFile = ts.createSourceFile(storyPath, content, ts.ScriptTarget.Latest, true)
 
-    // Extract exported story variants
-    ts.forEachChild(sourceFile, (node) => {
-      // Look for exported const declarations (CSF3 format)
-      if (ts.isVariableStatement(node)) {
-        const modifiers = ts.getModifiers(node)
-        const hasExport = modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-
-        if (hasExport) {
-          for (const declaration of node.declarationList.declarations) {
-            if (ts.isIdentifier(declaration.name)) {
-              const name = declaration.name.text
-              // Skip meta export
-              if (name !== 'default' && name !== 'meta') {
-                variants.push(name)
-              }
-            }
-          }
-        }
-      }
-    })
-
-    // Determine expected states based on component type
+    const variants = extractVariantNames(sourceFile)
     const expectedStates = getExpectedStates(component)
-
-    // Check for missing states
-    for (const state of expectedStates) {
-      const hasState = variants.some((v) => v.toLowerCase().includes(state.toLowerCase()))
-      if (!hasState) {
-        missingStates.push(state)
-      }
-    }
+    const missingStates = findMissingStates(variants, expectedStates)
 
     return {
       path: storyPath,
@@ -92,12 +131,7 @@ function analyzeStoryFile(storyPath: string, component: ComponentEntry): StoryIn
       missingStates,
     }
   } catch {
-    return {
-      path: storyPath,
-      variants: [],
-      isComplete: false,
-      missingStates: getExpectedStates(component),
-    }
+    return createDefaultStoryInfo(storyPath, component)
   }
 }
 
@@ -108,40 +142,14 @@ function getExpectedStates(component: ComponentEntry): string[] {
   const { category, dependencies, name } = component
   const lowerName = name.toLowerCase()
 
-  // Async components (API calls, loading states)
-  if (dependencies.needsMsw || dependencies.apiCalls.length > 0) {
-    return EXPECTED_STATES.async
-  }
+  // Check in priority order
+  if (isAsyncComponent(dependencies)) return EXPECTED_STATES.async
 
-  // Form components
-  if (
-    lowerName.includes('input') ||
-    lowerName.includes('form') ||
-    lowerName.includes('field') ||
-    lowerName.includes('textarea')
-  ) {
-    return EXPECTED_STATES.form
-  }
+  const nameType = detectTypeFromName(lowerName)
+  if (nameType) return EXPECTED_STATES[nameType]
 
-  // Toggle/switch components
-  if (lowerName.includes('toggle') || lowerName.includes('switch') || lowerName.includes('checkbox')) {
-    return EXPECTED_STATES.toggle
-  }
+  if (isInteractiveUI(category, lowerName)) return EXPECTED_STATES.interactive
 
-  // Interactive UI components
-  if (category === 'ui') {
-    // Buttons, selects, inputs
-    if (
-      lowerName.includes('button') ||
-      lowerName.includes('select') ||
-      lowerName.includes('dropdown') ||
-      lowerName.includes('menu')
-    ) {
-      return EXPECTED_STATES.interactive
-    }
-  }
-
-  // Default: just need a Default state
   return EXPECTED_STATES.default
 }
 

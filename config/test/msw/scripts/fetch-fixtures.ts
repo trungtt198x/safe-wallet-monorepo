@@ -144,31 +144,42 @@ async function createEmptyFixtures(): Promise<void> {
   await saveFixture('positions/empty.json', [])
 }
 
+/** Parse --safe= argument from command line args */
+function parseSafeArg(args: string[]): SafeKey | undefined {
+  return args.find((a) => a.startsWith('--safe='))?.split('=')[1] as SafeKey | undefined
+}
+
+/** Fetch fixtures for a single safe, exit with error if unknown */
+async function fetchSingleSafe(safeArg: SafeKey): Promise<void> {
+  if (!SAFES[safeArg]) {
+    console.error(`Unknown safe: ${safeArg}. Available: ${Object.keys(SAFES).join(', ')}`)
+    process.exit(1)
+  }
+  await fetchSafeFixtures(safeArg)
+}
+
+/** Fetch all fixtures: chains, all safes, and empty fixtures */
+async function fetchAllFixtures(): Promise<void> {
+  await fetchChainFixtures()
+
+  for (const safeKey of Object.keys(SAFES) as SafeKey[]) {
+    await fetchSafeFixtures(safeKey)
+  }
+
+  await createEmptyFixtures()
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2)
-  const safeArg = args.find((a) => a.startsWith('--safe='))?.split('=')[1] as SafeKey | undefined
-  const endpointArg = args.find((a) => a.startsWith('--endpoint='))?.split('=')[1]
+  const safeArg = parseSafeArg(args)
 
   console.log('🔄 Fetching MSW fixtures from staging gateway...')
   console.log(`   Gateway: ${GATEWAY_URL}`)
 
   if (safeArg) {
-    // Fetch single safe
-    if (SAFES[safeArg]) {
-      await fetchSafeFixtures(safeArg)
-    } else {
-      console.error(`Unknown safe: ${safeArg}. Available: ${Object.keys(SAFES).join(', ')}`)
-      process.exit(1)
-    }
+    await fetchSingleSafe(safeArg)
   } else {
-    // Fetch all
-    await fetchChainFixtures()
-
-    for (const safeKey of Object.keys(SAFES) as SafeKey[]) {
-      await fetchSafeFixtures(safeKey)
-    }
-
-    await createEmptyFixtures()
+    await fetchAllFixtures()
   }
 
   console.log('\n✅ Done!')

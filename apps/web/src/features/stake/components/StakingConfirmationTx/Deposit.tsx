@@ -5,7 +5,7 @@ import ConfirmationOrderHeader from '@/components/tx/ConfirmationOrder/Confirmat
 import { formatDurationFromMilliseconds, formatVisualAmount, maybePlural } from '@safe-global/utils/utils/formatters'
 import { formatCurrency } from '@safe-global/utils/utils/formatNumber'
 import StakingStatus from '../StakingStatus'
-import { InfoTooltip } from '../InfoTooltip'
+import { InfoTooltip } from '@/components/common/InfoTooltip'
 import { BRAND_NAME } from '@/config/constants'
 
 type StakingOrderConfirmationViewProps = {

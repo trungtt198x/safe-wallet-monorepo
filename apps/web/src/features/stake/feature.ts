@@ -16,7 +16,6 @@ import StakePage from './components/StakePage'
 import StakeButton from './components/StakeButton'
 import StakingStatus from './components/StakingStatus'
 import StakingConfirmationTx from './components/StakingConfirmationTx'
-import { InfoTooltip } from './components/InfoTooltip'
 import StakingTxDepositDetails from './components/StakingTxDepositDetails'
 import StakingTxDepositInfo from './components/StakingTxDepositInfo'
 import StakingTxExitDetails from './components/StakingTxExitDetails'
@@ -37,7 +36,6 @@ const feature: StakeContract = {
   StakeButton,
   StakingStatus,
   StakingConfirmationTx,
-  InfoTooltip,
 
   // Transaction Details
   StakingTxDepositDetails,

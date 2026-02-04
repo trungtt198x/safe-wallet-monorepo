@@ -16,7 +16,6 @@ import type StakePage from './components/StakePage'
 import type StakeButton from './components/StakeButton'
 import type StakingStatus from './components/StakingStatus'
 import type StakingConfirmationTx from './components/StakingConfirmationTx'
-import type { InfoTooltip } from './components/InfoTooltip'
 import type StakingTxDepositDetails from './components/StakingTxDepositDetails'
 import type StakingTxDepositInfo from './components/StakingTxDepositInfo'
 import type StakingTxExitDetails from './components/StakingTxExitDetails'
@@ -34,7 +33,6 @@ export interface StakeContract {
   StakeButton: typeof StakeButton
   StakingStatus: typeof StakingStatus
   StakingConfirmationTx: typeof StakingConfirmationTx
-  InfoTooltip: typeof InfoTooltip
 
   // Transaction Details Components
   StakingTxDepositDetails: typeof StakingTxDepositDetails

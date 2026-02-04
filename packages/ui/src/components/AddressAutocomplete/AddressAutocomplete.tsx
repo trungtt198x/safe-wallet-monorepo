@@ -17,7 +17,6 @@ import {
   parsePrefixedAddress,
   formatPrefixedAddress,
 } from '@safe-global/utils/utils/addresses'
-import { isValidAddress as checkValidAddress } from '@safe-global/utils/utils/validation'
 import useDebounce from '@safe-global/utils/hooks/useDebounce'
 
 import type { AddressAutocompleteProps, AddressBookEntry } from './types'
@@ -73,7 +72,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
  * Check if address is valid (wrapper that handles undefined/empty)
  */
 const isValidAddress = (address?: string): boolean => {
-  return !!address && isAddress(address) && checkValidAddress(address)
+  return !!address && isAddress(address)
 }
 
 // Based on https://docs.ens.domains/dapp-developer-guide/resolving-names

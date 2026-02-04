@@ -16,9 +16,10 @@ type SelectContractFieldTypes = {
   label: string
   name: string
   id: string
+  required?: boolean
 }
 
-const SelectContractField = ({ value, onChange, options, label, name, id }: SelectContractFieldTypes) => {
+const SelectContractField = ({ value, onChange, options, label, name, id, required }: SelectContractFieldTypes) => {
   const selectedValue = useMemo(() => options.find((opt) => opt.id === value), [options, value])
 
   const onValueChange = useCallback(
@@ -43,6 +44,7 @@ const SelectContractField = ({ value, onChange, options, label, name, id }: Sele
           {...params}
           label={label}
           name={name}
+          required={required}
           InputProps={{
             ...params.InputProps,
             id: `${id}-input`,

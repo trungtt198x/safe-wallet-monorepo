@@ -95,15 +95,8 @@ interface FieldRenderProps {
  * Uses explicit conditional rendering instead of unsafe type casts.
  */
 const renderFieldComponent = (fieldType: string, props: FieldRenderProps): ReactElement => {
-  const {
-    options,
-    getAddressFromDomain,
-    networkPrefix,
-    showErrorsInTheLabel,
-    required: _required,
-    fullWidth,
-    ...baseProps
-  } = props
+  const { options, getAddressFromDomain, networkPrefix, showErrorsInTheLabel, required, fullWidth, ...baseProps } =
+    props
 
   if (isAddressFieldType(fieldType)) {
     return (
@@ -117,14 +110,28 @@ const renderFieldComponent = (fieldType: string, props: FieldRenderProps): React
   }
 
   if (isBooleanFieldType(fieldType) || fieldType === CONTRACT_METHOD_FIELD_TYPE) {
-    return <SelectContractField {...baseProps} options={options || []} />
+    return <SelectContractField {...baseProps} options={options || []} required={required} />
   }
 
   if (fieldType === CUSTOM_TRANSACTION_DATA_FIELD_TYPE) {
-    return <TextareaContractField {...baseProps} fullWidth={fullWidth} showErrorsInTheLabel={showErrorsInTheLabel} />
+    return (
+      <TextareaContractField
+        {...baseProps}
+        required={required}
+        fullWidth={fullWidth}
+        showErrorsInTheLabel={showErrorsInTheLabel}
+      />
+    )
   }
 
-  return <TextContractField {...baseProps} fullWidth={fullWidth} showErrorsInTheLabel={showErrorsInTheLabel} />
+  return (
+    <TextContractField
+      {...baseProps}
+      required={required}
+      fullWidth={fullWidth}
+      showErrorsInTheLabel={showErrorsInTheLabel}
+    />
+  )
 }
 
 const Field = <T extends FieldValues = FieldValues>({

@@ -43,6 +43,50 @@ type ComponentCoverage =
   | { type: 'group'; groupName: string }
   | { type: 'none' }
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/** Format coverage source for display */
+function formatCoverageSource(coverage: ComponentCoverage | undefined, comp: ComponentEntry): string {
+  switch (coverage?.type) {
+    case 'own': {
+      const storyFile = comp.storyPath ? path.basename(comp.storyPath) : 'unknown'
+      const storyName =
+        storyFile === 'index.stories.tsx'
+          ? path.basename(path.dirname(comp.storyPath || ''))
+          : storyFile.replace('.stories.tsx', '')
+      return `Own story (${storyName})`
+    }
+    case 'family':
+      return `Family (${coverage.familyName})`
+    case 'group':
+      return `Group (${coverage.groupName})`
+    default:
+      return 'Unknown'
+  }
+}
+
+/** Partition components by coverage status */
+function partitionByCoverage(
+  components: ComponentEntry[],
+  coverageMap: Map<string, ComponentCoverage>,
+): { covered: ComponentEntry[]; uncovered: ComponentEntry[] } {
+  const covered: ComponentEntry[] = []
+  const uncovered: ComponentEntry[] = []
+
+  for (const comp of components) {
+    const type = coverageMap.get(comp.path)?.type
+    if (type === 'own' || type === 'family' || type === 'group') {
+      covered.push(comp)
+    } else {
+      uncovered.push(comp)
+    }
+  }
+
+  return { covered, uncovered }
+}
+
 /** Build a map of component path → coverage source with details */
 function buildComponentCoverageMap(
   families: ComponentFamily[],
@@ -351,15 +395,7 @@ function generateComponentSection(
   components: ComponentEntry[],
   componentCoverageMap: Map<string, ComponentCoverage>,
 ): string {
-  // A component is covered if it has own story, family story, or group story
-  const covered = components.filter((c) => {
-    const coverage = componentCoverageMap.get(c.path)
-    return coverage?.type === 'own' || coverage?.type === 'family' || coverage?.type === 'group'
-  })
-  const uncovered = components.filter((c) => {
-    const coverage = componentCoverageMap.get(c.path)
-    return coverage?.type === 'none' || coverage === undefined
-  })
+  const { covered, uncovered } = partitionByCoverage(components, componentCoverageMap)
 
   let md = `## 3. Component Coverage (${components.length} components)
 
@@ -376,22 +412,7 @@ Detailed view - every component with its coverage status.
 
   for (const comp of covered.sort((a, b) => a.name.localeCompare(b.name))) {
     const coverage = componentCoverageMap.get(comp.path)
-    let source: string
-    if (coverage?.type === 'own') {
-      // For index.stories.tsx, show parent directory name; otherwise show filename
-      const storyFile = comp.storyPath ? path.basename(comp.storyPath) : 'unknown'
-      const storyName =
-        storyFile === 'index.stories.tsx'
-          ? path.basename(path.dirname(comp.storyPath || ''))
-          : storyFile.replace('.stories.tsx', '')
-      source = `Own story (${storyName})`
-    } else if (coverage?.type === 'family') {
-      source = `Family (${coverage.familyName})`
-    } else if (coverage?.type === 'group') {
-      source = `Group (${coverage.groupName})`
-    } else {
-      source = 'Unknown'
-    }
+    const source = formatCoverageSource(coverage, comp)
     md += `| ${comp.name} | ${comp.category} | ${comp.path} | ${source} |\n`
   }
 

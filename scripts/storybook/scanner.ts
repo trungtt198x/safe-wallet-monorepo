@@ -16,6 +16,36 @@ import * as ts from 'typescript'
 import type { ComponentEntry, ComponentCategory, ScannerOptions, ComponentDependencies } from './types'
 import { DEFAULT_EXCLUDE_PATTERNS } from './types'
 
+// ============================================================================
+// Lookup Tables and Constants
+// ============================================================================
+
+/** Package patterns that indicate specific dependency types */
+const PACKAGE_DETECTORS: Record<string, (path: string) => boolean> = {
+  needsRedux: (p) => p.includes('react-redux') || p.includes('@reduxjs'),
+  needsWeb3: (p) => p.includes('ethers') || p.includes('web3') || p.includes('wagmi'),
+  needsMsw: (p) => p.includes('swr') || p.includes('react-query'),
+}
+
+/** Patterns in source code that indicate API calls */
+const API_PATTERNS = ['useSWR', 'useQuery', 'fetch(', 'axios'] as const
+
+/** Category path patterns for component classification */
+const CATEGORY_PATTERNS: [string, ComponentCategory][] = [
+  ['/ui/', 'ui'],
+  ['/sidebar/', 'sidebar'],
+  ['/common/', 'common'],
+  ['/dashboard/', 'dashboard'],
+  ['/transactions/', 'transaction'],
+  ['/tx/', 'transaction'],
+  ['/balances/', 'balance'],
+  ['/assets/', 'balance'],
+  ['/settings/', 'settings'],
+  ['/layout/', 'layout'],
+  ['/pages/', 'page'],
+  ['/features/', 'feature'],
+]
+
 /**
  * Scans the codebase for React components
  */
@@ -88,71 +118,77 @@ async function analyzeComponentFile(fullPath: string, relativePath: string): Pro
   }
 }
 
+// ============================================================================
+// Component Name Extraction
+// ============================================================================
+
+type ExportExtractor = (node: ts.Node) => string | null
+
+/** Extract default export assignment: export default Foo */
+function extractDefaultExport(node: ts.Node): string | null {
+  if (!ts.isExportAssignment(node) || node.isExportEquals) return null
+  return ts.isIdentifier(node.expression) ? node.expression.text : null
+}
+
+/** Extract exported function: export function Foo() {} */
+function extractExportedFunction(node: ts.Node): string | null {
+  if (!ts.isFunctionDeclaration(node) || !node.name) return null
+  const hasExport = ts.getModifiers(node)?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+  return hasExport && isPascalCase(node.name.text) ? node.name.text : null
+}
+
+/** Extract named exports: export { Foo } */
+function extractNamedExport(node: ts.Node): string | null {
+  if (!ts.isExportDeclaration(node)) return null
+  if (!node.exportClause || !ts.isNamedExports(node.exportClause)) return null
+  const pascalExport = node.exportClause.elements.find((e) => isPascalCase(e.name.text))
+  return pascalExport?.name.text ?? null
+}
+
+/** Extract exported variable: export const Foo = ... */
+function extractExportedVariable(node: ts.Node): string | null {
+  if (!ts.isVariableStatement(node)) return null
+  const hasExport = ts.getModifiers(node)?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+  if (!hasExport) return null
+  for (const decl of node.declarationList.declarations) {
+    if (ts.isIdentifier(decl.name) && isPascalCase(decl.name.text)) {
+      return decl.name.text
+    }
+  }
+  return null
+}
+
+/** Ordered list of extractors to try for component name detection */
+const EXPORT_EXTRACTORS: ExportExtractor[] = [
+  extractDefaultExport,
+  extractExportedFunction,
+  extractNamedExport,
+  extractExportedVariable,
+]
+
 /**
  * Extracts the component name from a source file
  */
 function extractComponentName(sourceFile: ts.SourceFile, relativePath: string): string | null {
-  let componentName: string | null = null
-
-  // Look for default export or named export that matches file name
-  const fileName = path.basename(relativePath, '.tsx')
+  let result: string | null = null
 
   ts.forEachChild(sourceFile, (node) => {
-    // Check for default export
-    if (ts.isExportAssignment(node) && !node.isExportEquals) {
-      if (ts.isIdentifier(node.expression)) {
-        componentName = node.expression.text
-      }
-    }
+    if (result) return
 
-    // Check for exported function declarations (both default and named)
-    if (ts.isFunctionDeclaration(node)) {
-      const modifiers = ts.getModifiers(node)
-      const hasExport = modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-
-      if (hasExport && node.name) {
-        const name = node.name.text
-        // Accept PascalCase function names as components
-        if (isPascalCase(name)) {
-          componentName = name
-        }
-      }
-    }
-
-    // Check for named exports
-    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
-      for (const element of node.exportClause.elements) {
-        const name = element.name.text
-        if (isPascalCase(name)) {
-          componentName = name
-          break
-        }
-      }
-    }
-
-    // Check for exported const/function declarations
-    if (ts.isVariableStatement(node)) {
-      const modifiers = ts.getModifiers(node)
-      const hasExport = modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-
-      if (hasExport) {
-        for (const declaration of node.declarationList.declarations) {
-          if (ts.isIdentifier(declaration.name) && isPascalCase(declaration.name.text)) {
-            componentName = declaration.name.text
-            break
-          }
-        }
-      }
+    for (const extractor of EXPORT_EXTRACTORS) {
+      result = extractor(node)
+      if (result) break
     }
   })
 
-  // Fallback to file name if it's PascalCase
-  if (!componentName && isPascalCase(fileName)) {
-    componentName = fileName
-  }
-
-  return componentName
+  // Fallback to PascalCase filename
+  const fileName = path.basename(relativePath, '.tsx')
+  return result ?? (isPascalCase(fileName) ? fileName : null)
 }
+
+// ============================================================================
+// Category Detection
+// ============================================================================
 
 /**
  * Determines the component category based on file path
@@ -160,25 +196,63 @@ function extractComponentName(sourceFile: ts.SourceFile, relativePath: string): 
 function determineCategory(relativePath: string): ComponentCategory {
   const lowerPath = relativePath.toLowerCase()
 
-  if (lowerPath.includes('/ui/')) return 'ui'
-  if (lowerPath.includes('/sidebar/')) return 'sidebar'
-  if (lowerPath.includes('/common/')) return 'common'
-  if (lowerPath.includes('/dashboard/')) return 'dashboard'
-  if (lowerPath.includes('/transactions/') || lowerPath.includes('/tx/')) return 'transaction'
-  if (lowerPath.includes('/balances/') || lowerPath.includes('/assets/')) return 'balance'
-  if (lowerPath.includes('/settings/')) return 'settings'
-  if (lowerPath.includes('/layout/')) return 'layout'
-  if (lowerPath.includes('/pages/')) return 'page'
-  if (lowerPath.includes('/features/')) return 'feature'
+  for (const [pattern, category] of CATEGORY_PATTERNS) {
+    if (lowerPath.includes(pattern)) return category
+  }
 
   return 'other'
 }
 
-/**
- * Extracts dependencies from a source file
- */
-function extractDependencies(sourceFile: ts.SourceFile): ComponentDependencies {
-  const dependencies: ComponentDependencies = {
+// ============================================================================
+// Dependency Extraction
+// ============================================================================
+
+/** Check if a module path is an external package */
+function isExternalPackage(modulePath: string): boolean {
+  return !modulePath.startsWith('.') && !modulePath.startsWith('@/')
+}
+
+/** Detect package types and update dependencies flags */
+function detectPackageTypes(modulePath: string, deps: ComponentDependencies): void {
+  for (const [key, detector] of Object.entries(PACKAGE_DETECTORS)) {
+    if (detector(modulePath)) {
+      deps[key as keyof Pick<ComponentDependencies, 'needsRedux' | 'needsWeb3' | 'needsMsw'>] = true
+    }
+  }
+}
+
+/** Categorize an import name by its type */
+function categorizeImport(name: string): 'hooks' | 'redux' | 'components' | null {
+  if (name.startsWith('use')) return 'hooks'
+  if (name.includes('Slice') || name.includes('selector') || name.includes('dispatch') || name.startsWith('select')) {
+    return 'redux'
+  }
+  if (isPascalCase(name) && !name.startsWith('use')) return 'components'
+  return null
+}
+
+/** Extract named imports from an import declaration */
+function extractNamedImports(node: ts.ImportDeclaration, deps: ComponentDependencies): void {
+  const bindings = node.importClause?.namedBindings
+  if (!bindings || !ts.isNamedImports(bindings)) return
+
+  for (const element of bindings.elements) {
+    const name = element.name.text
+    const category = categorizeImport(name)
+
+    if (category === 'redux') deps.needsRedux = true
+    if (category) deps[category].push(name)
+  }
+}
+
+/** Check if source text contains API call patterns */
+function hasApiCalls(sourceText: string): boolean {
+  return API_PATTERNS.some((p) => sourceText.includes(p))
+}
+
+/** Create empty dependencies object */
+function createEmptyDependencies(): ComponentDependencies {
+  return {
     hooks: [],
     redux: [],
     apiCalls: [],
@@ -188,73 +262,34 @@ function extractDependencies(sourceFile: ts.SourceFile): ComponentDependencies {
     needsRedux: false,
     needsWeb3: false,
   }
+}
+
+/**
+ * Extracts dependencies from a source file
+ */
+function extractDependencies(sourceFile: ts.SourceFile): ComponentDependencies {
+  const deps = createEmptyDependencies()
 
   ts.forEachChild(sourceFile, (node) => {
-    if (ts.isImportDeclaration(node)) {
-      const moduleSpecifier = node.moduleSpecifier
-      if (ts.isStringLiteral(moduleSpecifier)) {
-        const modulePath = moduleSpecifier.text
+    if (!ts.isImportDeclaration(node)) return
+    if (!ts.isStringLiteral(node.moduleSpecifier)) return
 
-        // Check for package imports
-        if (!modulePath.startsWith('.') && !modulePath.startsWith('@/')) {
-          dependencies.packages.push(modulePath)
+    const modulePath = node.moduleSpecifier.text
 
-          // Check for specific packages
-          if (modulePath.includes('react-redux') || modulePath.includes('@reduxjs')) {
-            dependencies.needsRedux = true
-          }
-          if (modulePath.includes('ethers') || modulePath.includes('web3') || modulePath.includes('wagmi')) {
-            dependencies.needsWeb3 = true
-          }
-          if (modulePath.includes('swr') || modulePath.includes('react-query')) {
-            dependencies.needsMsw = true
-          }
-        }
-
-        // Extract named imports
-        if (node.importClause?.namedBindings && ts.isNamedImports(node.importClause.namedBindings)) {
-          for (const element of node.importClause.namedBindings.elements) {
-            const importName = element.name.text
-
-            // Detect hooks
-            if (importName.startsWith('use')) {
-              dependencies.hooks.push(importName)
-            }
-
-            // Detect Redux imports
-            if (
-              importName.includes('Slice') ||
-              importName.includes('selector') ||
-              importName.includes('dispatch') ||
-              importName.startsWith('select')
-            ) {
-              dependencies.redux.push(importName)
-              dependencies.needsRedux = true
-            }
-
-            // Detect component imports
-            if (isPascalCase(importName) && !importName.startsWith('use')) {
-              dependencies.components.push(importName)
-            }
-          }
-        }
-      }
+    if (isExternalPackage(modulePath)) {
+      deps.packages.push(modulePath)
+      detectPackageTypes(modulePath, deps)
     }
+
+    extractNamedImports(node, deps)
   })
 
-  // Check for API call patterns in source
-  const sourceText = sourceFile.getFullText()
-  if (
-    sourceText.includes('useSWR') ||
-    sourceText.includes('useQuery') ||
-    sourceText.includes('fetch(') ||
-    sourceText.includes('axios')
-  ) {
-    dependencies.needsMsw = true
-    dependencies.apiCalls.push('detected')
+  if (hasApiCalls(sourceFile.getFullText())) {
+    deps.needsMsw = true
+    deps.apiCalls.push('detected')
   }
 
-  return dependencies
+  return deps
 }
 
 /**

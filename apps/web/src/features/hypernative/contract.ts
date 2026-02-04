@@ -18,7 +18,7 @@ import type HnPendingBanner from './components/HnPendingBanner'
 import type { HnQueueAssessmentBanner } from './components/HnQueueAssessmentBanner'
 import type { HnActivatedBannerForSettings } from './components/HnActivatedSettingsBanner'
 import type HnSecurityReportBtn from './components/HnSecurityReportBtn/HnSecurityReportBtn'
-import type HnSecurityReportBtnForTxDetails from './components/HnSecurityReportBtn/HnSecurityReportBtnForTxDetails'
+import type HnSecuritySection from './components/HnSecuritySection'
 import type { HnLoginCard } from './components/HnLoginCard'
 import type HypernativeLogo from './components/HypernativeLogo'
 import type { HypernativeTooltip } from './components/HypernativeTooltip'
@@ -38,7 +38,7 @@ export interface HypernativeContract {
   // Settings Components (PascalCase → stub renders null)
   HnActivatedSettingsBanner: typeof HnActivatedBannerForSettings
   HnSecurityReportBtn: typeof HnSecurityReportBtn
-  HnSecurityReportBtnForTxDetails: typeof HnSecurityReportBtnForTxDetails
+  HnSecuritySection: typeof HnSecuritySection
   HnLoginCard: typeof HnLoginCard
 
   // UI Components (PascalCase → stub renders null)

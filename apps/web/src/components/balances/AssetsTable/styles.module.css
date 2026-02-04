@@ -35,7 +35,7 @@
 /* Header styling - bold and no bottom border */
 .container thead th {
   border-bottom: none !important;
-  background-color: var(--color-background-main);
+  background-color: var(--color-background-paper);
 }
 
 .container thead th span {

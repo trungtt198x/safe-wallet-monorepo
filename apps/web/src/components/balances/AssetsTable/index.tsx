@@ -283,7 +283,7 @@ const AssetsTable = ({
           </Box>
         </Card>
       ) : (
-        <Card sx={{ mb: 2, border: '4px solid transparent' }}>
+        <Card sx={{ mb: 2, border: '2px solid var(--color-border-main)' }}>
           <div className={classNames(css.container, { [css.containerWideActions]: showHiddenAssets })}>
             <EnhancedTable
               rows={rows}

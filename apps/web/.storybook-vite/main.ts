@@ -183,7 +183,6 @@ const config: StorybookConfig = {
     }
 
     // Ensure proper resolution of monorepo packages
-    config.resolve = config.resolve || {}
     config.resolve.dedupe = [
       ...(config.resolve.dedupe || []),
       'react',

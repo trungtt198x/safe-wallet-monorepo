@@ -1,5 +1,7 @@
 import { useSpaceSafesGetV1Query } from '@safe-global/store/gateway/AUTO_GENERATED/spaces'
-import { useCurrentSpaceId, useGetSpaceAddressBook, mapSpaceContactsToAddressBookState } from '@/features/spaces'
+import { useCurrentSpaceId } from './useCurrentSpaceId'
+import useGetSpaceAddressBook from './useGetSpaceAddressBook'
+import { mapSpaceContactsToAddressBookState } from '../utils'
 import { _buildSafeItems, type AllSafeItems } from '@/features/myAccounts/hooks/useAllSafesGrouped'
 import { useAllSafesGrouped } from '@/features/myAccounts/hooks/useAllSafesGrouped'
 import { useAppSelector } from '@/store'

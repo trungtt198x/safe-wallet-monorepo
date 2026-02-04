@@ -2,7 +2,7 @@ import { type ReactElement, useState, useMemo, useCallback } from 'react'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
 import { Box, InputAdornment, Skeleton, SvgIcon, Typography } from '@mui/material'
 import classnames from 'classnames'
-import { AddressAutocomplete, type AddressBookEntry } from '@safe-global/ui'
+import { AddressAutocomplete, triggerValidationDelayed, type AddressBookEntry } from '@safe-global/ui'
 import Identicon from '@/components/common/Identicon'
 import SrcEthHashInfo from '@/components/common/EthHashInfo/SrcEthHashInfo'
 import type { AddressInputProps } from '../AddressInput'
@@ -132,8 +132,7 @@ const AddressBookInput = ({
                 onChange={field.onChange}
                 onBlur={() => {
                   field.onBlur()
-                  // Workaround for react-hook-form caching errors
-                  setTimeout(() => trigger(name), 100)
+                  triggerValidationDelayed(trigger, name)
                 }}
                 onClick={handleInputClick}
                 onOpenChange={setIsAutocompleteOpen}

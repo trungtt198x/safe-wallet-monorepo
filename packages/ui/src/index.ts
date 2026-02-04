@@ -13,3 +13,6 @@ export type { AddressAutocompleteProps, AddressBookEntry, ValidateCallback } fro
 
 export { AddressAutocompleteField } from './components/AddressAutocompleteField'
 export type { AddressAutocompleteFieldProps } from './components/AddressAutocompleteField'
+
+// Utilities
+export { triggerValidationDelayed } from './utils/triggerValidation'

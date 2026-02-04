@@ -1,6 +1,7 @@
-import { ReactElement, useCallback, useEffect } from 'react'
+import type { ReactElement } from 'react'
 import { Controller, FieldPath, FieldValues, useFormContext } from 'react-hook-form'
 import AddressAutocomplete from '../AddressAutocomplete/AddressAutocomplete'
+import { triggerValidationDelayed } from '../../utils/triggerValidation'
 import type { AddressAutocompleteFieldProps } from './types'
 
 const AddressAutocompleteField = <
@@ -50,10 +51,7 @@ const AddressAutocompleteField = <
           onBlur={() => {
             field.onBlur()
             autocompleteProps.onBlur?.()
-            // Workaround for react-hook-form caching errors
-            if (trigger) {
-              setTimeout(() => trigger(name), 100)
-            }
+            triggerValidationDelayed(trigger, name)
           }}
           error={fieldState.error?.message}
         />

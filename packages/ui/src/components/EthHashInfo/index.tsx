@@ -1,13 +1,15 @@
-import type { ReactElement } from 'react'
+import { type ReactElement, memo, useMemo } from 'react'
 import { isAddress } from 'ethers'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Tooltip from '@mui/material/Tooltip'
 import SvgIcon from '@mui/material/SvgIcon'
 import Identicon from '../Identicon'
+import { sanitizeName } from '../../utils/sanitize'
 import type { EthHashInfoProps } from './types'
 
-export type { EthHashInfoProps } from './types'
+// Re-export types for consumers
+export type { EthHashInfoProps }
 
 const shortenAddress = (address: string, length = 4): string => {
   if (!address) {
@@ -29,7 +31,7 @@ const AddressBookIcon = () => (
   </SvgIcon>
 )
 
-const EthHashInfo = ({
+const EthHashInfoComponent = ({
   address,
   customAvatar,
   prefix = '',
@@ -44,6 +46,7 @@ const EthHashInfo = ({
 }: EthHashInfoProps): ReactElement => {
   const shouldPrefix = isAddress(address)
   const identicon = <Identicon address={address} size={avatarSize} />
+  const displayName = useMemo(() => sanitizeName(name), [name])
 
   const addressElement = (
     <Typography variant="body2" component="span" noWrap>
@@ -103,10 +106,14 @@ const EthHashInfo = ({
           alignItems: onlyName ? 'center' : undefined,
         }}
       >
-        {!!name && (
-          <Box title={name} className="ethHashInfo-name" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {!!displayName && (
+          <Box
+            title={name ?? undefined}
+            className="ethHashInfo-name"
+            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+          >
             <Typography variant="body2" noWrap>
-              {name}
+              {displayName}
             </Typography>
             {showAddressBookIcon && (
               <Tooltip title="From your address book" placement="top">
@@ -118,7 +125,7 @@ const EthHashInfo = ({
           </Box>
         )}
 
-        {(!onlyName || !name) && (
+        {(!onlyName || !displayName) && (
           <Box sx={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
             {addressElement}
             {children}
@@ -128,5 +135,8 @@ const EthHashInfo = ({
     </Box>
   )
 }
+
+const EthHashInfo = memo(EthHashInfoComponent)
+EthHashInfo.displayName = 'EthHashInfo'
 
 export default EthHashInfo

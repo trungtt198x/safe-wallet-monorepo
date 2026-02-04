@@ -17,8 +17,6 @@ export interface EthHashInfoProps {
   avatarSize?: number
   /** Custom avatar image URL */
   customAvatar?: string | null
-  /** Whether to make the address copyable (wraps in a clickable element). Defaults to true */
-  copyAddress?: boolean
   /** Whether to only display the name (hide address when name exists). Defaults to false */
   onlyName?: boolean
   /** Whether to show an address book icon next to the name. Defaults to false */

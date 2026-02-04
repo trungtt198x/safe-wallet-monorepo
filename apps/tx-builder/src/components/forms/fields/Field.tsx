@@ -1,4 +1,5 @@
 import { Control, Controller, FieldValues, FieldPath, PathValue } from 'react-hook-form'
+import type { ReactElement } from 'react'
 
 export interface SelectItem {
   id: string
@@ -58,6 +59,74 @@ type FieldProps<T extends FieldValues = FieldValues> = {
   options?: SelectItem[]
 }
 
+import type { ChangeEvent } from 'react'
+
+/**
+ * React-hook-form's field.onChange is polymorphic - it can accept either:
+ * - A ChangeEvent (for native inputs)
+ * - A value directly (for custom components)
+ *
+ * We use this type to properly type field components that may receive either format.
+ */
+type FieldOnChange = {
+  (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void
+  (value: string): void
+}
+
+/** Props for field rendering - uses polymorphic onChange for type safety */
+interface FieldRenderProps {
+  name: string
+  value: string
+  onChange: FieldOnChange
+  onBlur?: () => void
+  label: string
+  error?: string
+  id: string
+  required?: boolean
+  fullWidth?: boolean
+  options?: SelectItem[]
+  getAddressFromDomain?: (name: string) => Promise<string>
+  networkPrefix?: string
+  showErrorsInTheLabel?: boolean
+}
+
+/**
+ * Renders the appropriate field component based on fieldType.
+ * Uses explicit conditional rendering instead of unsafe type casts.
+ */
+const renderFieldComponent = (fieldType: string, props: FieldRenderProps): ReactElement => {
+  const {
+    options,
+    getAddressFromDomain,
+    networkPrefix,
+    showErrorsInTheLabel,
+    required: _required,
+    fullWidth,
+    ...baseProps
+  } = props
+
+  if (isAddressFieldType(fieldType)) {
+    return (
+      <AddressAutocompleteWrapper
+        {...baseProps}
+        getAddressFromDomain={getAddressFromDomain}
+        networkPrefix={networkPrefix}
+        showErrorsInTheLabel={showErrorsInTheLabel}
+      />
+    )
+  }
+
+  if (isBooleanFieldType(fieldType) || fieldType === CONTRACT_METHOD_FIELD_TYPE) {
+    return <SelectContractField {...baseProps} options={options || []} />
+  }
+
+  if (fieldType === CUSTOM_TRANSACTION_DATA_FIELD_TYPE) {
+    return <TextareaContractField {...baseProps} fullWidth={fullWidth} showErrorsInTheLabel={showErrorsInTheLabel} />
+  }
+
+  return <TextContractField {...baseProps} fullWidth={fullWidth} showErrorsInTheLabel={showErrorsInTheLabel} />
+}
+
 const Field = <T extends FieldValues = FieldValues>({
   fieldType,
   control,
@@ -68,8 +137,6 @@ const Field = <T extends FieldValues = FieldValues>({
   validations,
   ...props
 }: FieldProps<T>) => {
-  const FieldComponent = getFieldComponent(fieldType)
-
   return (
     <Controller
       name={name as FieldPath<T>}
@@ -83,56 +150,20 @@ const Field = <T extends FieldValues = FieldValues>({
         },
         validate: validateField(fieldType, validations),
       }}
-      render={({ field, fieldState }) => (
-        <FieldComponent
-          name={field.name}
-          onChange={field.onChange}
-          onBlur={field.onBlur}
-          value={field.value}
-          options={options || DEFAULT_OPTIONS[fieldType]}
-          error={fieldState.error?.message}
-          required={required}
-          {...props}
-        />
-      )}
+      render={({ field, fieldState }) =>
+        renderFieldComponent(fieldType, {
+          name: field.name,
+          onChange: field.onChange,
+          onBlur: field.onBlur,
+          value: field.value,
+          options: options || DEFAULT_OPTIONS[fieldType],
+          error: fieldState.error?.message,
+          required,
+          ...props,
+        })
+      }
     />
   )
 }
 
 export default Field
-
-interface FieldComponentBaseProps {
-  name: string
-  value: string
-  onChange: (...event: unknown[]) => void
-  onBlur?: () => void
-  label: string
-  error?: string
-  required?: boolean
-  options?: SelectItem[]
-  id: string
-  fullWidth?: boolean
-  getAddressFromDomain?: (name: string) => Promise<string>
-  networkPrefix?: string
-  showErrorsInTheLabel?: boolean
-}
-
-const getFieldComponent = (fieldType: string): React.FC<FieldComponentBaseProps> => {
-  if (isAddressFieldType(fieldType)) {
-    return AddressAutocompleteWrapper as unknown as React.FC<FieldComponentBaseProps>
-  }
-
-  if (isBooleanFieldType(fieldType)) {
-    return SelectContractField as unknown as React.FC<FieldComponentBaseProps>
-  }
-
-  if (fieldType === CONTRACT_METHOD_FIELD_TYPE) {
-    return SelectContractField as unknown as React.FC<FieldComponentBaseProps>
-  }
-
-  if (fieldType === CUSTOM_TRANSACTION_DATA_FIELD_TYPE) {
-    return TextareaContractField as unknown as React.FC<FieldComponentBaseProps>
-  }
-
-  return TextContractField as unknown as React.FC<FieldComponentBaseProps>
-}

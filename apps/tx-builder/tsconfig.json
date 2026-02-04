@@ -17,7 +17,13 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "./",
+    "paths": {
+      "@safe-global/store/*": ["../../packages/store/src/*"],
+      "@safe-global/utils/*": ["../../packages/utils/src/*"],
+      "@safe-global/ui/*": ["../../packages/ui/src/*"]
+    }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

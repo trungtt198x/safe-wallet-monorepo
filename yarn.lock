@@ -11562,6 +11562,7 @@ __metadata:
     "@safe-global/safe-deployments": "npm:^1.37.49"
     "@safe-global/safe-gateway-typescript-sdk": "npm:^3.22.9"
     "@safe-global/ui": "workspace:^"
+    "@safe-global/utils": "workspace:^"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.2.0"
@@ -11618,6 +11619,7 @@ __metadata:
     "@faker-js/faker": "npm:^9.0.3"
     "@mui/material": "npm:^6.0.0"
     "@safe-global/test": "workspace:^"
+    "@safe-global/utils": "workspace:^"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.2.0"
     "@testing-library/user-event": "npm:^14.5.2"
@@ -11635,6 +11637,7 @@ __metadata:
     typescript: "npm:~5.9.2"
   peerDependencies:
     "@mui/material": ^6.x
+    "@safe-global/utils": "workspace:^"
     ethers: ^6.x
     react: ^18.x || ^19.x
     react-hook-form: ^7.x

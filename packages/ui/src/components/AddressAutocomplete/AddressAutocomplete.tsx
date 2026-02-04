@@ -8,7 +8,17 @@ import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
 import SvgIcon from '@mui/material/SvgIcon'
 import { styled } from '@mui/material/styles'
-import { getAddress, isAddress, isHexString } from 'ethers'
+import { isAddress } from 'ethers'
+
+// Import address utilities from @safe-global/utils
+import {
+  checksumAddress,
+  isChecksummedAddress,
+  parsePrefixedAddress,
+  formatPrefixedAddress,
+} from '@safe-global/utils/utils/addresses'
+import { isValidAddress as checkValidAddress } from '@safe-global/utils/utils/validation'
+import useDebounce from '@safe-global/utils/hooks/useDebounce'
 
 import type { AddressAutocompleteProps, AddressBookEntry } from './types'
 import AddressOptionItem from '../AddressOptionItem'
@@ -30,6 +40,9 @@ const saveAddressIconPaths = (
 )
 
 const MAX_RESULTS = 10
+const MAX_INPUT_LENGTH = 512 // ENS names can be long but not unlimited
+const ENS_DEBOUNCE_MS = 350
+const VALIDATION_DEBOUNCE_MS = 300
 
 // Custom Paper component that properly inherits theme
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -56,67 +69,23 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   },
 }))
 
-// Address utility functions
+/**
+ * Check if address is valid (wrapper that handles undefined/empty)
+ */
 const isValidAddress = (address?: string): boolean => {
-  if (address) {
-    return isHexString(address, 20) && isAddress(address)
-  }
-  return false
+  return !!address && isAddress(address) && checkValidAddress(address)
 }
-
-const isChecksumAddress = (address?: string): boolean => {
-  if (address) {
-    try {
-      return getAddress(address) === address
-    } catch {
-      return false
-    }
-  }
-  return false
-}
-
-const checksumAddress = (address: string): string => getAddress(address)
 
 // Based on https://docs.ens.domains/dapp-developer-guide/resolving-names
 const validENSRegex = /[^[\]]+\.[^[\]]/
 const isValidEnsName = (name: string): boolean => validENSRegex.test(name)
 
-const getAddressWithoutNetworkPrefix = (address = ''): string => {
-  const hasPrefix = address.includes(':')
-  if (!hasPrefix) {
-    return address
-  }
-  const [, ...addressWithoutNetworkPrefix] = address.split(':')
-  return addressWithoutNetworkPrefix.join('')
-}
-
-const getNetworkPrefix = (address = ''): string => {
-  const splitAddress = address.split(':')
-  const hasPrefixDefined = splitAddress.length > 1
-  const [prefix] = splitAddress
-  return hasPrefixDefined ? prefix : ''
-}
-
-const addNetworkPrefix = (address: string, prefix: string | undefined): string => {
-  return prefix ? `${prefix}:${address}` : address
-}
-
-// Checksum valid addresses
-const checksumValidAddress = (address: string) => {
-  if (isValidAddress(address) && !isChecksumAddress(address)) {
+/**
+ * Checksum valid addresses, return unchanged if invalid
+ */
+const checksumValidAddress = (address: string): string => {
+  if (isValidAddress(address) && !isChecksummedAddress(address)) {
     return checksumAddress(address)
-  }
-  return address
-}
-
-// Add network prefix if needed (only for valid addresses)
-const formatAddressWithPrefix = (address: string, networkPrefix?: string): string => {
-  if (!address || !networkPrefix) return address
-  // Only add prefix to valid Ethereum addresses, not to invalid inputs or ENS names
-  if (!isValidAddress(address)) return address
-  const hasPrefix = !!getNetworkPrefix(address)
-  if (!hasPrefix) {
-    return addNetworkPrefix(address, networkPrefix)
   }
   return address
 }
@@ -153,15 +122,22 @@ const AddressAutocomplete = ({
   const [isResolvingEns, setIsResolvingEns] = useState(false)
   const [validationError, setValidationError] = useState<string | undefined>(undefined)
   const [isValidating, setIsValidating] = useState(false)
+  const [pendingEnsName, setPendingEnsName] = useState<string | null>(null)
 
   // Abort controller ref to cancel in-flight ENS resolution requests
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  // Debounce ENS name before resolution (350ms)
+  const debouncedEnsName = useDebounce(pendingEnsName, ENS_DEBOUNCE_MS)
+
+  // Debounce value for validation (300ms)
+  const debouncedValueForValidation = useDebounce(value, VALIDATION_DEBOUNCE_MS)
 
   // Custom filter that accounts for network prefix
   const filterOptions = useMemo(() => {
     return createFilterOptions<AddressBookEntry>({
       stringify: (option) => {
-        const prefixedAddress = networkPrefix ? addNetworkPrefix(option.address, networkPrefix) : option.address
+        const prefixedAddress = networkPrefix ? formatPrefixedAddress(option.address, networkPrefix) : option.address
         return `${option.name} ${option.address} ${prefixedAddress}`
       },
       limit: MAX_RESULTS,
@@ -180,27 +156,40 @@ const AddressAutocomplete = ({
     return addressBook.find((item) => item.address.toLowerCase() === value.toLowerCase()) || null
   }, [addressBook, value])
 
-  // Run validation when value changes
+  // Run validation when debounced value changes (with cancellation)
   useEffect(() => {
-    if (!validate || !value) {
+    if (!validate || !debouncedValueForValidation) {
       setValidationError(undefined)
+      setIsValidating(false)
       return
     }
 
+    let cancelled = false
+    setIsValidating(true)
+
     const runValidation = async () => {
-      setIsValidating(true)
       try {
-        const result = await validate(value)
-        setValidationError(result)
+        const result = await validate(debouncedValueForValidation)
+        if (!cancelled) {
+          setValidationError(result)
+        }
       } catch {
-        setValidationError(undefined)
+        if (!cancelled) {
+          setValidationError(undefined)
+        }
       } finally {
-        setIsValidating(false)
+        if (!cancelled) {
+          setIsValidating(false)
+        }
       }
     }
 
     runValidation()
-  }, [value, validate])
+
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedValueForValidation, validate])
 
   // Compute the label to display when a contact is selected
   const displayLabel = useMemo(() => {
@@ -228,6 +217,11 @@ const AddressAutocomplete = ({
         if (controller.signal.aborted) return
 
         if (resolvedAddress && resolvedAddress !== ensName) {
+          // Validate resolved address before using it (security check)
+          if (!isValidAddress(resolvedAddress)) {
+            console.warn('ENS resolver returned invalid address:', resolvedAddress)
+            return
+          }
           const checksummed = checksumValidAddress(resolvedAddress)
           onChange(checksummed)
           // Don't add network prefix to input display value
@@ -246,6 +240,13 @@ const AddressAutocomplete = ({
     [resolveAddress, onChange],
   )
 
+  // Resolve debounced ENS name
+  useEffect(() => {
+    if (debouncedEnsName && isValidEnsName(debouncedEnsName)) {
+      resolveEnsName(debouncedEnsName)
+    }
+  }, [debouncedEnsName, resolveEnsName])
+
   // Cleanup abort controller on unmount
   useEffect(() => {
     return () => {
@@ -257,8 +258,14 @@ const AddressAutocomplete = ({
   const processInputValue = useCallback(
     (rawValue: string) => {
       const trimmed = rawValue.trim()
-      const inputPrefix = getNetworkPrefix(trimmed)
-      const addressWithoutPrefix = getAddressWithoutNetworkPrefix(trimmed)
+
+      // Reject overly long inputs to prevent DoS
+      if (trimmed.length > MAX_INPUT_LENGTH) {
+        return
+      }
+
+      // Parse prefixed address to extract prefix and address
+      const { prefix: inputPrefix, address: addressWithoutPrefix } = parsePrefixedAddress(trimmed)
 
       // If valid network prefix is present, remove it from the stored value
       const isValidPrefix = networkPrefix === inputPrefix
@@ -266,12 +273,14 @@ const AddressAutocomplete = ({
 
       onChange(finalValue)
 
-      // Check for ENS name
+      // Set pending ENS name for debounced resolution (instead of direct call)
       if (isValidEnsName(finalValue)) {
-        resolveEnsName(finalValue)
+        setPendingEnsName(finalValue)
+      } else {
+        setPendingEnsName(null)
       }
     },
-    [networkPrefix, onChange, resolveEnsName],
+    [networkPrefix, onChange],
   )
 
   // Handle option selection from dropdown

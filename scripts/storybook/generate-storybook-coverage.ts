@@ -292,12 +292,65 @@ This document tracks Storybook story coverage across the codebase, enabling hist
   return md
 }
 
+/** Generate markdown row for a covered group */
+function formatCoveredGroupRow(group: TopLevelGroup): string {
+  const storyFile = group.storyPath ? `\`${group.storyPath}\`` : '(family stories)'
+  const status = group.coverage === 'complete' ? '✅' : '⚠️'
+  return `| ${group.name} | ${group.category} | ${group.families.length} | ${group.totalComponents} | ${storyFile} | ${group.storyExports} | ${status} |\n`
+}
+
+/** Generate markdown row for an uncovered group */
+function formatUncoveredGroupRow(group: TopLevelGroup): string {
+  return `| ${group.name} | ${group.category} | ${group.families.length} | ${group.totalComponents} | Create \`${group.rootPath}/index.stories.tsx\` |\n`
+}
+
+/** Generate markdown row for a skipped group */
+function formatSkippedGroupRow(group: TopLevelGroup): string {
+  return `| ${group.name} | ${SKIPPED_GROUPS[group.name]} |\n`
+}
+
+/** Generate uncovered groups subsection */
+function generateUncoveredGroupsSection(groups: TopLevelGroup[]): string {
+  if (groups.length === 0) return ''
+
+  const header = `
+### ❌ Uncovered Groups (${groups.length})
+
+| Group | Category | Families | Components | Action Needed |
+|-------|----------|----------|------------|---------------|
+`
+  const rows = groups
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(formatUncoveredGroupRow)
+    .join('')
+
+  return header + rows
+}
+
+/** Generate skipped groups subsection */
+function generateSkippedGroupsSection(groups: TopLevelGroup[]): string {
+  if (groups.length === 0) return ''
+
+  const header = `
+### 🚫 Skipped Groups (${groups.length})
+
+| Group | Reason |
+|-------|--------|
+`
+  const rows = groups
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(formatSkippedGroupRow)
+    .join('')
+
+  return header + rows
+}
+
 function generateTopLevelSection(groups: TopLevelGroup[], report: TopLevelCoverageReport): string {
   const coveredGroups = groups.filter((g) => g.coverage !== 'none')
   const skippedGroups = groups.filter((g) => SKIPPED_GROUPS[g.name])
   const uncoveredGroups = groups.filter((g) => g.coverage === 'none' && !SKIPPED_GROUPS[g.name])
 
-  let md = `## 1. Top-Level Coverage (${report.totalGroups} groups)
+  const header = `## 1. Top-Level Coverage (${report.totalGroups} groups)
 
 High-level view - each group can be covered by ONE story file.
 
@@ -307,38 +360,18 @@ High-level view - each group can be covered by ONE story file.
 |-------|----------|----------|------------|------------|---------|--------|
 `
 
-  for (const group of coveredGroups.sort((a, b) => a.name.localeCompare(b.name))) {
-    const storyFile = group.storyPath ? `\`${group.storyPath}\`` : '(family stories)'
-    const status = group.coverage === 'complete' ? '✅' : '⚠️'
-    md += `| ${group.name} | ${group.category} | ${group.families.length} | ${group.totalComponents} | ${storyFile} | ${group.storyExports} | ${status} |\n`
-  }
+  const coveredRows = coveredGroups
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(formatCoveredGroupRow)
+    .join('')
 
-  if (uncoveredGroups.length > 0) {
-    md += `
-### ❌ Uncovered Groups (${uncoveredGroups.length})
-
-| Group | Category | Families | Components | Action Needed |
-|-------|----------|----------|------------|---------------|
-`
-    for (const group of uncoveredGroups.sort((a, b) => a.name.localeCompare(b.name))) {
-      md += `| ${group.name} | ${group.category} | ${group.families.length} | ${group.totalComponents} | Create \`${group.rootPath}/index.stories.tsx\` |\n`
-    }
-  }
-
-  if (skippedGroups.length > 0) {
-    md += `
-### 🚫 Skipped Groups (${skippedGroups.length})
-
-| Group | Reason |
-|-------|--------|
-`
-    for (const group of skippedGroups.sort((a, b) => a.name.localeCompare(b.name))) {
-      md += `| ${group.name} | ${SKIPPED_GROUPS[group.name]} |\n`
-    }
-  }
-
-  md += '\n---\n\n'
-  return md
+  return (
+    header +
+    coveredRows +
+    generateUncoveredGroupsSection(uncoveredGroups) +
+    generateSkippedGroupsSection(skippedGroups) +
+    '\n---\n\n'
+  )
 }
 
 function generateFamilySection(families: ComponentFamily[], groups: TopLevelGroup[]): string {

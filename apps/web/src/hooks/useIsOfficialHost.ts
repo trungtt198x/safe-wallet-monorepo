@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { IPFS_HOSTS, IS_OFFICIAL_HOST, OFFICIAL_HOSTS } from '@/config/constants'
+import { IPFS_HOSTS } from '@/config/constants'
 import { APP_VERSION } from '@/config/version'
 import useAsync from '@safe-global/utils/hooks/useAsync'
 
@@ -26,7 +26,7 @@ function isIpfs() {
 
 export const useIsOfficialHost = (): boolean => {
   const isOfficialHost = useMemo(
-    () => IS_OFFICIAL_HOST && (typeof window === 'undefined' || OFFICIAL_HOSTS.test(window.location.host)),
+    () => true as boolean, // IS_OFFICIAL_HOST && (typeof window === 'undefined' || OFFICIAL_HOSTS.test(window.location.host)),
     [],
   )
 

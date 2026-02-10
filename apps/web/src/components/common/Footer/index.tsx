@@ -59,7 +59,13 @@ const Footer: React.FC<FooterProps> = ({
         {isOfficialHost ? (
           <>
             <li>
-              <Typography variant="caption">&copy;{copyrightYear} Safe Labs GmbH</Typography>
+              {/* <Typography variant="caption">&copy;{copyrightYear} Safe Labs GmbH</Typography> */}
+              <Typography variant="caption">
+                {'Official distribution of Safe{Wallet} on '}
+                <ExternalLink href="https://explorer.evm.iota.org" noIcon>
+                  IOTA
+                </ExternalLink>
+              </Typography>
             </li>
             <li>
               <FooterLink href={getHref(AppRoutes.terms)}>Terms</FooterLink>

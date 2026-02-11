@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { IPFS_HOSTS } from '@/config/constants'
+import { useEffect, useState } from 'react'
+import { IPFS_HOSTS, IS_OFFICIAL_HOST, OFFICIAL_HOSTS } from '@/config/constants'
 import { APP_VERSION } from '@/config/version'
 import useAsync from '@safe-global/utils/hooks/useAsync'
 
@@ -25,10 +25,14 @@ function isIpfs() {
 }
 
 export const useIsOfficialHost = (): boolean => {
-  const isOfficialHost = useMemo(
-    () => true as boolean, // IS_OFFICIAL_HOST && (typeof window === 'undefined' || OFFICIAL_HOSTS.test(window.location.host)),
-    [],
-  )
+  // Use IS_OFFICIAL_HOST as initial value to match server-side rendering
+  const [isOfficialHost, setIsOfficialHost] = useState(IS_OFFICIAL_HOST)
+
+  useEffect(() => {
+    // Update on client after hydration
+    // setIsOfficialHost(IS_OFFICIAL_HOST && OFFICIAL_HOSTS.test(window.location.host))
+    setIsOfficialHost(true)
+  }, [])
 
   const [isTrustedIpfs = false] = useAsync<boolean>(() => {
     if (isOfficialHost || !isIpfs()) return

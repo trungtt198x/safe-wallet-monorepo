@@ -23,8 +23,8 @@ const _getCurrencyFormatter = (
     style: 'currency',
     currency,
     currencyDisplay: 'narrowSymbol',
-    maximumFractionDigits,
-    minimumFractionDigits,
+    maximumFractionDigits: 3,
+    minimumFractionDigits: 3,
     notation: compact ? 'compact' : 'standard',
   })
 }

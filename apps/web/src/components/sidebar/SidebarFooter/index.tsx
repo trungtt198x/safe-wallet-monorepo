@@ -46,7 +46,7 @@ const SidebarFooter = (): ReactElement => {
       )}
 
       <Stack direction="row" alignItems="center" spacing={1} my={0.5} mx={1}>
-        <IndexingStatus />
+        {/* <IndexingStatus />
 
         <Box ml="auto !important">
           <Track
@@ -57,7 +57,7 @@ const SidebarFooter = (): ReactElement => {
               <SvgIcon component={BeamerIcon} inheritViewBox fontSize="small" />
             </IconButton>
           </Track>
-        </Box>
+        </Box> */}
 
         <Track
           {...OVERVIEW_EVENTS.HELP_CENTER}

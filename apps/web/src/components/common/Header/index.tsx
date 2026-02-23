@@ -4,7 +4,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { ReactElement } from 'react'
 import { useRouter } from 'next/router'
 import type { Url } from 'next/dist/shared/lib/router/router'
-import { Box, IconButton, Paper } from '@mui/material'
+import { Box, IconButton, Paper, SvgIcon } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import classnames from 'classnames'
 import css from './styles.module.css'
@@ -25,6 +25,8 @@ import { OVERVIEW_EVENTS, OVERVIEW_LABELS } from '@/services/analytics'
 import { useSafeTokenEnabled } from '@/hooks/useSafeTokenEnabled'
 import { useIsOfficialHost } from '@/hooks/useIsOfficialHost'
 import { BRAND_LOGO, BRAND_NAME } from '@/config/constants'
+import { HELP_CENTER_URL } from '@safe-global/utils/config/constants'
+import HelpCenterIcon from '@/public/images/sidebar/help-center.svg'
 
 type HeaderProps = {
   onMenuToggle?: Dispatch<SetStateAction<boolean>>
@@ -96,6 +98,11 @@ const Header = ({ onMenuToggle, onBatchToggle }: HeaderProps): ReactElement => {
       )}
 
       <Box className={css.rightSideGroup}>
+        <div className={classnames(css.element, css.hideMobile)}>
+          <IconButton href={HELP_CENTER_URL} target="_blank" data-testid="list-item-need-help">
+            <SvgIcon component={HelpCenterIcon} inheritViewBox fontSize="inherit" />
+          </IconButton>
+        </div>
         <div data-testid="notifications-center" className={css.element}>
           <NotificationCenter />
         </div>

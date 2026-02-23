@@ -59,14 +59,14 @@ const SidebarFooter = (): ReactElement => {
           </Track>
         </Box> */}
 
-        <Track
+        {/* <Track
           {...OVERVIEW_EVENTS.HELP_CENTER}
           mixpanelParams={{ [MixpanelEventParams.SIDEBAR_ELEMENT]: 'Help Center' }}
         >
           <IconButton href={HELP_CENTER_URL} target="_blank" data-testid="list-item-need-help" color="primary">
             <SvgIcon component={HelpCenterIcon} inheritViewBox fontSize="small" />
           </IconButton>
-        </Track>
+        </Track> */}
       </Stack>
     </>
   )

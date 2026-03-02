@@ -14,7 +14,7 @@ import SwapIcon from '@/public/images/common/swap.svg'
 import StakeIcon from '@/public/images/common/stake.svg'
 import EarnIcon from '@/public/images/common/earn.svg'
 import { SvgIcon } from '@mui/material'
-import { DEVELOPER_PORTAL_URL } from '@/config/constants'
+// import { DEVELOPER_PORTAL_URL } from '@/config/constants'
 
 export type NavItem = {
   label: string
@@ -49,13 +49,13 @@ export const navItems: NavItem[] = [
     icon: <SvgIcon data-testid="settings-nav-icon" component={SettingsIcon} inheritViewBox />,
     href: AppRoutes.settings.setup,
   },
-  {
-    label: 'API',
-    icon: <SvgIcon component={ApiIcon} inheritViewBox />,
-    href: '',
-    externalUrl: DEVELOPER_PORTAL_URL,
-    tag: <Chip sx={{ backgroundColor: 'secondary.light', color: 'static.main' }} />,
-  },
+  // {
+  //   label: 'API',
+  //   icon: <SvgIcon component={ApiIcon} inheritViewBox />,
+  //   href: '',
+  //   externalUrl: DEVELOPER_PORTAL_URL,
+  //   tag: <Chip sx={{ backgroundColor: 'secondary.light', color: 'static.main' }} />,
+  // },
 ]
 
 export const transactionNavItems = [

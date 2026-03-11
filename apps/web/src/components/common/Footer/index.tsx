@@ -17,7 +17,7 @@ const footerPages = [
   AppRoutes.settings.index,
   AppRoutes.imprint,
   AppRoutes.privacy,
-  AppRoutes.cookie,
+  // AppRoutes.cookie,
   AppRoutes.terms,
   AppRoutes.licenses,
 ]

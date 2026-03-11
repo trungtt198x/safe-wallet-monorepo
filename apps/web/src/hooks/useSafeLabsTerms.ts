@@ -14,7 +14,7 @@ const TERMS_REDIRECT_EXCEPTIONS = [
   AppRoutes.privacy,
   AppRoutes.terms,
   AppRoutes.imprint,
-  AppRoutes.cookie,
+  // AppRoutes.cookie,
   AppRoutes.licenses,
 ]
 

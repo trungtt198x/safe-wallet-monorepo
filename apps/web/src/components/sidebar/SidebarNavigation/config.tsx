@@ -82,7 +82,7 @@ export const settingsNavItems = [
 ]
 
 export const generalSettingsNavItems = [
-  { label: 'Cookies', href: AppRoutes.settings.cookies },
+  // { label: 'Cookies', href: AppRoutes.settings.cookies },
   { label: 'Appearance', href: AppRoutes.settings.appearance },
   { label: 'Notifications', href: AppRoutes.settings.notifications },
   { label: 'Security', href: AppRoutes.settings.security },

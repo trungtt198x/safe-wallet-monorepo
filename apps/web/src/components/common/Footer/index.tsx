@@ -100,7 +100,8 @@ const Footer: React.FC<FooterProps> = ({
         )}
 
         <li>
-          <ExternalLink href={`${APP_HOMEPAGE}/releases/tag/v${APP_VERSION}`} noIcon>
+          {/* <ExternalLink href={`${APP_HOMEPAGE}/releases/tag/v${APP_VERSION}`} noIcon> */}
+          <ExternalLink href={`https://github.com/iota-community/safe-wallet-monorepo`} noIcon>
             {versionIcon && <SvgIcon component={GitHubIcon} inheritViewBox fontSize="inherit" sx={{ mr: 0.5 }} />}v
             {APP_VERSION}
           </ExternalLink>
